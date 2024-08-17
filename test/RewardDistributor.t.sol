@@ -5,8 +5,9 @@ import {L2StakeManager} from '../src/L2StakeManager.sol';
 import {RewardDistributor} from '../src/RewardDistributor.sol';
 import {MockL2CrossDomainMessenger} from './mock/MockL2CrossDomainMessenger.sol';
 import 'forge-std/Test.sol';
+import {GasSnapshot} from 'lib/forge-gas-snapshot/src/GasSnapshot.sol';
 
-abstract contract Deployed is Test {
+abstract contract Deployed is Test, GasSnapshot {
     L2StakeManager l2StakeManager;
     RewardDistributor rewardDistributor;
     MockL2CrossDomainMessenger mockL2CrossDomainMessenger;
@@ -50,12 +51,14 @@ abstract contract Deposited is Deployed {
         uint256 randomReward = rewardForBlock(seed);
         vm.prank(paymentSplitter);
         (bool success,) = address(rewardDistributor).call{value: randomReward}('');
+        snapLastCall('deposit reward');
         assert(success);
     }
 
     function attest(bytes memory account) public {
         vm.prank(makeAddr(string(account)));
         rewardDistributor.attest(vm.getBlockNumber() - 2, blockhash(vm.getBlockNumber() - 2), true);
+        snapLastCall('attest');
     }
 }
 

@@ -29,6 +29,11 @@ contract RewardDistributor {
     mapping(uint256 blockNumber => Block) private _blocks;
     mapping(address user => Reward) private _rewards;
 
+    event RewardDeposited(uint256 indexed blockNumber, uint256 reward);
+    event Attested(uint256 indexed blockNumber, address indexed user, bytes32 blockHash, bool vote);
+    event Finalized(uint256 indexed blockNumber, address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+
     error Unauthorized();
     error InvalidBlockNumber();
     error InvalidBlockHash();
@@ -50,6 +55,7 @@ contract RewardDistributor {
         uint256 currentBlock = block.number;
         _blocks[currentBlock].reward += msg.value;
         _blocks[currentBlock - 1].blockHash = blockhash(currentBlock - 1);
+        emit RewardDeposited(currentBlock, msg.value);
     }
 
     function attest(uint256 blockNumber, bytes32 blockHash, bool vote) external {
@@ -68,6 +74,7 @@ contract RewardDistributor {
         }
         _rewards[msg.sender].next[_rewards[msg.sender].tail] = _encodeNext(blockNumber, vote);
         _rewards[msg.sender].tail = blockNumber;
+        emit Attested(blockNumber, msg.sender, blockHash, vote);
     }
 
     function withdraw(address recipient) external {
@@ -75,6 +82,7 @@ contract RewardDistributor {
         _rewards[recipient].earned = 0;
         (bool success,) = recipient.call{value: amount}('');
         if (!success) revert TransferFailed();
+        emit Withdrawn(recipient, amount);
     }
 
     function finalize(address account, uint256 n) external {
@@ -106,8 +114,10 @@ contract RewardDistributor {
         } else {
             votes = _blocks[next].votesFor;
         }
-        _rewards[account].earned += _blocks[next].reward * L2_STAKE_MANAGER.getPastVotes(account, next) / votes;
+        uint256 reward = _blocks[next].reward * L2_STAKE_MANAGER.getPastVotes(account, next) / votes;
+        _rewards[account].earned += reward;
         _rewards[account].head = next;
+        emit Finalized(next, account, reward);
     }
 
     function _encodeNext(uint256 blockNumber, bool vote) private pure returns (uint256) {

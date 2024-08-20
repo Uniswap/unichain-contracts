@@ -154,4 +154,10 @@ contract RewardDistributorTest is Deposited {
         assertEq(rewardCharlie, 0);
         assertEq(rewardDave, theoreticalRewards[3]);
     }
+
+    // TODO:
+    // - test that invalid votes are not rewarded
+    // - test that invalid votes are rewarded if block is invalid
+    // - test that rewards are not paid out if no votes are cast
+    // - fuzzing tests
 }

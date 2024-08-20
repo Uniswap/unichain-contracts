@@ -27,7 +27,6 @@ contract L2StakeManager is ERC20Votes {
     }
 
     function registerDeposit(address user, uint256 amount, address delegatee) external onlyL1StakeManager {
-        // TODO account for delegation during reward distribution
         // normal staking on L1 => delegate management on L2
 
         // Do not delegate if already delegated to same address

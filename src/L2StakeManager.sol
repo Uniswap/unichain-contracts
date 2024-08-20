@@ -26,11 +26,16 @@ contract L2StakeManager is ERC20Votes {
         L1_STAKE_MANAGER = l1StakeManager;
     }
 
-    function registerDeposit(address user, uint256 amount) external onlyL1StakeManager {
-        // Self delegate by default
-        // TODO allow for delegation and account for it during reward distribution
+    function registerDeposit(address user, uint256 amount, address delegatee) external onlyL1StakeManager {
+        // TODO account for delegation during reward distribution
         // normal staking on L1 => delegate management on L2
-        if (delegates(user) == address(0)) _delegate(user, user);
+
+        // Do not delegate if already delegated to same address
+        if (delegates(user) != delegatee) {
+            // Self delegate if no delegatee is provided
+            if (delegatee == address(0)) delegatee = user;
+            _delegate(user, delegatee);
+        }
         _mint(user, amount);
     }
 

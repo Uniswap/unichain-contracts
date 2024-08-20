@@ -30,13 +30,15 @@ abstract contract Deposited is Deployed {
     function setUp() public virtual override {
         super.setUp();
         vm.prank(address(mockL2CrossDomainMessenger));
-        l2StakeManager.registerDeposit(makeAddr('alice'), uint256(keccak256('alice')) % MAX_AMOUNT);
+        l2StakeManager.registerDeposit(makeAddr('alice'), uint256(keccak256('alice')) % MAX_AMOUNT, makeAddr('alice'));
         vm.prank(address(mockL2CrossDomainMessenger));
-        l2StakeManager.registerDeposit(makeAddr('bob'), uint256(keccak256('bob')) % MAX_AMOUNT);
+        l2StakeManager.registerDeposit(makeAddr('bob'), uint256(keccak256('bob')) % MAX_AMOUNT, makeAddr('bob'));
         vm.prank(address(mockL2CrossDomainMessenger));
-        l2StakeManager.registerDeposit(makeAddr('charlie'), uint256(keccak256('charlie')) % MAX_AMOUNT);
+        l2StakeManager.registerDeposit(
+            makeAddr('charlie'), uint256(keccak256('charlie')) % MAX_AMOUNT, makeAddr('charlie')
+        );
         vm.prank(address(mockL2CrossDomainMessenger));
-        l2StakeManager.registerDeposit(makeAddr('dave'), uint256(keccak256('dave')) % MAX_AMOUNT);
+        l2StakeManager.registerDeposit(makeAddr('dave'), uint256(keccak256('dave')) % MAX_AMOUNT, makeAddr('dave'));
     }
 
     function balanceOf(bytes memory account) public pure returns (uint256) {

@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import {L2StakeManager} from '../src/L2StakeManager.sol';
 import {RewardDistributor} from '../src/RewardDistributor.sol';
+import {UniVotes} from '../src/lib/UniVotes.sol';
 import {MockL2CrossDomainMessenger} from './mock/MockL2CrossDomainMessenger.sol';
 import 'forge-std/Test.sol';
 import {console2} from 'forge-std/console2.sol';
@@ -120,6 +121,8 @@ contract RewardDistributorTest is Deposited {
 
     // Expect that rewards are paid out by delegated votes and not token balances
     function test_ShouldDistributeRewardsCorrectlyWithActiveDelegations() public {
+        vm.roll(l2StakeManager.getLastEpochBlock() + l2StakeManager.getEpochLength());
+        l2StakeManager.updateEpoch();
         // alice delegates to bob
         delegate('alice', 'bob');
         // charlie delegates to dave

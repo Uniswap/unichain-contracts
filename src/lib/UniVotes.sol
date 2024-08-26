@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import {Votes} from '@openzeppelin/contracts/governance/utils/Votes.sol';
+import {console2} from 'forge-std/console2.sol';
 import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import {Checkpoints} from '@openzeppelin/contracts/utils/structs/Checkpoints.sol';
 
@@ -9,6 +10,8 @@ import {Checkpoints} from '@openzeppelin/contracts/utils/structs/Checkpoints.sol
 /// @notice This contract tracks voting units, balance, and validator activity for L2 accounts
 /// @dev implementation uses OpenZeppelin's ERC20Votes.sol and adds additional balance checkpointing
 abstract contract UniVotes is ERC20, Votes {
+    uint256 public EPOCH_BLOCKS = 604_800; // 1 block/s = 1 week
+
     struct BalanceCheckpoint {
         uint48 blockNumber;
         uint256 balance;
@@ -16,6 +19,8 @@ abstract contract UniVotes is ERC20, Votes {
 
     /// @notice mapping of account to balance checkpoints
     mapping(address => BalanceCheckpoint[]) private _balances;
+
+    error CannotChangeDelegation();
 
     /**
      * @dev Total supply cap has been exceeded, introducing a risk of votes overflowing.
@@ -67,6 +72,21 @@ abstract contract UniVotes is ERC20, Votes {
             }
         }
     }
+
+    function _delegate(address account, address delegatee) internal override {
+        // prevent re-delegation in the same epoch
+        if (_balances[account].length > 0 && delegates(account) != delegatee) {
+            uint256 latestDepositBlock = _balances[account][_balances[account].length - 1].blockNumber;
+            uint256 lastEpochBlock = getLastEpochBlock();
+            if (latestDepositBlock >= lastEpochBlock && latestDepositBlock < lastEpochBlock + EPOCH_BLOCKS) {
+                revert CannotChangeDelegation();
+            }
+        }
+        super._delegate(account, delegatee);
+    }
+
+    function getEpochLength() public view virtual returns (uint256);
+    function getLastEpochBlock() public view virtual returns (uint256);
 
     /**
      * @dev Maximum token supply. Defaults to `type(uint208).max` (2^208^ - 1).

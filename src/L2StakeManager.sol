@@ -16,6 +16,9 @@ contract L2StakeManager is UniVotes {
 
     error Unauthorized();
     error TransfersDisabled();
+    error EpochUpdateNotAllowed();
+
+    uint256 lastEpochBlock;
 
     modifier onlyL1StakeManager() {
         if (msg.sender != address(MESSENGER) || MESSENGER.xDomainMessageSender() != L1_STAKE_MANAGER) {
@@ -26,12 +29,11 @@ contract L2StakeManager is UniVotes {
 
     constructor(address l1StakeManager) ERC20('L2 Stake Manager', 'L2SM') EIP712('L2StakeManager', '1') {
         L1_STAKE_MANAGER = l1StakeManager;
+        lastEpochBlock = block.number;
     }
 
     /// @notice Register a deposit on L1, mint tokens on L2 and optionally delegate all tokens to a delegatee
     function registerDeposit(address user, uint256 amount, address delegatee) external onlyL1StakeManager {
-        // normal staking on L1 => delegate management on L2
-
         // Do not delegate if already delegated to same address
         if (delegates(user) != delegatee) {
             // Self delegate if no delegatee is provided
@@ -39,6 +41,22 @@ contract L2StakeManager is UniVotes {
             _delegate(user, delegatee);
         }
         _mint(user, amount);
+    }
+
+    function getEpochLength() public view override returns (uint256) {
+        return EPOCH_BLOCKS;
+    }
+
+    function getLastEpochBlock() public view override returns (uint256) {
+        return lastEpochBlock;
+    }
+
+    /// @notice Update the epoch if the last epoch has ended
+    function updateEpoch() external {
+        if (block.number < lastEpochBlock + EPOCH_BLOCKS) {
+            revert EpochUpdateNotAllowed();
+        }
+        lastEpochBlock = block.number;
     }
 
     /// @notice Register a withdrawal on L1, burn tokens on L2

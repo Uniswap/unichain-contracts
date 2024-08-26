@@ -32,6 +32,7 @@ contract RewardDistributor {
 
     mapping(uint256 blockNumber => Block) private _blocks;
     mapping(address user => Reward) private _rewards;
+    mapping(address validator => uint256) private _inactiveUntil;
 
     event RewardDeposited(uint256 indexed blockNumber, uint256 reward);
     event Attested(uint256 indexed blockNumber, address indexed user, bytes32 blockHash, bool vote);
@@ -125,11 +126,12 @@ contract RewardDistributor {
         uint256 reward;
         if (votes != 0) {
             // get the reward for the delegatee
-            reward = _blocks[next].reward.mulDivDown(L2_STAKE_MANAGER.getPastVotes(delegatee, next), votes);
+            uint256 delegateeVotes = L2_STAKE_MANAGER.getPastVotes(delegatee, next);
+            reward = _blocks[next].reward.mulDivDown(delegateeVotes, votes);
             // get the pro-rate reward for the account if not self-delegated
             if (account != delegatee) {
                 reward = reward.mulDivDown(
-                    L2_STAKE_MANAGER.getPastVotes(account, next), L2_STAKE_MANAGER.getPastVotes(delegatee, next)
+                    L2_STAKE_MANAGER.getPastBalance(account, next), delegateeVotes
                 );
             }
         }

@@ -23,6 +23,34 @@ abstract contract UniVotes is ERC20, Votes {
     error ERC20ExceededSafeSupply(uint256 increasedSupply, uint256 cap);
 
     /**
+     * @dev Get the checkpointed balance of an account at a specific block number. Returns the most recent checkpoint greater than or equal to blockNumber
+     */
+    function getPastBalance(address account, uint256 blockNumber) public view returns (uint256) {
+        BalanceCheckpoint[] memory balanceCheckpoints = _balances[account];
+        uint256 length = balanceCheckpoints.length;
+        uint256 mid = length / 2;
+        uint256 low = 0;
+        uint256 high = length - 1;
+        while (low < high) {
+            mid = (low + high) / 2;
+            if (balanceCheckpoints[mid].blockNumber == blockNumber) {
+                return balanceCheckpoints[mid].balance;
+            } else if (balanceCheckpoints[mid].blockNumber < blockNumber) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        // At this point, low should be equal to high
+        if (balanceCheckpoints[high].blockNumber > blockNumber) {
+            return balanceCheckpoints[high].balance;
+        } else {
+            // Fallback to mid or handle the case where no element is greater
+            return balanceCheckpoints[mid].balance;
+        }
+    }
+
+    /**
      * @dev Checkpoint balances when transferring tokens
      */
     function _checkpointBalances(address from, address to, uint256 amount) internal {

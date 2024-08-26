@@ -162,10 +162,8 @@ contract RewardDistributorTest is Deposited {
         uint256 rewardDave = rewardDistributor.earned(makeAddr('dave'));
 
         assertEq(rewardAlice, theoreticalRewards[0]);
-        assertEq(rewardAlice, 0);
         assertEq(rewardBob, theoreticalRewards[1]);
         assertEq(rewardCharlie, theoreticalRewards[2]);
-        assertEq(rewardCharlie, 0);
         assertEq(rewardDave, theoreticalRewards[3]);
     }
 

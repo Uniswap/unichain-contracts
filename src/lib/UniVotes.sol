@@ -2,9 +2,10 @@
 pragma solidity 0.8.26;
 
 import {Votes} from '@openzeppelin/contracts/governance/utils/Votes.sol';
-import {console2} from 'forge-std/console2.sol';
+
 import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import {Checkpoints} from '@openzeppelin/contracts/utils/structs/Checkpoints.sol';
+import {console2} from 'forge-std/console2.sol';
 
 /// @title UniVotes
 /// @notice This contract tracks voting units, balance, and validator activity for L2 accounts

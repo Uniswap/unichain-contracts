@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import {Votes} from '@openzeppelin/contracts/governance/utils/Votes.sol';
-import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
+import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import {Checkpoints} from '@openzeppelin/contracts/utils/structs/Checkpoints.sol';
 
 /// @title UniVotes
 /// @notice This contract tracks voting units, balance, and validator activity for L2 accounts
@@ -16,10 +16,10 @@ abstract contract UniVotes is ERC20, Votes {
 
     /// @notice mapping of account to balance checkpoints
     mapping(address => BalanceCheckpoint[]) private _balances;
-    
+
     /**
      * @dev Total supply cap has been exceeded, introducing a risk of votes overflowing.
-    */
+     */
     error ERC20ExceededSafeSupply(uint256 increasedSupply, uint256 cap);
 
     /**
@@ -109,7 +109,7 @@ abstract contract UniVotes is ERC20, Votes {
     function _getVotingUnits(address account) internal view virtual override returns (uint256) {
         return balanceOf(account);
     }
-    
+
     /**
      * @dev Get number of checkpoints for `account`.
      */

@@ -130,9 +130,7 @@ contract RewardDistributor {
             reward = _blocks[next].reward.mulDivDown(delegateeVotes, votes);
             // get the pro-rate reward for the account if not self-delegated
             if (account != delegatee) {
-                reward = reward.mulDivDown(
-                    L2_STAKE_MANAGER.getPastBalance(account, next), delegateeVotes
-                );
+                reward = reward.mulDivDown(L2_STAKE_MANAGER.getPastBalance(account, next), delegateeVotes);
             }
         }
         _rewards[account].earned += reward;

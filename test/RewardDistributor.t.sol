@@ -176,9 +176,63 @@ contract RewardDistributorTest is Deposited {
         uint256 rewardCharlie = rewardDistributor.earned(makeAddr('charlie'));
         uint256 rewardDave = rewardDistributor.earned(makeAddr('dave'));
 
+        assertEq(rewardAlice, 0, 'alice earned does not match expected');
+        assertEq(rewardBob, theoreticalRewards[1], 'bob earned does not match expected');
+        assertEq(rewardCharlie, 0, 'charlie earned does not match expected');
+        assertEq(rewardDave, theoreticalRewards[3], 'dave earned does not match expected');
+    }
+
+    // Expect that rewards are paid out for votes in the supermajority
+    function test_ShouldDistributeRewardsCorrectlyWithWinningAndLosingVotes() public {
+        vm.roll(l2StakeManager.getLastEpochBlock() + l2StakeManager.EPOCH_BLOCKS());
+        l2StakeManager.updateEpoch();
+
+        uint256 iterations = 100;
+        vm.roll(100);
+        vm.deal(paymentSplitter, 2 ether * iterations);
+        uint256[] memory theoreticalRewards = new uint256[](4);
+        for (uint256 i = 0; i < iterations + 2; i++) {
+            // increment block number
+            vm.roll(vm.getBlockNumber() + 1);
+            uint256 blockNumber = vm.getBlockNumber();
+
+            depositReward(blockNumber);
+
+            // skip first two blocks before starting to attest
+            if (i < 2) continue;
+
+            bool aliceBobWins = i % 2 == 0;
+            bool daveWins = i % 2 != 0;
+
+            uint256 totalWinningVotes = (
+                aliceBobWins
+                    ? l2StakeManager.getPastVotes(makeAddr('alice'), blockNumber - 2)
+                        + l2StakeManager.getPastVotes(makeAddr('bob'), blockNumber - 2)
+                    : 0
+            ) + (daveWins ? l2StakeManager.getPastVotes(makeAddr('dave'), blockNumber - 2) : 0);
+
+            // attest
+            attest('alice', aliceBobWins);
+            attest('bob', aliceBobWins);
+            if (aliceBobWins) {
+                theoreticalRewards[0] += calculateReward('alice', vm.getBlockNumber() - 2, totalWinningVotes);
+                theoreticalRewards[1] += calculateReward('bob', vm.getBlockNumber() - 2, totalWinningVotes);
+            }
+            attest('dave', daveWins);
+            if (daveWins) theoreticalRewards[3] += calculateReward('dave', vm.getBlockNumber() - 2, totalWinningVotes);
+        }
+        vm.roll(vm.getBlockNumber() + 100);
+        rewardDistributor.finalize(makeAddr('alice'), 100);
+        rewardDistributor.finalize(makeAddr('bob'), 100);
+        rewardDistributor.finalize(makeAddr('dave'), 100);
+        uint256 rewardAlice = rewardDistributor.earned(makeAddr('alice'));
+        uint256 rewardBob = rewardDistributor.earned(makeAddr('bob'));
+        uint256 rewardCharlie = rewardDistributor.earned(makeAddr('charlie'));
+        uint256 rewardDave = rewardDistributor.earned(makeAddr('dave'));
+
         assertEq(rewardAlice, theoreticalRewards[0], 'alice earned does not match expected');
         assertEq(rewardBob, theoreticalRewards[1], 'bob earned does not match expected');
-        assertEq(rewardCharlie, theoreticalRewards[2], 'charlie earned does not match expected');
+        assertEq(rewardCharlie, 0, 'charlie earned does not match expected');
         assertEq(rewardDave, theoreticalRewards[3], 'dave earned does not match expected');
     }
 

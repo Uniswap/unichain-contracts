@@ -64,12 +64,12 @@ contract RewardDistributor {
         emit RewardDeposited(currentBlock, msg.value);
     }
 
-    /// @notice attest to a block
+    /// @notice Attest to a block
     function attest(uint256 blockNumber, bytes32 blockHash, bool vote) external {
         _attest(msg.sender, blockNumber, blockHash, vote);
     }
 
-    /// @notice submit multiple signed attestations
+    /// @notice Submit multiple signed attestations
     function attest(
         uint256 blockNumber,
         bytes32 blockHash,
@@ -85,6 +85,7 @@ contract RewardDistributor {
         }
     }
 
+    /// @notice Withdraw all rewards for an account
     function withdraw(address recipient) external {
         uint256 amount = _rewards[recipient].earned;
         _rewards[recipient].earned = 0;
@@ -93,6 +94,9 @@ contract RewardDistributor {
         emit Withdrawn(recipient, amount);
     }
 
+    /// @notice Finalize the next n rewards for account
+    /// @param account the account to finalize
+    /// @param n the number of rewards to finalize
     function finalize(address account, uint256 n) external {
         for (uint256 i = 0; i < n; i++) {
             _finalizeNext(account);
@@ -112,13 +116,20 @@ contract RewardDistributor {
         return keccak256(abi.encode(blockNumber, blockHash, vote));
     }
 
+    /// @notice attest to a block
+    /// @param account the account attesting
+    /// @param blockNumber the block number
+    /// @param blockHash the claimed block hash
+    /// @param vote the vote
     function _attest(address account, uint256 blockNumber, bytes32 blockHash, bool vote) internal {
         // subtract 2 because hash will be available after n + 1 blocks
         if (blockNumber > block.number - 2) revert InvalidBlockNumber();
         if (isFinalized(blockNumber)) revert AttestationPeriodExpired();
         if (blockNumber <= _rewards[account].tail) revert AttestationOutOfOrder();
+
         // in case of a reorg the attestation will fail
         if (blockHash != _blocks[blockNumber].blockHash) revert InvalidBlockHash();
+
         uint256 balance = L2_STAKE_MANAGER.getPastVotes(account, blockNumber);
         if (vote) {
             _blocks[blockNumber].votesFor += balance;
@@ -127,10 +138,12 @@ contract RewardDistributor {
         }
         _rewards[account].next[_rewards[account].tail] = _encodeNext(blockNumber, vote);
         _rewards[account].tail = blockNumber;
+
         emit Attested(blockNumber, account, blockHash, vote);
     }
 
     /// @notice Finalizes the rewards for the next block for account
+    /// @param account the account to finalize
     function _finalizeNext(address account) internal {
         uint256 head = _rewards[account].head;
         if (!isFinalized(head)) return;

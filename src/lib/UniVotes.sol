@@ -2,206 +2,97 @@
 pragma solidity 0.8.26;
 
 import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
+import {Votes} from '@openzeppelin/contracts/governance/utils/Votes.sol';
+import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 
 /// @title UniVotes
-/// @notice This contract tracks voting units, balance, and validator information for L2 accounts
-/// @dev implementation inspired by OpenZeppelin's Votes.sol
-abstract contract UniVotes is ERC20, EIP712 {
-    struct Checkpoint {
-        uint256 fromBlock;
+/// @notice This contract tracks voting units, balance, and validator activity for L2 accounts
+/// @dev implementation uses OpenZeppelin's ERC20Votes.sol and adds additional balance checkpointing
+abstract contract UniVotes is ERC20, Votes {
+    struct BalanceCheckpoint {
+        uint48 blockNumber;
         uint256 balance;
-        uint256 delegatedVotes;
-        bool active;
     }
 
-    event DelegateChanged(address indexed delegator, address indexed fromDelegate, address indexed toDelegate);
-
-    event DelegateVotesChanged(address indexed delegate, uint256 previousVotes, uint256 newVotes);
-
-    /// @notice totalCheckpoints tracks the total number of votes delegated
-    Checkpoint[] private _totalCheckpoints;
-    /// @notice mapping of account to checkpoints
-    mapping(address => Checkpoint[]) private _checkpoints;
-    /// @notice mapping of account to delegatee
-    mapping(address account => address) private _delegatee;
-
-    bytes32 private constant DELEGATION_TYPEHASH =
-        keccak256('Delegation(address delegatee,uint256 nonce,uint256 expiry)');
+    /// @notice mapping of account to balance checkpoints
+    mapping(address => BalanceCheckpoint[]) private _balances;
+    
+    /**
+     * @dev Total supply cap has been exceeded, introducing a risk of votes overflowing.
+    */
+    error ERC20ExceededSafeSupply(uint256 increasedSupply, uint256 cap);
 
     /**
-     * @dev Delegates votes from the sender to `delegatee`.
+     * @dev Checkpoint balances when transferring tokens
      */
-    function delegate(address delegatee) public virtual {
-        _delegate(msg.sender, delegatee);
-    }
-
-    /**
-     * @dev Returns the delegate that `account` has chosen.
-     */
-    function delegates(address account) public view virtual returns (address) {
-        return _delegatee[account];
-    }
-
-    /**
-     * @dev Delegate all of `account`'s voting units to `delegatee`.
-     * @notice necessarily enforces that votes are 1:1 with token balance
-     */
-    function _delegate(address account, address delegatee) internal virtual {
-        address oldDelegate = delegates(account);
-        _delegatee[account] = delegatee;
-
-        emit DelegateChanged(account, oldDelegate, delegatee);
-        // the max amount of votes that can be delegated is the current balance of the account
-        _moveDelegateVotes(oldDelegate, delegatee, balanceOf(account));
-    }
-
-    /// @notice get the latest checkpoint for an account
-    function latest(address account) public view returns (Checkpoint memory) {
-        if (_checkpoints[account].length == 0) {
-            return Checkpoint({
-                fromBlock: block.number,
-                balance: balanceOf(account),
-                delegatedVotes: 0, // account is not delegated by default
-                active: true
-            });
-        }
-        return _checkpoints[account][_checkpoints[account].length - 1];
-    }
-
-    /// @notice get the latest total checkpoint
-    function latestTotalCheckpoint() public view returns (Checkpoint memory) {
-        // if no mints or burns yet we initialize here
-        if (_totalCheckpoints.length == 0) {
-            return Checkpoint({fromBlock: block.number, balance: totalSupply()});
-        }
-        return _totalCheckpoints[_totalCheckpoints.length - 1];
-    }
-
-    /// @notice get the checkpoint for an account at fromBlock or before
-    /// @dev preforms a binary search and returns the lower bound
-    function getPastCheckpoint(address account, uint256 fromBlock) public view returns (Checkpoint memory) {
-        Checkpoint[] memory checkpoints = _checkpoints[account];
-        // binary search for fromBlock
-        uint256 length = checkpoints.length;
-        uint256 mid = length / 2;
-        uint256 low = 0;
-        uint256 high = length - 1;
-        while (low < high) {
-            mid = (low + high) / 2;
-            if (checkpoints[mid].fromBlock == fromBlock) {
-                return checkpoints[mid];
-            } else if (checkpoints[mid].fromBlock < fromBlock) {
-                low = mid + 1;
-            } else {
-                high = mid - 1;
+    function _checkpointBalances(address from, address to, uint256 amount) internal {
+        if (from != to && amount > 0) {
+            if (from != address(0)) {
+                uint256 oldBalance = balanceOf(from);
+                // if from has insufficient balance here it will revert, but not nicely with ERC20InsufficientBalance
+                // as handled in the ERC20 contract
+                _balances[from].push(BalanceCheckpoint(uint48(block.number), oldBalance - amount));
+            }
+            if (to != address(0)) {
+                uint256 oldBalance = balanceOf(to);
+                _balances[to].push(BalanceCheckpoint(uint48(block.number), oldBalance + amount));
             }
         }
-        // if fromBlock is not found, return the closest checkpoint before fromBlock
-        if (low > 0 && checkpoints[low].fromBlock > fromBlock) {
-            return checkpoints[low - 1];
-        } else {
-            return checkpoints[low];
-        }
     }
-
-    /// @notice get the total checkpoint at fromBlock or before
-    /// @dev preforms a binary search and returns the lower bound
-    function getPastTotalCheckpoint(uint256 fromBlock) public view returns (Checkpoint memory) {
-        // binary search for fromBlock
-        uint256 length = _totalCheckpoints.length;
-        uint256 mid = length / 2;
-        uint256 low = 0;
-        uint256 high = length - 1;
-        while (low < high) {
-            mid = (low + high) / 2;
-            if (_totalCheckpoints[mid].fromBlock == fromBlock) {
-                return _totalCheckpoints[mid];
-            } else if (_totalCheckpoints[mid].fromBlock < fromBlock) {
-                low = mid + 1;
-            } else {
-                high = mid - 1;
-            }
-        }
-        // if fromBlock is not found, return the closest checkpoint before fromBlock
-        if (low > 0 && _totalCheckpoints[low].fromBlock > fromBlock) {
-            return _totalCheckpoints[low - 1];
-        } else {
-            return _totalCheckpoints[low];
-        }
-    }
-
-    /// Internal and private functions
 
     /**
-     * @dev Updates token balances and voting units on transfer
+     * @dev Maximum token supply. Defaults to `type(uint208).max` (2^208^ - 1).
+     *
+     * This maximum is enforced in {_update}. It limits the total supply of the token, which is otherwise a uint256,
+     * so that checkpoints can be stored in the Trace208 structure used by {{Votes}}. Increasing this value will not
+     * remove the underlying limitation, and will cause {_update} to fail because of a math overflow in
+     * {_transferVotingUnits}. An override could be used to further restrict the total supply (to a lower value) if
+     * additional logic requires it. When resolving override conflicts on this function, the minimum should be
+     * returned.
+     */
+    function _maxSupply() internal view virtual returns (uint256) {
+        return type(uint208).max;
+    }
+
+    /**
+     * @dev Move voting power when tokens are transferred.
+     *
+     * Emits a {IVotes-DelegateVotesChanged} event.
      */
     function _update(address from, address to, uint256 value) internal virtual override {
+        _checkpointBalances(from, to, value);
         super._update(from, to, value);
+        if (from == address(0)) {
+            uint256 supply = totalSupply();
+            uint256 cap = _maxSupply();
+            if (supply > cap) {
+                revert ERC20ExceededSafeSupply(supply, cap);
+            }
+        }
         _transferVotingUnits(from, to, value);
     }
 
     /**
-     * @dev Transfers, mints, or burns voting units. To register a mint, `from` should be zero. To register a burn, `to`
-     * should be zero. TotalVotingUnits will be adjusted with mints and burns.
+     * @dev Returns the voting units of an `account`.
+     *
+     * WARNING: Overriding this function may compromise the internal vote accounting.
+     * `ERC20Votes` assumes tokens map to voting units 1:1 and this is not easy to change.
      */
-    function _transferVotingUnits(address from, address to, uint256 amount) internal virtual {
-        if (from == address(0)) {
-            Checkpoint memory latestTotalCheckpoint = latestTotalCheckpoint();
-            _totalCheckpoints.push(
-                Checkpoint({
-                    fromBlock: block.number,
-                    balance: totalSupply()
-                })
-            );
-        }
-        if (to == address(0)) {
-            Checkpoint memory latestTotalCheckpoint = latestTotalCheckpoint();
-            _totalCheckpoints.push(
-                Checkpoint({
-                    fromBlock: block.number,
-                    balance: totalSupply()
-                })
-            );
-        }
-        _moveDelegateVotes(delegates(from), delegates(to), amount);
+    function _getVotingUnits(address account) internal view virtual override returns (uint256) {
+        return balanceOf(account);
+    }
+    
+    /**
+     * @dev Get number of checkpoints for `account`.
+     */
+    function numCheckpoints(address account) public view virtual returns (uint32) {
+        return _numCheckpoints(account);
     }
 
     /**
-     * @dev Moves delegated votes from one delegate to another.
+     * @dev Get the `pos`-th checkpoint for `account`.
      */
-    function _moveDelegateVotes(address from, address to, uint256 amount) private {
-        if (from != to && amount > 0) {
-            if (from != address(0)) {
-                Checkpoint memory latestFrom = latest(from);
-                Checkpoint memory checkpoint = _push(
-                    from,
-                    latestFrom.balance, // balance is not modified here because delegation does not affect balance
-                    latestFrom.delegatedVotes - amount,
-                    latestFrom.active
-                );
-                emit DelegateVotesChanged(from, latestFrom.delegatedVotes, checkpoint.delegatedVotes);
-            }
-            if (to != address(0)) {
-                Checkpoint memory latestTo = latest(to);
-                Checkpoint memory checkpoint = _push(
-                    to,
-                    latestTo.balance, // balance is not modified here because delegation does not affect balance
-                    latestTo.delegatedVotes - amount,
-                    latestTo.active
-                );
-                emit DelegateVotesChanged(to, latestTo.delegatedVotes, checkpoint.delegatedVotes);
-            }
-        }
-    }
-
-    /// @notice push a new checkpoint for an account
-    function _push(address account, uint256 balance, uint256 delegatedVotes, bool active)
-        internal
-        returns (Checkpoint memory checkpoint)
-    {
-        checkpoint =
-            Checkpoint({fromBlock: block.number, balance: balance, delegatedVotes: delegatedVotes, active: active});
-        _checkpoints[account].push(checkpoint);
+    function checkpoints(address account, uint32 pos) public view virtual returns (Checkpoints.Checkpoint208 memory) {
+        return _checkpoints(account, pos);
     }
 }

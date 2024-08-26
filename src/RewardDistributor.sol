@@ -70,7 +70,7 @@ contract RewardDistributor {
         if (blockNumber <= _rewards[msg.sender].tail) revert AttestationOutOfOrder();
         // in case of a reorg the attestation will fail
         if (blockHash != _blocks[blockNumber].blockHash) revert InvalidBlockHash();
-        uint256 balance = L2_STAKE_MANAGER.lowerLookup(msg.sender, blockNumber);
+        uint256 balance = L2_STAKE_MANAGER.getPastVotes(msg.sender, blockNumber);
         if (vote) {
             _blocks[blockNumber].votesFor += balance;
         } else {
@@ -114,7 +114,7 @@ contract RewardDistributor {
         uint256 votes;
         if (!vote) {
             uint256 votesAgainst = _blocks[next].votesAgainst;
-            bool isInvalid = votesAgainst * 3 / 2 > L2_STAKE_MANAGER.getPastTotalCheckpoint(next); // TODO: precision loss here?
+            bool isInvalid = votesAgainst * 3 / 2 > L2_STAKE_MANAGER.getPastTotalSupply(next); // TODO: precision loss here?
             if (isInvalid) {
                 votes = votesAgainst;
             }

@@ -83,13 +83,17 @@ contract RewardDistributorTest is Deposited {
             // attest
             uint256 totalSupply = l2StakeManager.totalSupply();
             attest('alice', true);
-            theoreticalRewards[0] += rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('alice')) / totalSupply;
+            theoreticalRewards[0] +=
+                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('alice')) / totalSupply;
             attest('bob', true);
-            theoreticalRewards[1] += rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('bob')) / totalSupply;
+            theoreticalRewards[1] +=
+                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('bob')) / totalSupply;
             attest('charlie', true);
-            theoreticalRewards[2] += rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('charlie')) / totalSupply;
+            theoreticalRewards[2] +=
+                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('charlie')) / totalSupply;
             attest('dave', true);
-            theoreticalRewards[3] += rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('dave')) / totalSupply;
+            theoreticalRewards[3] +=
+                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('dave')) / totalSupply;
         }
         vm.roll(vm.getBlockNumber() + 100);
         rewardDistributor.finalize(makeAddr('alice'), 100);
@@ -135,13 +139,17 @@ contract RewardDistributorTest is Deposited {
             // attest
             uint256 totalSupply = l2StakeManager.totalSupply();
             attest('alice', true);
-            theoreticalRewards[0] += rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('alice')) / totalSupply;
+            theoreticalRewards[0] +=
+                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('alice')) / totalSupply;
             attest('bob', true);
-            theoreticalRewards[1] += rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('bob')) / totalSupply;
+            theoreticalRewards[1] +=
+                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('bob')) / totalSupply;
             attest('charlie', true);
-            theoreticalRewards[2] += rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('charlie')) / totalSupply;
+            theoreticalRewards[2] +=
+                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('charlie')) / totalSupply;
             attest('dave', true);
-            theoreticalRewards[3] += rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('dave')) / totalSupply;
+            theoreticalRewards[3] +=
+                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('dave')) / totalSupply;
         }
         vm.roll(vm.getBlockNumber() + 100);
         rewardDistributor.finalize(makeAddr('alice'), 100);

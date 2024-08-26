@@ -79,7 +79,9 @@ abstract contract Deposited is Deployed {
     }
 
     function calculateReward(bytes memory account, uint256 blockNumber, uint256 totalVotes) public returns (uint256) {
-        return rewardForBlock(blockNumber).mulDivDown(l2StakeManager.getPastVotes(makeAddr(string(account)), blockNumber), totalVotes);
+        return rewardForBlock(blockNumber).mulDivDown(
+            l2StakeManager.getPastVotes(makeAddr(string(account)), blockNumber), totalVotes
+        );
     }
 }
 
@@ -97,11 +99,11 @@ contract RewardDistributorTest is Deposited {
 
             // skip first two blocks before starting to attest
             if (i < 2) continue;
-            
-            uint256 totalWinningVotes = l2StakeManager.getPastVotes(makeAddr('alice'), vm.getBlockNumber() - 2) +
-                l2StakeManager.getPastVotes(makeAddr('bob'), vm.getBlockNumber() - 2) +
-                l2StakeManager.getPastVotes(makeAddr('charlie'), vm.getBlockNumber() - 2) +
-                l2StakeManager.getPastVotes(makeAddr('dave'), vm.getBlockNumber() - 2);
+
+            uint256 totalWinningVotes = l2StakeManager.getPastVotes(makeAddr('alice'), vm.getBlockNumber() - 2)
+                + l2StakeManager.getPastVotes(makeAddr('bob'), vm.getBlockNumber() - 2)
+                + l2StakeManager.getPastVotes(makeAddr('charlie'), vm.getBlockNumber() - 2)
+                + l2StakeManager.getPastVotes(makeAddr('dave'), vm.getBlockNumber() - 2);
 
             // attest
             attest('alice', true);
@@ -156,9 +158,9 @@ contract RewardDistributorTest is Deposited {
 
             // skip first two blocks before starting to attest
             if (i < 2) continue;
-            
-            uint256 totalWinningVotes = l2StakeManager.getPastVotes(makeAddr('bob'), blockNumber - 2) +
-                l2StakeManager.getPastVotes(makeAddr('dave'), blockNumber - 2);
+
+            uint256 totalWinningVotes = l2StakeManager.getPastVotes(makeAddr('bob'), blockNumber - 2)
+                + l2StakeManager.getPastVotes(makeAddr('dave'), blockNumber - 2);
 
             // attest
             attest('bob', true);

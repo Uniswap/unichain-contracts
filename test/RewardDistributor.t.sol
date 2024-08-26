@@ -83,6 +83,15 @@ abstract contract Deposited is Deployed {
             l2StakeManager.getPastVotes(makeAddr(string(account)), blockNumber), totalVotes
         );
     }
+
+    function signAttestation(bytes memory account, uint256 blockNumber, bytes32 blockHash, bool vote)
+        public
+        returns (bytes memory sig)
+    {
+        bytes32 data = rewardDistributor.getAttestationData(blockNumber, blockHash, vote);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(uint256(keccak256(abi.encodePacked(account))), data);
+        sig = bytes.concat(r, s, bytes1(v));
+    }
 }
 
 contract RewardDistributorTest is Deposited {
@@ -184,9 +193,6 @@ contract RewardDistributorTest is Deposited {
 
     // Expect that rewards are paid out for votes in the supermajority
     function test_ShouldDistributeRewardsCorrectlyWithWinningAndLosingVotes() public {
-        vm.roll(l2StakeManager.getLastEpochBlock() + l2StakeManager.EPOCH_BLOCKS());
-        l2StakeManager.updateEpoch();
-
         uint256 iterations = 100;
         vm.roll(100);
         vm.deal(paymentSplitter, 2 ether * iterations);
@@ -220,6 +226,76 @@ contract RewardDistributorTest is Deposited {
             }
             attest('dave', daveWins);
             if (daveWins) theoreticalRewards[3] += calculateReward('dave', vm.getBlockNumber() - 2, totalWinningVotes);
+        }
+        vm.roll(vm.getBlockNumber() + 100);
+        rewardDistributor.finalize(makeAddr('alice'), 100);
+        rewardDistributor.finalize(makeAddr('bob'), 100);
+        rewardDistributor.finalize(makeAddr('dave'), 100);
+        uint256 rewardAlice = rewardDistributor.earned(makeAddr('alice'));
+        uint256 rewardBob = rewardDistributor.earned(makeAddr('bob'));
+        uint256 rewardCharlie = rewardDistributor.earned(makeAddr('charlie'));
+        uint256 rewardDave = rewardDistributor.earned(makeAddr('dave'));
+
+        assertEq(rewardAlice, theoreticalRewards[0], 'alice earned does not match expected');
+        assertEq(rewardBob, theoreticalRewards[1], 'bob earned does not match expected');
+        assertEq(rewardCharlie, 0, 'charlie earned does not match expected');
+        assertEq(rewardDave, theoreticalRewards[3], 'dave earned does not match expected');
+    }
+
+    function test_ShouldAllowForBatchAttestations() public {
+        uint256 iterations = 100;
+        vm.roll(100);
+        vm.deal(paymentSplitter, 2 ether * iterations);
+        uint256[] memory theoreticalRewards = new uint256[](4);
+        for (uint256 i = 0; i < iterations + 2; i++) {
+            // increment block number
+            vm.roll(vm.getBlockNumber() + 1);
+            uint256 blockNumber = vm.getBlockNumber();
+
+            depositReward(blockNumber);
+
+            // skip first two blocks before starting to attest
+            if (i < 2) continue;
+
+            bool aliceBobWins = i % 2 == 0;
+            bool daveWins = i % 2 != 0;
+
+            uint256 attestingBlockNumber = blockNumber - 2;
+
+            uint256 totalWinningVotes = (
+                aliceBobWins
+                    ? l2StakeManager.getPastVotes(makeAddr('alice'), attestingBlockNumber)
+                        + l2StakeManager.getPastVotes(makeAddr('bob'), attestingBlockNumber)
+                    : 0
+            ) + (daveWins ? l2StakeManager.getPastVotes(makeAddr('dave'), attestingBlockNumber) : 0);
+
+            // attest
+            bytes[] memory signatures = new bytes[](3);
+            signatures[0] = signAttestation('alice', attestingBlockNumber, blockhash(attestingBlockNumber), aliceBobWins);
+            signatures[1] = signAttestation('bob', attestingBlockNumber, blockhash(attestingBlockNumber), aliceBobWins);
+            signatures[2] = signAttestation('dave', attestingBlockNumber, blockhash(attestingBlockNumber), daveWins);
+            address[] memory signers = new address[](3);
+            signers[0] = makeAddr('alice');
+            signers[1] = makeAddr('bob');
+            signers[2] = makeAddr('dave');
+            bool[] memory votes = new bool[](3);
+            votes[0] = aliceBobWins;
+            votes[1] = aliceBobWins;
+            votes[2] = daveWins;
+            rewardDistributor.attest(
+                attestingBlockNumber,
+                blockhash(attestingBlockNumber),
+                signers,
+                votes,
+                signatures
+            );
+            snapLastCall('batchAttest');
+
+            if (aliceBobWins) {
+                theoreticalRewards[0] += calculateReward('alice', attestingBlockNumber, totalWinningVotes);
+                theoreticalRewards[1] += calculateReward('bob', attestingBlockNumber, totalWinningVotes);
+            }
+            if (daveWins) theoreticalRewards[3] += calculateReward('dave', attestingBlockNumber, totalWinningVotes);
         }
         vm.roll(vm.getBlockNumber() + 100);
         rewardDistributor.finalize(makeAddr('alice'), 100);

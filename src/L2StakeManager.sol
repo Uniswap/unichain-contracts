@@ -43,17 +43,20 @@ contract L2StakeManager is UniVotes {
         _mint(user, amount);
     }
 
-    function getEpochLength() public view override returns (uint256) {
-        return EPOCH_BLOCKS;
+    /// @notice Return the number of blocks in an epoch
+    /// at 1 block/s this is roughly 1 week
+    function EPOCH_BLOCKS() public view override returns (uint256) {
+        return 604_800;
     }
 
+    /// @notice Return the start block of the current epoch
     function getLastEpochBlock() public view override returns (uint256) {
         return lastEpochBlock;
     }
 
-    /// @notice Update the epoch if the last epoch has ended
+    /// @notice Update the epoch after the current epoch has ended
     function updateEpoch() external {
-        if (block.number < lastEpochBlock + EPOCH_BLOCKS) {
+        if (block.number < lastEpochBlock + EPOCH_BLOCKS()) {
             revert EpochUpdateNotAllowed();
         }
         lastEpochBlock = block.number;

@@ -11,8 +11,6 @@ import {console2} from 'forge-std/console2.sol';
 /// @notice This contract tracks voting units, balance, and validator activity for L2 accounts
 /// @dev implementation uses OpenZeppelin's ERC20Votes.sol and adds additional balance checkpointing
 abstract contract UniVotes is ERC20, Votes {
-    uint256 public EPOCH_BLOCKS = 604_800; // 1 block/s = 1 week
-
     struct BalanceCheckpoint {
         uint48 blockNumber;
         uint256 balance;
@@ -79,14 +77,14 @@ abstract contract UniVotes is ERC20, Votes {
         if (_balances[account].length > 0 && delegates(account) != delegatee) {
             uint256 latestDepositBlock = _balances[account][_balances[account].length - 1].blockNumber;
             uint256 lastEpochBlock = getLastEpochBlock();
-            if (latestDepositBlock >= lastEpochBlock && latestDepositBlock < lastEpochBlock + EPOCH_BLOCKS) {
+            if (latestDepositBlock >= lastEpochBlock && latestDepositBlock < lastEpochBlock + EPOCH_BLOCKS()) {
                 revert CannotChangeDelegation();
             }
         }
         super._delegate(account, delegatee);
     }
 
-    function getEpochLength() public view virtual returns (uint256);
+    function EPOCH_BLOCKS() public view virtual returns (uint256);
     function getLastEpochBlock() public view virtual returns (uint256);
 
     /**

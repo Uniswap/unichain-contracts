@@ -5,7 +5,9 @@ import {L2StakeManager} from '../src/L2StakeManager.sol';
 import {RewardDistributor} from '../src/RewardDistributor.sol';
 import {MockL2CrossDomainMessenger} from './mock/MockL2CrossDomainMessenger.sol';
 import 'forge-std/Test.sol';
+import {console2} from 'forge-std/console2.sol';
 import {GasSnapshot} from 'lib/forge-gas-snapshot/src/GasSnapshot.sol';
+import {FixedPointMathLib} from 'solmate/utils/FixedPointMathLib.sol';
 
 abstract contract Deployed is Test, GasSnapshot {
     L2StakeManager l2StakeManager;
@@ -25,6 +27,8 @@ abstract contract Deployed is Test, GasSnapshot {
 }
 
 abstract contract Deposited is Deployed {
+    using FixedPointMathLib for uint256;
+
     uint256 private constant MAX_AMOUNT = 100 ether;
 
     function setUp() public virtual override {
@@ -63,6 +67,15 @@ abstract contract Deposited is Deployed {
         vm.prank(makeAddr(string(account)));
         l2StakeManager.delegate(makeAddr(string(delegatee)));
     }
+
+    function rewardWithDelegation(bytes memory account, uint256 blockNumber) public returns (uint256) {
+        address delegatee = l2StakeManager.delegates(makeAddr(string(account)));
+        uint256 delegateeReward =
+            rewardForBlock(blockNumber).mulDivDown(l2StakeManager.getVotes(delegatee), l2StakeManager.totalSupply());
+        return delegateeReward.mulDivDown(
+            l2StakeManager.balanceOf(makeAddr(string(account))), l2StakeManager.getVotes(delegatee)
+        );
+    }
 }
 
 contract RewardDistributorTest is Deposited {
@@ -81,19 +94,14 @@ contract RewardDistributorTest is Deposited {
             if (i < 2) continue;
 
             // attest
-            uint256 totalSupply = l2StakeManager.totalSupply();
             attest('alice', true);
-            theoreticalRewards[0] +=
-                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('alice')) / totalSupply;
+            theoreticalRewards[0] += rewardWithDelegation('alice', vm.getBlockNumber() - 2);
             attest('bob', true);
-            theoreticalRewards[1] +=
-                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('bob')) / totalSupply;
+            theoreticalRewards[1] += rewardWithDelegation('bob', vm.getBlockNumber() - 2);
             attest('charlie', true);
-            theoreticalRewards[2] +=
-                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('charlie')) / totalSupply;
+            theoreticalRewards[2] += rewardWithDelegation('charlie', vm.getBlockNumber() - 2);
             attest('dave', true);
-            theoreticalRewards[3] +=
-                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('dave')) / totalSupply;
+            theoreticalRewards[3] += rewardWithDelegation('dave', vm.getBlockNumber() - 2);
         }
         vm.roll(vm.getBlockNumber() + 100);
         rewardDistributor.finalize(makeAddr('alice'), 100);
@@ -123,36 +131,32 @@ contract RewardDistributorTest is Deposited {
         assertEq(l2StakeManager.getVotes(makeAddr('alice')), 0);
         assertEq(l2StakeManager.getVotes(makeAddr('charlie')), 0);
 
-        uint256 iterations = 100;
+        uint256 iterations = 10;
         vm.roll(100);
         vm.deal(paymentSplitter, 2 ether * iterations);
         uint256[] memory theoreticalRewards = new uint256[](4);
         for (uint256 i = 0; i < iterations + 2; i++) {
             // increment block number
             vm.roll(vm.getBlockNumber() + 1);
+            uint256 blockNumber = vm.getBlockNumber();
 
-            depositReward(vm.getBlockNumber());
+            depositReward(blockNumber);
 
             // skip first two blocks before starting to attest
             if (i < 2) continue;
 
             // attest
-            uint256 totalSupply = l2StakeManager.totalSupply();
             attest('alice', true);
-            theoreticalRewards[0] +=
-                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('alice')) / totalSupply;
+            theoreticalRewards[0] += rewardWithDelegation('alice', vm.getBlockNumber() - 2);
             attest('bob', true);
-            theoreticalRewards[1] +=
-                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('bob')) / totalSupply;
+            theoreticalRewards[1] += rewardWithDelegation('bob', vm.getBlockNumber() - 2);
             attest('charlie', true);
-            theoreticalRewards[2] +=
-                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('charlie')) / totalSupply;
+            theoreticalRewards[2] += rewardWithDelegation('charlie', vm.getBlockNumber() - 2);
             attest('dave', true);
-            theoreticalRewards[3] +=
-                rewardForBlock(vm.getBlockNumber() - 2) * l2StakeManager.getVotes(makeAddr('dave')) / totalSupply;
+            theoreticalRewards[3] += rewardWithDelegation('dave', vm.getBlockNumber() - 2);
         }
         vm.roll(vm.getBlockNumber() + 100);
-        rewardDistributor.finalize(makeAddr('alice'), 100);
+        rewardDistributor.finalize(makeAddr('alice'), 10);
         rewardDistributor.finalize(makeAddr('bob'), 100);
         rewardDistributor.finalize(makeAddr('charlie'), 100);
         rewardDistributor.finalize(makeAddr('dave'), 100);

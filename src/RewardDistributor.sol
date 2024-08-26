@@ -104,8 +104,10 @@ contract RewardDistributor {
         return _rewards[account].earned;
     }
 
-    /// @notice Finalizes the rewards for the next block for account
-    /// if account is delegated to another account, the rewards are calculated pro-rate based on the balance of the delegator over the total votes held by the delegatee
+    /// @notice Finalizes the rewards for the next block for account and its delegatee (if any)
+    /// rewards are calculated based on pro-rata share of votes held by account and delegated to a delegatee
+    /// this function will automatically collect rewards for account and the delegatee
+    /// @dev if you have previous accrued rewards not under your current delegation, you will need to re-delegate to yourself to finalize your previously accrued rewards
     function _finalizeNext(address account) internal {
         address delegatee = L2_STAKE_MANAGER.delegates(account);
         uint256 head = _rewards[delegatee].head;
@@ -127,14 +129,23 @@ contract RewardDistributor {
         if (votes != 0) {
             // get the reward for the delegatee
             uint256 delegateeVotes = L2_STAKE_MANAGER.getPastVotes(delegatee, next);
-            reward = _blocks[next].reward.mulDivDown(delegateeVotes, votes);
-            // get the pro-rate reward for the account if not self-delegated
-            if (account != delegatee) {
-                reward = reward.mulDivDown(L2_STAKE_MANAGER.getPastBalance(account, next), delegateeVotes);
+            uint256 delegateeReward = _blocks[next].reward.mulDivDown(delegateeVotes, votes);
+
+            // get the reward for the account depending on their balance
+            reward = delegateeReward.mulDivDown(L2_STAKE_MANAGER.getPastBalance(account, next), delegateeVotes);
+            if (reward != 0) {
+                // account rewards for staker
+                _rewards[account].earned += reward;
+                // account rewards for delegatee
+                if (delegatee != account) {
+                    _rewards[delegatee].earned +=
+                        delegateeReward.mulDivDown(L2_STAKE_MANAGER.getPastBalance(delegatee, next), delegateeVotes);
+                }
             }
         }
-        _rewards[account].earned += reward;
-        _rewards[account].head = next;
+
+        // advance head for delegatee
+        _rewards[delegatee].head = next;
         emit Finalized(next, account, reward);
     }
 

@@ -103,10 +103,13 @@ contract RewardDistributor {
         return _rewards[account].earned;
     }
 
+    /// @notice Finalizes the rewards for the next block for account
+    /// if account is delegated to another account, the rewards are calculated pro-rate based on the balance of the delegator over the total votes held by the delegatee
     function _finalizeNext(address account) internal {
-        uint256 head = _rewards[account].head;
+        address delegatee = L2_STAKE_MANAGER.delegates(account);
+        uint256 head = _rewards[delegatee].head;
         if (!isFinalized(head)) return;
-        (uint256 next, bool vote) = _decodeNext(_rewards[account].next[head]);
+        (uint256 next, bool vote) = _decodeNext(_rewards[delegatee].next[head]);
         if (next == 0) return;
         uint256 votes;
         if (!vote) {
@@ -121,7 +124,12 @@ contract RewardDistributor {
 
         uint256 reward;
         if (votes != 0) {
-            reward = _blocks[next].reward.mulDivDown(L2_STAKE_MANAGER.getPastVotes(account, next), votes);
+            // get the reward for the delegatee
+            reward = _blocks[next].reward.mulDivDown(L2_STAKE_MANAGER.getPastVotes(delegatee, next), votes);
+            // get the pro-rate reward for the account if not self-delegated
+            if(account != delegatee) {
+                reward = reward.mulDivDown(L2_STAKE_MANAGER.getPastVotes(account, next), L2_STAKE_MANAGER.getPastVotes(delegatee, next));
+            }
         }
         _rewards[account].earned += reward;
         _rewards[account].head = next;

@@ -113,6 +113,12 @@ contract RewardDistributorTest is Deposited {
         // charlie delegates to dave
         delegate('charlie', 'dave');
 
+        // assert that the delegations are active
+        assertEq(l2StakeManager.delegates(makeAddr('alice')), makeAddr('bob'));
+        assertEq(l2StakeManager.delegates(makeAddr('charlie')), makeAddr('dave'));
+        assertEq(l2StakeManager.getVotes(makeAddr('alice')), 0);
+        assertEq(l2StakeManager.getVotes(makeAddr('charlie')), 0);
+
         uint256 iterations = 100;
         vm.roll(100);
         vm.deal(paymentSplitter, 2 ether * iterations);

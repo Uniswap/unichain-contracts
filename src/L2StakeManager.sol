@@ -26,6 +26,7 @@ contract L2StakeManager is ERC20Votes {
         L1_STAKE_MANAGER = l1StakeManager;
     }
 
+    /// @notice Register a deposit on L1, mint tokens on L2 and optionally delegate all tokens to a delegatee
     function registerDeposit(address user, uint256 amount, address delegatee) external onlyL1StakeManager {
         // normal staking on L1 => delegate management on L2
 
@@ -38,6 +39,7 @@ contract L2StakeManager is ERC20Votes {
         _mint(user, amount);
     }
 
+    /// @notice Register a withdrawal on L1, burn tokens on L2
     function registerWithdrawal(address user, uint256 amount) external onlyL1StakeManager {
         _burn(user, amount);
     }

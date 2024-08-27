@@ -69,24 +69,26 @@ abstract contract Deposited is Deployed {
         l2StakeManager.delegate(makeAddr(string(delegatee)));
     }
 
-    function rewardWithDelegation(bytes memory account, uint256 blockNumber) public returns (uint256) {
+    function rewardWithDelegation(bytes memory account, uint256 blockNumber, uint256 totalVotes) public returns (uint256) {
         address delegatee = l2StakeManager.delegates(makeAddr(string(account)));
         uint256 delegateeReward =
-            rewardForBlock(blockNumber).mulDivDown(l2StakeManager.getVotes(delegatee), l2StakeManager.totalSupply());
+            rewardForBlock(blockNumber).mulDivDown(l2StakeManager.getPastVotes(delegatee, blockNumber), totalVotes);
         return delegateeReward.mulDivDown(
-            l2StakeManager.balanceOf(makeAddr(string(account))), l2StakeManager.getVotes(delegatee)
+            l2StakeManager.balanceOf(makeAddr(string(account))), l2StakeManager.getPastVotes(delegatee, blockNumber)
         );
     }
 
     function calculateReward(bytes memory account, uint256 blockNumber, uint256 totalVotes) public returns (uint256) {
-        return rewardForBlock(blockNumber).mulDivDown(l2StakeManager.getPastVotes(makeAddr(string(account)), blockNumber), totalVotes);
+        return rewardForBlock(blockNumber).mulDivDown(
+            l2StakeManager.getPastVotes(makeAddr(string(account)), blockNumber), totalVotes
+        );
     }
 }
 
 contract RewardDistributorTest is Deposited {
     function test_ShouldDistributeRewardsCorrectly() public {
-        uint256 iterations = 100;
-        vm.roll(100);
+        uint256 iterations = 10;
+        vm.roll(iterations);
         vm.deal(paymentSplitter, 2 ether * iterations);
         uint256[] memory theoreticalRewards = new uint256[](4);
         for (uint256 i = 0; i < iterations + 2; i++) {
@@ -97,11 +99,11 @@ contract RewardDistributorTest is Deposited {
 
             // skip first two blocks before starting to attest
             if (i < 2) continue;
-            
-            uint256 totalWinningVotes = l2StakeManager.getPastVotes(makeAddr('alice'), vm.getBlockNumber() - 2) +
-                l2StakeManager.getPastVotes(makeAddr('bob'), vm.getBlockNumber() - 2) +
-                l2StakeManager.getPastVotes(makeAddr('charlie'), vm.getBlockNumber() - 2) +
-                l2StakeManager.getPastVotes(makeAddr('dave'), vm.getBlockNumber() - 2);
+
+            uint256 totalWinningVotes = l2StakeManager.getPastVotes(makeAddr('alice'), vm.getBlockNumber() - 2)
+                + l2StakeManager.getPastVotes(makeAddr('bob'), vm.getBlockNumber() - 2)
+                + l2StakeManager.getPastVotes(makeAddr('charlie'), vm.getBlockNumber() - 2)
+                + l2StakeManager.getPastVotes(makeAddr('dave'), vm.getBlockNumber() - 2);
 
             // attest
             attest('alice', true);
@@ -113,15 +115,15 @@ contract RewardDistributorTest is Deposited {
             attest('dave', true);
             theoreticalRewards[3] += calculateReward('dave', vm.getBlockNumber() - 2, totalWinningVotes);
         }
-        vm.roll(vm.getBlockNumber() + 100);
-        rewardDistributor.finalize(makeAddr('alice'), 100);
-        rewardDistributor.finalize(makeAddr('bob'), 100);
-        rewardDistributor.finalize(makeAddr('charlie'), 100);
-        rewardDistributor.finalize(makeAddr('dave'), 100);
-        uint256 rewardAlice = rewardDistributor.earned(makeAddr('alice'));
-        uint256 rewardBob = rewardDistributor.earned(makeAddr('bob'));
-        uint256 rewardCharlie = rewardDistributor.earned(makeAddr('charlie'));
-        uint256 rewardDave = rewardDistributor.earned(makeAddr('dave'));
+        vm.roll(vm.getBlockNumber() + iterations);
+        rewardDistributor.finalize(makeAddr('alice'), iterations);
+        rewardDistributor.finalize(makeAddr('bob'), iterations);
+        rewardDistributor.finalize(makeAddr('charlie'), iterations);
+        rewardDistributor.finalize(makeAddr('dave'), iterations);
+        uint256 rewardAlice = rewardDistributor.earned(makeAddr('alice'), 0);
+        uint256 rewardBob = rewardDistributor.earned(makeAddr('bob'), 0);
+        uint256 rewardCharlie = rewardDistributor.earned(makeAddr('charlie'), 0);
+        uint256 rewardDave = rewardDistributor.earned(makeAddr('dave'), 0);
         assertEq(rewardAlice, theoreticalRewards[0]);
         assertEq(rewardBob, theoreticalRewards[1]);
         assertEq(rewardCharlie, theoreticalRewards[2]);
@@ -143,8 +145,8 @@ contract RewardDistributorTest is Deposited {
         assertEq(l2StakeManager.getVotes(makeAddr('alice')), 0);
         assertEq(l2StakeManager.getVotes(makeAddr('charlie')), 0);
 
-        uint256 iterations = 100;
-        vm.roll(100);
+        uint256 iterations = 10;
+        vm.roll(iterations);
         vm.deal(paymentSplitter, 2 ether * iterations);
         uint256[] memory theoreticalRewards = new uint256[](4);
         for (uint256 i = 0; i < iterations + 2; i++) {
@@ -156,23 +158,25 @@ contract RewardDistributorTest is Deposited {
 
             // skip first two blocks before starting to attest
             if (i < 2) continue;
-            
-            uint256 totalWinningVotes = l2StakeManager.getPastVotes(makeAddr('bob'), blockNumber - 2) +
-                l2StakeManager.getPastVotes(makeAddr('dave'), blockNumber - 2);
+
+            uint256 totalWinningVotes = l2StakeManager.getPastVotes(makeAddr('bob'), blockNumber - 2)
+                + l2StakeManager.getPastVotes(makeAddr('dave'), blockNumber - 2);
 
             // attest
             attest('bob', true);
+            theoreticalRewards[0] += rewardWithDelegation('alice', vm.getBlockNumber() - 2, totalWinningVotes);
             theoreticalRewards[1] += calculateReward('bob', vm.getBlockNumber() - 2, totalWinningVotes);
             attest('dave', true);
+            theoreticalRewards[2] += rewardWithDelegation('charlie', vm.getBlockNumber() - 2, totalWinningVotes);
             theoreticalRewards[3] += calculateReward('dave', vm.getBlockNumber() - 2, totalWinningVotes);
         }
-        vm.roll(vm.getBlockNumber() + 100);
-        rewardDistributor.finalize(makeAddr('bob'), 100);
-        rewardDistributor.finalize(makeAddr('dave'), 100);
-        uint256 rewardAlice = rewardDistributor.earned(makeAddr('alice'));
-        uint256 rewardBob = rewardDistributor.earned(makeAddr('bob'));
-        uint256 rewardCharlie = rewardDistributor.earned(makeAddr('charlie'));
-        uint256 rewardDave = rewardDistributor.earned(makeAddr('dave'));
+        vm.roll(vm.getBlockNumber() + iterations);
+        rewardDistributor.finalize(makeAddr('bob'), iterations);
+        rewardDistributor.finalize(makeAddr('dave'), iterations);
+        uint256 rewardAlice = rewardDistributor.earned(makeAddr('alice'), 0);
+        uint256 rewardBob = rewardDistributor.earned(makeAddr('bob'), 0);
+        uint256 rewardCharlie = rewardDistributor.earned(makeAddr('charlie'), 0);
+        uint256 rewardDave = rewardDistributor.earned(makeAddr('dave'), 0);
 
         assertEq(rewardAlice, theoreticalRewards[0], 'alice earned does not match expected');
         assertEq(rewardBob, theoreticalRewards[1], 'bob earned does not match expected');

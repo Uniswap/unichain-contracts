@@ -20,6 +20,12 @@ contract L2StakeManager is UniVotes {
 
     uint256 lastEpochBlock;
 
+    struct Validator {
+        uint256 fee;
+    }
+
+    mapping(address => Validator) public validators;
+
     modifier onlyL1StakeManager() {
         if (msg.sender != address(MESSENGER) || MESSENGER.xDomainMessageSender() != L1_STAKE_MANAGER) {
             revert Unauthorized();
@@ -43,6 +49,16 @@ contract L2StakeManager is UniVotes {
         _mint(user, amount);
     }
 
+    /// @notice Register a withdrawal on L1, burn tokens on L2
+    function registerWithdrawal(address user, uint256 amount) external onlyL1StakeManager {
+        _burn(user, amount);
+    }
+
+    /// @notice Register a validator with a fee
+    function registerValidator(address validator, uint256 fee) external onlyL1StakeManager {
+        validators[validator].fee = fee;
+    }
+
     /// @notice Return the number of blocks in an epoch
     /// at 1 block/s this is roughly 1 week
     function EPOCH_BLOCKS() public view override returns (uint256) {
@@ -60,11 +76,6 @@ contract L2StakeManager is UniVotes {
             revert EpochUpdateNotAllowed();
         }
         lastEpochBlock = block.number;
-    }
-
-    /// @notice Register a withdrawal on L1, burn tokens on L2
-    function registerWithdrawal(address user, uint256 amount) external onlyL1StakeManager {
-        _burn(user, amount);
     }
 
     function _update(address from, address to, uint256 amount) internal override {

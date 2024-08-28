@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Predeploys } from "@eth-optimism-bedrock/src/libraries/Predeploys.sol";
 import { SafeCall } from "@eth-optimism-bedrock/src/libraries/SafeCall.sol";
@@ -13,7 +14,7 @@ import { IFeeVault } from "./interfaces/optimism/IFeeVault.sol";
  * @dev Withdraws funds from system FeeVault contracts, shares revenue with Optimism, Uniswap Labs, and the Attestation Rewards distributor
  * @dev Inspired by the Base FeeDisburser contract
  */
-contract FeeSplitter {
+contract FeeSplitter is Ownable {
     /*//////////////////////////////////////////////////////////////
                             Constants
     //////////////////////////////////////////////////////////////*/
@@ -43,6 +44,10 @@ contract FeeSplitter {
      * @dev The address of the Optimism wallet that will receive Optimism's revenue share.
      */
     address payable public immutable OPTIMISM_WALLET;
+    /**
+     * @dev The address of the Rewards Distributor that will receive a share of fees;
+     */
+    address payable public immutable REWARDS_DISTRIBUTOR;
     /**
      * @dev The address of the L1 wallet that will receive the OP chain runner's share of fees.
      */
@@ -93,20 +98,25 @@ contract FeeSplitter {
     //////////////////////////////////////////////////////////////*/
     /**
      * @dev Constructor for the FeeSplitter contract which validates and sets immutable variables.
+     * @param _owner The owner of the contract.
      * @param _optimismWallet The address which receives Optimism's revenue share.
      * @param _l1Wallet The L1 address which receives the remainder of the revenue.
      * @param _feeDisbursementInterval The minimum amount of time in seconds that must pass between fee disbursals.
      */
     constructor(
+        address _owner,
         address payable _optimismWallet,
+        address payable _rewardsDistributor,
         address _l1Wallet,
         uint256 _feeDisbursementInterval
-    ) {
+    ) Ownable(_owner) {
         require(_optimismWallet != address(0), "FeeSplitter: OptimismWallet cannot be address(0)");
+        require(_rewardsDistributor != address(0), "FeeSplitter: RewardsDistributor cannot be address(0)");
         require(_l1Wallet != address(0), "FeeSplitter: L1Wallet cannot be address(0)");
         require(_feeDisbursementInterval >= 24 hours, "FeeSplitter: FeeDisbursementInterval cannot be less than 24 hours");
 
         OPTIMISM_WALLET = _optimismWallet;
+        REWARDS_DISTRIBUTOR = _rewardsDistributor;
         L1_WALLET = _l1Wallet;
         FEE_DISBURSEMENT_INTERVAL = _feeDisbursementInterval;
     }
@@ -158,6 +168,12 @@ contract FeeSplitter {
         require(
             SafeCall.send(OPTIMISM_WALLET, gasleft(), optimismRevenueShare),
             "FeeSplitter: Failed to send funds to Optimism"
+        );
+
+        // Send Attestation Rewards distributor their revenue share on L2
+        require(
+            SafeCall.send(REWARDS_DISTRIBUTOR, gasleft(), rewardsDistributorRevenueShare),
+            "FeeSplitter: Failed to send funds to Rewards Distributor"
         );
 
         // Send remaining funds to L1 wallet on L1

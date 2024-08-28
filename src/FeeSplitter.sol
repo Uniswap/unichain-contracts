@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.26;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-
-import { L2StandardBridge } from "@eth-optimism-bedrock/src/L2/L2StandardBridge.sol";
-import { FeeVault } from "@eth-optimism-bedrock/src/universal/FeeVault.sol";
 import { Predeploys } from "@eth-optimism-bedrock/src/libraries/Predeploys.sol";
 import { SafeCall } from "@eth-optimism-bedrock/src/libraries/SafeCall.sol";
+
+import { IL2StandardBridge } from "./interfaces/optimism/IL2StandardBridge.sol";
+import { IFeeVault } from "./interfaces/optimism/IFeeVault.sol";
 
 /**
  * @title FeeSplitter
@@ -161,7 +161,7 @@ contract FeeSplitter {
         );
 
         // Send remaining funds to L1 wallet on L1
-        L2StandardBridge(payable(Predeploys.L2_STANDARD_BRIDGE)).bridgeETHTo{ value: address(this).balance }(
+        IL2StandardBridge(payable(Predeploys.L2_STANDARD_BRIDGE)).bridgeETHTo{ value: address(this).balance }(
             L1_WALLET,
             WITHDRAWAL_MIN_GAS,
             bytes("")
@@ -195,15 +195,15 @@ contract FeeSplitter {
     */
     function feeVaultWithdrawal(address payable _feeVault) internal {
         require(
-            FeeVault(_feeVault).WITHDRAWAL_NETWORK() == FeeVault.WithdrawalNetwork.L2, 
+            IFeeVault(_feeVault).WITHDRAWAL_NETWORK() == IFeeVault.WithdrawalNetwork.L2, 
             "FeeSplitter: FeeVault must withdraw to L2"
         );
         require(
-            FeeVault(_feeVault).RECIPIENT() == address(this), 
+            IFeeVault(_feeVault).RECIPIENT() == address(this), 
             "FeeSplitter: FeeVault must withdraw to FeeSplitter contract"
         );
-        if (_feeVault.balance >= FeeVault(_feeVault).MIN_WITHDRAWAL_AMOUNT()) {
-            FeeVault(_feeVault).withdraw();
+        if (_feeVault.balance >= IFeeVault(_feeVault).MIN_WITHDRAWAL_AMOUNT()) {
+            IFeeVault(_feeVault).withdraw();
         }
     }
 }

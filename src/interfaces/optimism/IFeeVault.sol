@@ -10,7 +10,7 @@ interface IFeeVault {
         L1,
         L2
     }
-    
+
     /// @notice Network which the recipient will receive fees on.
     ///         Use the `withdrawalNetwork()` getter as this is deprecated
     ///         and is subject to be removed in the future.

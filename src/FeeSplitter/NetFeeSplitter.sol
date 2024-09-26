@@ -6,7 +6,7 @@ import {INetFeeSplitter} from '../interfaces/FeeSplitter/INetFeeSplitter.sol';
 /// @title NetFeeSplitter
 /// @notice Splits net fees between multiple recipients. Recipients are managed by admins. Admins can transfer the entire allocation or a portion of it to other recipients.
 contract NetFeeSplitter is INetFeeSplitter {
-    uint256 internal constant TOTAL_ALLOCATION = 1_000_000;
+    uint256 internal constant TOTAL_ALLOCATION = 10_000;
     uint256 private constant MAGNITUDE = 1e30;
 
     uint256 private _index;

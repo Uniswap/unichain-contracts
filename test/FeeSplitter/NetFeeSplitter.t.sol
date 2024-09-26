@@ -53,7 +53,7 @@ contract NetFeeSplitterTest is Test {
     }
 
     function test_RevertIf_InvalidTotalAllocation(uint256 allocation) public {
-        vm.assume(allocation != 1_000_000 && allocation != 0);
+        vm.assume(allocation != 10_000 && allocation != 0);
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
@@ -66,7 +66,7 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 1_000_000});
+        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         vm.expectRevert(INetFeeSplitter.RecipientZero.selector);
         splitter.transfer(makeAddr('sender'), address(0), 1);
@@ -77,7 +77,7 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 1_000_000});
+        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         vm.expectRevert(INetFeeSplitter.Unauthorized.selector);
         vm.prank(initiator);
@@ -90,7 +90,7 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = recipient_;
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: admin_, allocation: 1_000_000});
+        recipientData[0] = INetFeeSplitter.Recipient({admin: admin_, allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         (bool success,) = address(splitter).call{value: 1 ether}('');
         assertTrue(success);
@@ -108,7 +108,7 @@ contract NetFeeSplitterTest is Test {
             newRecipient,
             'should create recipient data with the recipient being the admin'
         );
-        assertEq(splitter.balanceOf(recipient_), 999_999, 'should transfer the allocation to the new recipient');
+        assertEq(splitter.balanceOf(recipient_), 9999, 'should transfer the allocation to the new recipient');
         assertEq(splitter.balanceOf(newRecipient), 1, 'should receive the allocation');
         (success,) = address(splitter).call{value: 1 ether}('');
         assertTrue(success);
@@ -123,7 +123,7 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 1_000_000});
+        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         vm.expectRevert(INetFeeSplitter.Unauthorized.selector);
         vm.prank(initiator);
@@ -137,7 +137,7 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = recipient_;
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: admin_, allocation: 1_000_000});
+        recipientData[0] = INetFeeSplitter.Recipient({admin: admin_, allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         vm.expectEmit(true, true, true, true);
         emit INetFeeSplitter.TransferAdmin(recipient_, admin_, newAdmin_);
@@ -167,15 +167,15 @@ contract NetFeeSplitterTest is Test {
             recipientData[i].allocation = bound(recipientData[i].allocation, 1 ether, 100 ether);
             totalAllocation += recipientData[i].allocation;
         }
-        // normalize the balances so the sum is 1_000_000
+        // normalize the balances so the sum is 10_000
         uint256 combinedAllocation = 0;
         for (uint256 i = 0; i < recipients.length; i++) {
-            recipientData[i].allocation = recipientData[i].allocation * 1_000_000 / totalAllocation;
+            recipientData[i].allocation = recipientData[i].allocation * 10_000 / totalAllocation;
             combinedAllocation += recipientData[i].allocation;
         }
         // adjust for rounding errors
-        if (combinedAllocation < 1_000_000) {
-            recipientData[recipientData.length - 1].allocation += 1_000_000 - combinedAllocation;
+        if (combinedAllocation < 10_000) {
+            recipientData[recipientData.length - 1].allocation += 10_000 - combinedAllocation;
         }
 
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
@@ -188,7 +188,7 @@ contract NetFeeSplitterTest is Test {
 
         // check that the fees are distributed correctly
         for (uint256 i = 0; i < recipients.length; i++) {
-            uint256 expectedFees = totalFees * recipientData[i].allocation / 1_000_000;
+            uint256 expectedFees = totalFees * recipientData[i].allocation / 10_000;
             assertEq(splitter.earnedFees(recipients[i]), expectedFees);
             vm.prank(recipients[i]);
             splitter.withdrawFees(recipientData[i].admin);

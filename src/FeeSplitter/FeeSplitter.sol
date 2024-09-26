@@ -19,13 +19,13 @@ contract FeeSplitter is IFeeSplitter {
     uint32 internal constant GROSS_REVENUE_SHARE = 25;
 
     /// @dev The address of the Optimism wallet that will receive Optimism's revenue share.
-    address internal immutable OPTIMISM_WALLET;
+    address public immutable OPTIMISM_WALLET;
 
     /// @dev The address of the Rewards Distributor that will receive a share of fees;
-    address internal immutable NET_FEE_RECIPIENT;
+    address public immutable NET_FEE_RECIPIENT;
 
     /// @dev The address of the L1 wallet that will receive the OP chain runner's share of fees.
-    address internal immutable L1_FEE_RECIPIENT;
+    address public immutable L1_FEE_RECIPIENT;
 
     /// @dev Constructor for the FeeSplitter contract which validates and sets immutable variables.
     /// @param optimismWallet The address which receives Optimism's revenue share.

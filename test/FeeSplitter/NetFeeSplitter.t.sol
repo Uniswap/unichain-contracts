@@ -147,21 +147,25 @@ contract NetFeeSplitterTest is Test {
     }
 
     function test_ShouldDistributeAndWithdrawFeesCorrectly(
-        INetFeeSplitter.Recipient[] memory recipientData,
+        INetFeeSplitter.Recipient[] memory recipientData_,
         uint256[] memory fees
     ) public {
-        vm.assume(recipientData.length > 0 && recipientData.length < 50);
-        vm.assume(fees.length > 0 && fees.length < 50);
+        vm.assume(recipientData_.length > 0);
+        vm.assume(fees.length > 0);
+        uint256 recipientDataLen = recipientData_.length > 50 ? 50 : recipientData_.length;
+        uint256 feesLen = fees.length > 50 ? 50 : fees.length;
         // calculate total fees and bound the individual fees
         uint256 totalFees;
-        for (uint256 i = 0; i < fees.length; i++) {
+        for (uint256 i = 0; i < feesLen; i++) {
             fees[i] = bound(fees[i], 0.001 ether, 1000 ether);
             totalFees += fees[i];
         }
         // set up recipients and recipient data, bound the allocation
-        address[] memory recipients = new address[](recipientData.length);
+        address[] memory recipients = new address[](recipientDataLen);
+        INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](recipientDataLen);
         uint256 totalAllocation;
-        for (uint256 i = 0; i < recipients.length; i++) {
+        for (uint256 i = 0; i < recipientDataLen; i++) {
+            recipientData[i] = recipientData_[i];
             recipientData[i].admin = admin(i);
             recipients[i] = recipient(i);
             recipientData[i].allocation = bound(recipientData[i].allocation, 1 ether, 100 ether);
@@ -169,7 +173,7 @@ contract NetFeeSplitterTest is Test {
         }
         // normalize the balances so the sum is 10_000
         uint256 combinedAllocation = 0;
-        for (uint256 i = 0; i < recipients.length; i++) {
+        for (uint256 i = 0; i < recipientDataLen; i++) {
             recipientData[i].allocation = recipientData[i].allocation * 10_000 / totalAllocation;
             combinedAllocation += recipientData[i].allocation;
         }
@@ -181,13 +185,13 @@ contract NetFeeSplitterTest is Test {
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
 
         // distribute the fees
-        for (uint256 i = 0; i < fees.length; i++) {
+        for (uint256 i = 0; i < feesLen; i++) {
             (bool success,) = address(splitter).call{value: fees[i]}('');
             assertTrue(success);
         }
 
         // check that the fees are distributed correctly
-        for (uint256 i = 0; i < recipients.length; i++) {
+        for (uint256 i = 0; i < recipientDataLen; i++) {
             uint256 expectedFees = totalFees * recipientData[i].allocation / 10_000;
             assertEq(splitter.earnedFees(recipients[i]), expectedFees);
             vm.prank(recipients[i]);

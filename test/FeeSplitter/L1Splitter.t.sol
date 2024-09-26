@@ -26,7 +26,7 @@ contract L1SplitterTest is Test {
     }
 
     function test_Withdrawal(uint256 amount) public {
-        vm.assume(amount > 0.1 ether);
+        amount = bound(amount, 0.1 ether + 1, type(uint256).max);
         vm.deal(address(splitter), amount);
         vm.warp(block.timestamp + 1 days + 1);
         vm.expectEmit(true, true, true, true);

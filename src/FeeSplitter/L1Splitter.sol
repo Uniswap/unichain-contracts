@@ -6,6 +6,8 @@ import {Predeploys} from '@eth-optimism-bedrock/src/libraries/Predeploys.sol';
 import {IL1Splitter} from '../interfaces/FeeSplitter/IL1Splitter.sol';
 import {IL2StandardBridge} from '../interfaces/optimism/IL2StandardBridge.sol';
 
+/// @title L1Splitter
+/// @notice Withdraws the L1 fees to the L1 wallet via the L2 Standard Bridge.
 contract L1Splitter is IL1Splitter {
     /// @dev The minimum gas limit for the FeeSplitter withdrawal transaction to L1.
     uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000;

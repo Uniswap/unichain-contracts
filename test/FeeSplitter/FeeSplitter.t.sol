@@ -38,7 +38,6 @@ contract FeeSplitterTest is Test {
         vm.assume(sender != Predeploys.L1_FEE_VAULT);
         vm.prank(sender);
         (bool success, bytes memory revertData) = address(feeSplitter).call{value: 0}('');
-        console.logBytes(revertData);
         assertFalse(success, 'Did not revert');
         assertEq(
             revertData, abi.encodeWithSelector(IFeeSplitter.OnlyVaults.selector), 'Did not revert with `OnlyVaults()`'
@@ -149,15 +148,8 @@ contract FeeSplitterTest is Test {
         uint256 expectedNetRevenueShare = (sequencerFee + baseFee) * 975 / 1000;
         uint256 expectedL1Share = l1Fee * 975 / 1000;
 
-        console.log('sequencerFee', sequencerFee);
-        console.log('baseFee', baseFee);
-        console.log('l1Fee', l1Fee);
-        console.log('expectedOpShare', expectedOpShare);
-        console.log('expectedNetRevenueShare', expectedNetRevenueShare);
-        console.log('expectedL1Share', expectedL1Share);
-
-        // vm.expectEmit(true, true, false, true);
-        // emit IFeeSplitter.FeesDistributed(expectedOpShare, expectedL1Share, expectedNetRevenueShare);
+        vm.expectEmit(true, true, false, true);
+        emit IFeeSplitter.FeesDistributed(expectedOpShare, expectedL1Share, expectedNetRevenueShare);
         bool feesDistributed = feeSplitter.distributeFees();
         assertTrue(feesDistributed, 'Fees were not distributed');
         assertEq(opWallet.balance, expectedOpShare, 'Op wallet balance is not expected');

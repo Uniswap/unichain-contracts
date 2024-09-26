@@ -7,10 +7,8 @@ import {SafeCall} from '@eth-optimism-bedrock/src/libraries/SafeCall.sol';
 import {IFeeSplitter} from '../interfaces/FeeSplitter/IFeeSplitter.sol';
 import {IFeeVault} from '../interfaces/optimism/IFeeVault.sol';
 
-/**
- * @title FeeSplitter
- * @dev Withdraws funds from system FeeVault contracts, shares revenue with Optimism, sends revenue to L1 and net fee splitters
- */
+/// @title FeeSplitter
+/// @dev Withdraws funds from system FeeVault contracts, shares revenue with Optimism, sends remaining revenue to L1 and net fee splitters
 contract FeeSplitter is IFeeSplitter {
     // bytes32(uint256(keccak256('net.revenue')) - 1);
     bytes32 private constant NET_REVENUE_STORAGE_SLOT =

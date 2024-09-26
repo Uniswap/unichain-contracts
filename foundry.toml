@@ -8,6 +8,7 @@ via_ir = false
 solc = "0.8.26"
 verbosity = 2
 ffi = true
+evm_version = "cancun"
 fs_permissions = [
   { access = "read-write", path = ".forge-snapshots"},
   { access = "read", path = "script/" }

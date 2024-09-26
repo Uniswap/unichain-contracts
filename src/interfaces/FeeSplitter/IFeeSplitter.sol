@@ -12,7 +12,7 @@ interface IFeeSplitter {
     event FeesDistributed(uint256 optimismShare, uint256 l1Fees, uint256 netShare);
 
     /// @notice Thrown when an address provided in the constructor is zero
-    error AmountZero();
+    error AddressZero();
 
     /// @notice Thrown when a transfer fails
     error TransferFailed();

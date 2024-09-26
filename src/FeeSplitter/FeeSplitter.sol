@@ -33,7 +33,7 @@ contract FeeSplitter is IFeeSplitter {
     /// @param netFeeSplitter_ The address which receives the net fee share.
     constructor(address optimismWallet_, address l1FeeSplitter_, address netFeeSplitter_) {
         if (optimismWallet_ == address(0) || netFeeSplitter_ == address(0) || l1FeeSplitter_ == address(0)) {
-            revert AmountZero();
+            revert AddressZero();
         }
         OPTIMISM_WALLET = optimismWallet_;
         NET_FEE_SPLITTER = netFeeSplitter_;

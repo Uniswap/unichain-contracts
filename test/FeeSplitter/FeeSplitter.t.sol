@@ -24,11 +24,11 @@ contract FeeSplitterTest is Test {
     }
 
     function test_RevertIf_ConstructorAddressZero() public {
-        vm.expectRevert(abi.encodeWithSelector(IFeeSplitter.AmountZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(IFeeSplitter.AddressZero.selector));
         new FeeSplitter(address(0), address(1), address(1));
-        vm.expectRevert(abi.encodeWithSelector(IFeeSplitter.AmountZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(IFeeSplitter.AddressZero.selector));
         new FeeSplitter(address(1), address(0), address(1));
-        vm.expectRevert(abi.encodeWithSelector(IFeeSplitter.AmountZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(IFeeSplitter.AddressZero.selector));
         new FeeSplitter(address(1), address(1), address(0));
     }
 

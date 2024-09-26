@@ -10,14 +10,14 @@ import {Predeploys} from '@eth-optimism-bedrock/src/libraries/Predeploys.sol';
 contract FeeSplitterTest is Test {
     FeeVaultHelper internal helper;
     address opWallet = makeAddr('opWallet');
-    address l1Splitter = makeAddr('l1Splitter');
-    address netSplitter = makeAddr('netSplitter');
+    address l1Recipient = makeAddr('l1Recipient');
+    address netRecipient = makeAddr('netRecipient');
 
     FeeSplitter internal feeSplitter;
 
     function setUp() public {
         helper = new FeeVaultHelper();
-        feeSplitter = new FeeSplitter(opWallet, l1Splitter, netSplitter);
+        feeSplitter = new FeeSplitter(opWallet, l1Recipient, netRecipient);
         helper.deploy(feeSplitter, Predeploys.SEQUENCER_FEE_WALLET);
         helper.deploy(feeSplitter, Predeploys.BASE_FEE_VAULT);
         helper.deploy(feeSplitter, Predeploys.L1_FEE_VAULT);
@@ -123,8 +123,8 @@ contract FeeSplitterTest is Test {
         bool feesDistributed = feeSplitter.distributeFees();
         assertTrue(feesDistributed, 'Fees were not distributed');
         assertEq(opWallet.balance, expectedOpShare, 'Op wallet balance is not expected');
-        assertEq(l1Splitter.balance, expectedL1Share, 'L1 splitter balance is not expected');
-        assertEq(netSplitter.balance, expectedNetRevenueShare, 'Net splitter balance is not expected');
+        assertEq(l1Recipient.balance, expectedL1Share, 'L1 recipient balance is not expected');
+        assertEq(netRecipient.balance, expectedNetRevenueShare, 'Net recipient balance is not expected');
     }
 
     function test_ShouldDistributeGrossRevenueShareIfMoreThanNetRevenueShare(
@@ -153,8 +153,8 @@ contract FeeSplitterTest is Test {
         bool feesDistributed = feeSplitter.distributeFees();
         assertTrue(feesDistributed, 'Fees were not distributed');
         assertEq(opWallet.balance, expectedOpShare, 'Op wallet balance is not expected');
-        assertEq(l1Splitter.balance, expectedL1Share, 'L1 splitter balance is not expected');
-        assertEq(netSplitter.balance, expectedNetRevenueShare, 'Net splitter balance is not expected');
+        assertEq(l1Recipient.balance, expectedL1Share, 'L1 recipient balance is not expected');
+        assertEq(netRecipient.balance, expectedNetRevenueShare, 'Net recipient balance is not expected');
     }
 }
 

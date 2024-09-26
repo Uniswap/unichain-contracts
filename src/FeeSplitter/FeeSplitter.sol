@@ -8,7 +8,7 @@ import {IFeeSplitter} from '../interfaces/FeeSplitter/IFeeSplitter.sol';
 import {IFeeVault} from '../interfaces/optimism/IFeeVault.sol';
 
 /// @title FeeSplitter
-/// @dev Withdraws funds from system FeeVault contracts, shares revenue with Optimism, sends remaining revenue to L1 and net fee splitters
+/// @dev Withdraws funds from system FeeVault contracts, shares revenue with Optimism, sends remaining revenue to L1 and net fee recipients
 contract FeeSplitter is IFeeSplitter {
     // bytes32(uint256(keccak256('net.revenue')) - 1);
     bytes32 private constant NET_REVENUE_STORAGE_SLOT =
@@ -22,22 +22,22 @@ contract FeeSplitter is IFeeSplitter {
     address internal immutable OPTIMISM_WALLET;
 
     /// @dev The address of the Rewards Distributor that will receive a share of fees;
-    address internal immutable NET_FEE_SPLITTER;
+    address internal immutable NET_FEE_RECIPIENT;
 
     /// @dev The address of the L1 wallet that will receive the OP chain runner's share of fees.
-    address internal immutable L1_FEE_SPLITTER;
+    address internal immutable L1_FEE_RECIPIENT;
 
     /// @dev Constructor for the FeeSplitter contract which validates and sets immutable variables.
-    /// @param optimismWallet_ The address which receives Optimism's revenue share.
-    /// @param l1FeeSplitter_ The address which receives the L1 fee share.
-    /// @param netFeeSplitter_ The address which receives the net fee share.
-    constructor(address optimismWallet_, address l1FeeSplitter_, address netFeeSplitter_) {
-        if (optimismWallet_ == address(0) || netFeeSplitter_ == address(0) || l1FeeSplitter_ == address(0)) {
+    /// @param optimismWallet The address which receives Optimism's revenue share.
+    /// @param l1FeeRecipient The address which receives the L1 fee share.
+    /// @param netFeeRecipient The address which receives the net fee share.
+    constructor(address optimismWallet, address l1FeeRecipient, address netFeeRecipient) {
+        if (optimismWallet == address(0) || netFeeRecipient == address(0) || l1FeeRecipient == address(0)) {
             revert AddressZero();
         }
-        OPTIMISM_WALLET = optimismWallet_;
-        NET_FEE_SPLITTER = netFeeSplitter_;
-        L1_FEE_SPLITTER = l1FeeSplitter_;
+        OPTIMISM_WALLET = optimismWallet;
+        NET_FEE_RECIPIENT = netFeeRecipient;
+        L1_FEE_RECIPIENT = l1FeeRecipient;
     }
 
     /// @inheritdoc IFeeSplitter
@@ -80,9 +80,9 @@ contract FeeSplitter is IFeeSplitter {
 
         if (!SafeCall.send(OPTIMISM_WALLET, gasleft(), optimismRevenueShare)) revert TransferFailed();
 
-        if (!SafeCall.send(L1_FEE_SPLITTER, gasleft(), l1Fee)) revert TransferFailed();
+        if (!SafeCall.send(L1_FEE_RECIPIENT, gasleft(), l1Fee)) revert TransferFailed();
 
-        if (!SafeCall.send(NET_FEE_SPLITTER, gasleft(), remainingNetRevenue)) revert TransferFailed();
+        if (!SafeCall.send(NET_FEE_RECIPIENT, gasleft(), remainingNetRevenue)) revert TransferFailed();
 
         emit FeesDistributed(optimismRevenueShare, l1Fee, remainingNetRevenue);
         return true;

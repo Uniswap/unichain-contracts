@@ -6,7 +6,6 @@ import {SafeCall} from '@eth-optimism-bedrock/src/libraries/SafeCall.sol';
 
 import {IFeeSplitter} from '../interfaces/FeeSplitter/IFeeSplitter.sol';
 import {IFeeVault} from '../interfaces/optimism/IFeeVault.sol';
-import {IL2StandardBridge} from '../interfaces/optimism/IL2StandardBridge.sol';
 
 /**
  * @title FeeSplitter

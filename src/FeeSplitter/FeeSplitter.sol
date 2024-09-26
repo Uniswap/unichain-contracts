@@ -67,21 +67,22 @@ contract FeeSplitter is IFeeSplitter {
         uint256 grossRevenueShare = grossFeeRevenue * GROSS_REVENUE_SHARE / BASIS_POINT_SCALE;
 
         uint256 optimismRevenueShare;
-        uint256 l1Fee = grossFeeRevenue - netFeeRevenue;
-        uint256 remainingNetRevenue = netFeeRevenue;
+        uint256 l1Fee;
+        uint256 remainingNetRevenue;
         if (grossRevenueShare > netRevenueShare) {
             // if the gross revenue share is greater than the net revenue share, 2.5% of the gross revenue is sent to optimism
             // the remaining 97.5% of the L1 fees are sent to L1
             // the remaining 97.5% of the net fees are sent to the net fee recipient
             optimismRevenueShare = grossRevenueShare;
-            l1Fee = l1Fee * (BASIS_POINT_SCALE - GROSS_REVENUE_SHARE) / BASIS_POINT_SCALE;
+            l1Fee = (grossFeeRevenue - netFeeRevenue) * (BASIS_POINT_SCALE - GROSS_REVENUE_SHARE) / BASIS_POINT_SCALE;
             remainingNetRevenue = netFeeRevenue * (BASIS_POINT_SCALE - GROSS_REVENUE_SHARE) / BASIS_POINT_SCALE;
         } else {
             // if the net revenue share is greater than the gross revenue share, 15% of the net revenue is sent to optimism
             // the entire amount of L1 fees are sent to L1
             // the remaining 85% of the net fees are sent to the net fee recipient
             optimismRevenueShare = netRevenueShare;
-            remainingNetRevenue -= optimismRevenueShare;
+            l1Fee = grossFeeRevenue - netFeeRevenue;
+            remainingNetRevenue = netFeeRevenue - optimismRevenueShare;
         }
 
         if (!SafeCall.send(OPTIMISM_WALLET, gasleft(), optimismRevenueShare)) revert TransferFailed();

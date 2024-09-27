@@ -32,6 +32,8 @@ contract L1Splitter is IL1Splitter {
             revert DisbursementIntervalNotReached();
         }
 
+        lastDisbursementTime = block.timestamp;
+
         IL2StandardBridge(Predeploys.L2_STANDARD_BRIDGE).bridgeETHTo{value: balance}(
             L1_WALLET, WITHDRAWAL_MIN_GAS, bytes('')
         );

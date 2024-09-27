@@ -10,6 +10,8 @@ import {IFeeVault} from '../interfaces/optimism/IFeeVault.sol';
 /// @title FeeSplitter
 /// @dev Withdraws funds from system FeeVault contracts, shares revenue with Optimism, sends remaining revenue to L1 and net fee recipients
 contract FeeSplitter is IFeeSplitter {
+    // bytes32(uint256(keccak256('lock')) - 1);
+    bytes32 private constant LOCK_STORAGE_SLOT = 0x6168652c307c1e813ca11cfb3a601f1cf3b22452021a5052d8b05f1f1f8a3e91;
     // bytes32(uint256(keccak256('net.revenue')) - 1);
     bytes32 private constant NET_REVENUE_STORAGE_SLOT =
         0x784be9e5da62c580888dd777e3d4e36ef68053ef5af2fc8f65c4050e4729e434;
@@ -50,6 +52,11 @@ contract FeeSplitter is IFeeSplitter {
             // only collect fees if all fee vaults can be withdrawn from to guarantee accurate accounting of optimism revenue share
             emit NoFeesCollected();
             return false;
+        }
+
+        // unlock
+        assembly ("memory-safe") {
+            tstore(LOCK_STORAGE_SLOT, 1)
         }
         feeVaultWithdrawal(Predeploys.SEQUENCER_FEE_WALLET);
         feeVaultWithdrawal(Predeploys.BASE_FEE_VAULT);
@@ -97,7 +104,14 @@ contract FeeSplitter is IFeeSplitter {
 
     /// @dev Receives ETH fees withdrawn from L2 FeeVaults and stores the net revenue in transient storage.
     /// @dev Will revert if ETH is not sent from L2 FeeVaults.
+    /// @dev anyone can call the withdraw function on the vaults, the lock ensures that a withdrawal is only successful if the fee splitter is withdrawing the fees to ensure accurate accounting
     receive() external payable virtual {
+        uint256 unlocked;
+        assembly ("memory-safe") {
+            unlocked := tload(LOCK_STORAGE_SLOT)
+        }
+        if (unlocked == 0) revert Locked();
+
         // TODO: explore whether the withdraw function can return a value indicating the amount of fees withdrawn
         if (msg.sender == Predeploys.SEQUENCER_FEE_WALLET || msg.sender == Predeploys.BASE_FEE_VAULT) {
             uint256 amount = msg.value;

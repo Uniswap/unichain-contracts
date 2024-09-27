@@ -17,6 +17,9 @@ interface IFeeSplitter {
     /// @notice Thrown when a transfer fails
     error TransferFailed();
 
+    /// @notice Thrown an address other than the fee splitter tries to withdraw fees from vaults
+    error Locked();
+
     /// @notice Thrown when an address that is not a vault tries to deposit fees
     error OnlyVaults();
 

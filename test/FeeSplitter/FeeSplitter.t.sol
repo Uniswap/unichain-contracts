@@ -32,28 +32,19 @@ contract FeeSplitterTest is Test {
         new FeeSplitter(address(1), address(1), address(0));
     }
 
-    function test_RevertIf_FeesDepositedFromNonVault(address sender) public {
-        vm.assume(sender != Predeploys.SEQUENCER_FEE_WALLET);
-        vm.assume(sender != Predeploys.BASE_FEE_VAULT);
-        vm.assume(sender != Predeploys.L1_FEE_VAULT);
-        vm.prank(sender);
-        (bool success, bytes memory revertData) = address(feeSplitter).call{value: 0}('');
-        assertFalse(success, 'Did not revert');
-        assertEq(
-            revertData, abi.encodeWithSelector(IFeeSplitter.OnlyVaults.selector), 'Did not revert with `OnlyVaults()`'
-        );
-    }
-
-    function test_ShouldBeAbleToDepositFeesFromL2FeeVaults() public {
+    function test_RevertIf_ReceivingAnyFeesOutsideOfDistributeFeeCall() public {
         vm.prank(Predeploys.SEQUENCER_FEE_WALLET);
-        (bool success,) = address(feeSplitter).call{value: 0}('');
-        assertTrue(success);
+        (bool success, bytes memory revertData) = address(feeSplitter).call{value: 0}('');
+        assertFalse(success);
+        assertEq(revertData, abi.encodeWithSelector(IFeeSplitter.Locked.selector));
         vm.prank(Predeploys.BASE_FEE_VAULT);
-        (success,) = address(feeSplitter).call{value: 0}('');
-        assertTrue(success);
+        (success, revertData) = address(feeSplitter).call{value: 0}('');
+        assertFalse(success);
+        assertEq(revertData, abi.encodeWithSelector(IFeeSplitter.Locked.selector));
         vm.prank(Predeploys.L1_FEE_VAULT);
-        (success,) = address(feeSplitter).call{value: 0}('');
-        assertTrue(success);
+        (success, revertData) = address(feeSplitter).call{value: 0}('');
+        assertFalse(success);
+        assertEq(revertData, abi.encodeWithSelector(IFeeSplitter.Locked.selector));
     }
 
     function test_RevertIf_WithdrawalNetworkIsL1(uint256 index) public {

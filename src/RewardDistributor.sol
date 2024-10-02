@@ -32,7 +32,6 @@ contract RewardDistributor {
 
     mapping(uint256 blockNumber => Block) private _blocks;
     mapping(address user => Reward) private _rewards;
-    mapping(address validator => uint256) private _inactiveUntil;
 
     event RewardDeposited(uint256 indexed blockNumber, uint256 reward);
     event Attested(uint256 indexed blockNumber, address indexed user, bytes32 blockHash, bool vote);
@@ -45,6 +44,8 @@ contract RewardDistributor {
     error AttestationPeriodExpired();
     error AttestationOutOfOrder();
     error TransferFailed();
+    error InvalidSignature();
+    error InvalidArgumentLengths();
 
     constructor(address paymentSplitter, address l2StakeManager) {
         PAYMENT_SPLITTER = paymentSplitter;
@@ -63,25 +64,28 @@ contract RewardDistributor {
         emit RewardDeposited(currentBlock, msg.value);
     }
 
+    /// @notice Attest to a block
     function attest(uint256 blockNumber, bytes32 blockHash, bool vote) external {
-        _finalizeNext(msg.sender);
-        // subtract 2 because hash will be available after n + 1 blocks
-        if (blockNumber > block.number - 2) revert InvalidBlockNumber();
-        if (isFinalized(blockNumber)) revert AttestationPeriodExpired();
-        if (blockNumber <= _rewards[msg.sender].tail) revert AttestationOutOfOrder();
-        // in case of a reorg the attestation will fail
-        if (blockHash != _blocks[blockNumber].blockHash) revert InvalidBlockHash();
-        uint256 balance = L2_STAKE_MANAGER.getPastVotes(msg.sender, blockNumber);
-        if (vote) {
-            _blocks[blockNumber].votesFor += balance;
-        } else {
-            _blocks[blockNumber].votesAgainst += balance;
-        }
-        _rewards[msg.sender].next[_rewards[msg.sender].tail] = _encodeNext(blockNumber, vote);
-        _rewards[msg.sender].tail = blockNumber;
-        emit Attested(blockNumber, msg.sender, blockHash, vote);
+        _attest(msg.sender, blockNumber, blockHash, vote);
     }
 
+    /// @notice Submit multiple signed attestations
+    function attest(
+        uint256 blockNumber,
+        bytes32 blockHash,
+        address[] memory signers,
+        bool[] memory votes,
+        bytes[] memory signatures
+    ) external {
+        if (signers.length != votes.length || votes.length != signatures.length) revert InvalidArgumentLengths();
+        for (uint256 i = 0; i < signers.length; i++) {
+            bytes32 data = getAttestationData(blockNumber, blockHash, votes[i]);
+            _verifyAttestation(data, signers[i], signatures[i]);
+            _attest(signers[i], blockNumber, blockHash, votes[i]);
+        }
+    }
+
+    /// @notice Withdraw all rewards for an account
     function withdraw(address recipient) external {
         uint256 amount = _rewards[recipient].earned;
         _rewards[recipient].earned = 0;
@@ -90,6 +94,9 @@ contract RewardDistributor {
         emit Withdrawn(recipient, amount);
     }
 
+    /// @notice Finalize the next n rewards for account
+    /// @param account the account to finalize
+    /// @param n the number of rewards to finalize
     function finalize(address account, uint256 n) external {
         for (uint256 i = 0; i < n; i++) {
             _finalizeNext(account);
@@ -104,7 +111,39 @@ contract RewardDistributor {
         return _rewards[account].earned;
     }
 
+    /// @notice get the attestation data hash
+    function getAttestationData(uint256 blockNumber, bytes32 blockHash, bool vote) public pure returns (bytes32) {
+        return keccak256(abi.encode(blockNumber, blockHash, vote));
+    }
+
+    /// @notice attest to a block
+    /// @param account the account attesting
+    /// @param blockNumber the block number
+    /// @param blockHash the claimed block hash
+    /// @param vote the vote
+    function _attest(address account, uint256 blockNumber, bytes32 blockHash, bool vote) internal {
+        // subtract 2 because hash will be available after n + 1 blocks
+        if (blockNumber > block.number - 2) revert InvalidBlockNumber();
+        if (isFinalized(blockNumber)) revert AttestationPeriodExpired();
+        if (blockNumber <= _rewards[account].tail) revert AttestationOutOfOrder();
+
+        // in case of a reorg the attestation will fail
+        if (blockHash != _blocks[blockNumber].blockHash) revert InvalidBlockHash();
+
+        uint256 balance = L2_STAKE_MANAGER.getPastVotes(account, blockNumber);
+        if (vote) {
+            _blocks[blockNumber].votesFor += balance;
+        } else {
+            _blocks[blockNumber].votesAgainst += balance;
+        }
+        _rewards[account].next[_rewards[account].tail] = _encodeNext(blockNumber, vote);
+        _rewards[account].tail = blockNumber;
+
+        emit Attested(blockNumber, account, blockHash, vote);
+    }
+
     /// @notice Finalizes the rewards for the next block for account
+    /// @param account the account to finalize
     function _finalizeNext(address account) internal {
         uint256 head = _rewards[account].head;
         if (!isFinalized(head)) return;
@@ -129,6 +168,14 @@ contract RewardDistributor {
         _rewards[account].earned += reward;
         _rewards[account].head = next;
         emit Finalized(next, account, reward);
+    }
+
+    /// @notice verify a signature over an attestation
+    function _verifyAttestation(bytes32 data, address signer, bytes memory signature) internal pure {
+        (bytes32 r, bytes32 s) = abi.decode(signature, (bytes32, bytes32));
+        uint8 v = uint8(signature[64]);
+        address recoveredSigner = ecrecover(data, v, r, s);
+        if (signer != recoveredSigner || recoveredSigner == address(0)) revert InvalidSignature();
     }
 
     function _encodeNext(uint256 blockNumber, bool vote) private pure returns (uint256) {

@@ -2,10 +2,14 @@
 pragma solidity 0.8.26;
 
 import {L2StakeManager} from './L2StakeManager.sol';
+
 import {console2} from 'forge-std/console2.sol';
+import {FixedPointMathLib} from 'solmate/utils/FixedPointMathLib.sol';
 
 contract RewardDistributor {
+    using FixedPointMathLib for uint256;
     /// @dev The number of blocks attesters have to vote on a block
+
     uint256 public constant ATTESTATION_PERIOD = 10;
 
     /// @dev The address of the payment splitter contract that receives sequencer rewards.
@@ -28,6 +32,7 @@ contract RewardDistributor {
 
     mapping(uint256 blockNumber => Block) private _blocks;
     mapping(address user => Reward) private _rewards;
+    mapping(address validator => uint256) private _inactiveUntil;
 
     event RewardDeposited(uint256 indexed blockNumber, uint256 reward);
     event Attested(uint256 indexed blockNumber, address indexed user, bytes32 blockHash, bool vote);
@@ -99,6 +104,7 @@ contract RewardDistributor {
         return _rewards[account].earned;
     }
 
+    /// @notice Finalizes the rewards for the next block for account
     function _finalizeNext(address account) internal {
         uint256 head = _rewards[account].head;
         if (!isFinalized(head)) return;
@@ -107,14 +113,19 @@ contract RewardDistributor {
         uint256 votes;
         if (!vote) {
             uint256 votesAgainst = _blocks[next].votesAgainst;
-            bool isInvalid = votesAgainst * 3 / 2 > L2_STAKE_MANAGER.getPastTotalSupply(next);
+            bool isInvalid = votesAgainst * 3 / 2 > L2_STAKE_MANAGER.getPastTotalSupply(next); // TODO: precision loss here?
             if (isInvalid) {
                 votes = votesAgainst;
             }
         } else {
             votes = _blocks[next].votesFor;
         }
-        uint256 reward = _blocks[next].reward * L2_STAKE_MANAGER.getPastVotes(account, next) / votes;
+
+        uint256 reward;
+        if (votes != 0) {
+            reward = _blocks[next].reward.mulDivDown(L2_STAKE_MANAGER.getPastVotes(account, next), votes);
+        }
+
         _rewards[account].earned += reward;
         _rewards[account].head = next;
         emit Finalized(next, account, reward);

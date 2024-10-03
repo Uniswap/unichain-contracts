@@ -15,12 +15,12 @@ contract NetFeeSplitter is INetFeeSplitter {
 
     mapping(address recipient => Recipient) public recipients;
 
-    constructor(address[] memory recipients_, Recipient[] memory recipientData) {
+    constructor(address[] memory initialRecipients, Recipient[] memory recipientData) {
         uint256 totalAllocation;
-        uint256 length = recipients_.length;
-        if (recipients_.length != recipientData.length) revert InvalidRecipients();
+        uint256 length = initialRecipients.length;
+        if (initialRecipients.length != recipientData.length) revert InvalidRecipients();
         for (uint256 i = 0; i < length; i++) {
-            address recipient = recipients_[i];
+            address recipient = initialRecipients[i];
             bool duplicateRecipient = false;
             assembly {
                 duplicateRecipient := tload(recipient)

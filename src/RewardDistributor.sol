@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {L2StakeManager} from './L2StakeManager.sol';
-
 import {console2} from 'forge-std/console2.sol';
 import {FixedPointMathLib} from 'solmate/utils/FixedPointMathLib.sol';
+import {Checkpoints} from '@openzeppelin/contracts/utils/structs/Checkpoints.sol';
+import {L2StakeManager} from './L2StakeManager.sol';
 
 contract RewardDistributor {
     using FixedPointMathLib for uint256;
+    using Checkpoints for Checkpoints.Trace208;
+
     /// @dev The number of blocks attesters have to vote on a block
 
     uint256 public constant ATTESTATION_PERIOD = 10;
@@ -24,7 +26,6 @@ contract RewardDistributor {
     }
 
     struct Reward {
-        uint256 earned;
         uint256 head;
         uint256 tail;
         mapping(uint256 blockNumber => uint256 next) next;
@@ -32,6 +33,7 @@ contract RewardDistributor {
 
     mapping(uint256 blockNumber => Block) private _blocks;
     mapping(address user => Reward) private _rewards;
+    mapping(address validator => Checkpoints.Trace208) private _earned;
     mapping(address validator => uint256) private _inactiveUntil;
 
     event RewardDeposited(uint256 indexed blockNumber, uint256 reward);
@@ -45,6 +47,7 @@ contract RewardDistributor {
     error AttestationPeriodExpired();
     error AttestationOutOfOrder();
     error TransferFailed();
+    error EpochNotFinished();
 
     constructor(address paymentSplitter, address l2StakeManager) {
         PAYMENT_SPLITTER = paymentSplitter;
@@ -83,13 +86,17 @@ contract RewardDistributor {
     }
 
     function withdraw(address recipient) external {
-        uint256 amount = _rewards[recipient].earned;
-        _rewards[recipient].earned = 0;
+        uint256 amount = earned(recipient, _rewards[recipient].head);
+
+        // TODO: broken because we need to track total earned balance not just per block
+        _earned[recipient].push(uint48(block.number), uint208(_earned[recipient].latest() - amount));
+
         (bool success,) = recipient.call{value: amount}('');
         if (!success) revert TransferFailed();
         emit Withdrawn(recipient, amount);
     }
 
+    /// @notice Finalizes the rewards for the next n blocks for account
     function finalize(address account, uint256 n) external {
         for (uint256 i = 0; i < n; i++) {
             _finalizeNext(account);
@@ -100,11 +107,27 @@ contract RewardDistributor {
         return blockNumber < block.number - ATTESTATION_PERIOD - 2;
     }
 
-    function earned(address account) public view returns (uint256) {
-        return _rewards[account].earned;
+    /// @notice claim all rewards for account from blockNumber until last finalized block
+    /// @dev can be called by stakers or attestors
+    function earned(address account, uint256 blockNumber) public view returns (uint256) {
+        uint256 max = block.number - ATTESTATION_PERIOD - 2;
+        uint256 reward;
+        for (uint256 i = blockNumber; i <= max; i++) {
+            address validator = L2_STAKE_MANAGER.findValidator(account, i);
+            if(validator == address(0)) continue; // no validator found
+
+            uint256 votes = L2_STAKE_MANAGER.getPastVotes(validator, i);
+            uint256 balance = L2_STAKE_MANAGER.getPastBalances(account, i);
+            
+            if(votes == 0) continue;
+
+            reward += getPastEarned(validator, uint48(i)).mulDivDown(balance, votes);
+        }
+        return reward;
     }
 
     /// @notice Finalizes the rewards for the next block for account
+    /// @dev should only be called by attestors
     function _finalizeNext(address account) internal {
         uint256 head = _rewards[account].head;
         if (!isFinalized(head)) return;
@@ -123,12 +146,23 @@ contract RewardDistributor {
 
         uint256 reward;
         if (votes != 0) {
+            // TODO: check inactivity here
             reward = _blocks[next].reward.mulDivDown(L2_STAKE_MANAGER.getPastVotes(account, next), votes);
         }
 
-        _rewards[account].earned += reward;
+        _earned[account].push(uint48(next), uint208(reward));
         _rewards[account].head = next;
         emit Finalized(next, account, reward);
+    }
+
+    /**
+     * @dev Get the amount of rewards earned by `account` at `blockNumber`. If there are no more checkpoints <= `blockNumber`, return 0.
+     */
+    function getPastEarned(address account, uint48 blockNumber) public view returns (uint256) {
+        // if blockNumber is > latest checkpointed block, return 0
+        (bool exists, uint48 key,) = _earned[account].latestCheckpoint();
+        if (!exists || blockNumber > key) return 0;
+        return _earned[account].upperLookupRecent(blockNumber);
     }
 
     function _encodeNext(uint256 blockNumber, bool vote) private pure returns (uint256) {

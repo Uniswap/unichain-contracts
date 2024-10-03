@@ -58,9 +58,9 @@ contract FeeSplitter is IFeeSplitter {
         assembly ("memory-safe") {
             tstore(LOCK_STORAGE_SLOT, 1)
         }
-        feeVaultWithdrawal(Predeploys.SEQUENCER_FEE_WALLET);
-        feeVaultWithdrawal(Predeploys.BASE_FEE_VAULT);
-        feeVaultWithdrawal(Predeploys.L1_FEE_VAULT);
+        _feeVaultWithdrawal(Predeploys.SEQUENCER_FEE_WALLET);
+        _feeVaultWithdrawal(Predeploys.BASE_FEE_VAULT);
+        _feeVaultWithdrawal(Predeploys.L1_FEE_VAULT);
 
         uint256 netFeeRevenue;
         uint256 grossFeeRevenue = address(this).balance;
@@ -127,7 +127,7 @@ contract FeeSplitter is IFeeSplitter {
         }
     }
 
-    function feeVaultWithdrawal(address _feeVault) internal {
+    function _feeVaultWithdrawal(address _feeVault) internal {
         // TODO: is it sufficient to check that the fee vaults are configured properly once in the constructor?
         if (IFeeVault(_feeVault).withdrawalNetwork() != IFeeVault.WithdrawalNetwork.L2) {
             revert MustWithdrawToL2();

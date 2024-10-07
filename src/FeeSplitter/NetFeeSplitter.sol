@@ -60,7 +60,7 @@ contract NetFeeSplitter is INetFeeSplitter {
 
     /// @inheritdoc INetFeeSplitter
     function transferAdmin(address recipient, address newAdmin) external {
-        // TODO: allow newAdmin == address(0)?
+        if (newAdmin == address(0)) revert AdminZero();
         address currentAdmin = adminOf(recipient);
         if (currentAdmin != msg.sender) revert Unauthorized();
         recipients[recipient].admin = newAdmin;

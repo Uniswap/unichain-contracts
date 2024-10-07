@@ -62,6 +62,11 @@ contract FeeSplitter is IFeeSplitter {
         _feeVaultWithdrawal(Predeploys.BASE_FEE_VAULT);
         _feeVaultWithdrawal(Predeploys.L1_FEE_VAULT);
 
+        // lock
+        assembly ("memory-safe") {
+            tstore(LOCK_STORAGE_SLOT, 0)
+        }
+
         uint256 netFeeRevenue;
         uint256 grossFeeRevenue = address(this).balance;
 

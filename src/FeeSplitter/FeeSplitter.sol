@@ -70,15 +70,15 @@ contract FeeSplitter is IFeeSplitter {
         uint256 netFeeRevenue;
         uint256 grossFeeRevenue = address(this).balance;
 
+        assembly ("memory-safe") {
+            netFeeRevenue := tload(NET_REVENUE_STORAGE_SLOT)
+            tstore(NET_REVENUE_STORAGE_SLOT, 0)
+        }
+
         /// @audit gas savings if min withdrawal amount is set to 0
         if (grossFeeRevenue == 0) {
             emit NoFeesCollected();
             return false;
-        }
-
-        assembly ("memory-safe") {
-            netFeeRevenue := tload(NET_REVENUE_STORAGE_SLOT)
-            tstore(NET_REVENUE_STORAGE_SLOT, 0)
         }
 
         uint256 netRevenueShare = netFeeRevenue * NET_REVENUE_SHARE / BASIS_POINT_SCALE;

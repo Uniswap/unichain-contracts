@@ -51,14 +51,12 @@ abstract contract Deposited is Deployed {
         uint256 randomReward = rewardForBlock(seed);
         vm.prank(paymentSplitter);
         (bool success,) = address(rewardDistributor).call{value: randomReward}('');
-        snapLastCall('deposit reward');
         assert(success);
     }
 
     function attest(bytes memory account) public {
         vm.prank(makeAddr(string(account)));
         rewardDistributor.attest(vm.getBlockNumber() - 2, blockhash(vm.getBlockNumber() - 2), true);
-        snapLastCall('attest');
     }
 }
 

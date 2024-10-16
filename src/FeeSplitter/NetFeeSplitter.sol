@@ -11,7 +11,7 @@ contract NetFeeSplitter is INetFeeSplitter {
 
     uint256 private _index;
     mapping(address recipient => uint256 index) private _indexOf;
-    mapping(address recipient => uint256 earned) private earned;
+    mapping(address recipient => uint256 _earned) private _earned;
 
     mapping(address recipient => Recipient) public recipients;
 
@@ -60,7 +60,7 @@ contract NetFeeSplitter is INetFeeSplitter {
 
     /// @inheritdoc INetFeeSplitter
     function transferAdmin(address recipient, address newAdmin) external {
-        // TODO: allow newAdmin == address(0)?
+        if (newAdmin == address(0)) revert AdminZero();
         address currentAdmin = adminOf(recipient);
         if (currentAdmin != msg.sender) revert Unauthorized();
         recipients[recipient].admin = newAdmin;
@@ -70,9 +70,9 @@ contract NetFeeSplitter is INetFeeSplitter {
     /// @inheritdoc INetFeeSplitter
     function withdrawFees(address to) external returns (uint256 amount) {
         _updateFees(msg.sender);
-        amount = earned[msg.sender];
+        amount = _earned[msg.sender];
         if (amount != 0) {
-            earned[msg.sender] = 0;
+            _earned[msg.sender] = 0;
             (bool success,) = to.call{value: amount}('');
             if (!success) revert WithdrawalFailed();
         }
@@ -81,7 +81,7 @@ contract NetFeeSplitter is INetFeeSplitter {
 
     /// @inheritdoc INetFeeSplitter
     function earnedFees(address account) external view returns (uint256) {
-        return earned[account] + _calculateFees(account);
+        return _earned[account] + _calculateFees(account);
     }
 
     /// @inheritdoc INetFeeSplitter
@@ -99,7 +99,7 @@ contract NetFeeSplitter is INetFeeSplitter {
     }
 
     function _updateFees(address account) private {
-        earned[account] += _calculateFees(account);
+        _earned[account] += _calculateFees(account);
         _indexOf[account] = _index;
     }
 }

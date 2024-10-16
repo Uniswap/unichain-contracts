@@ -8,6 +8,7 @@ via_ir = false
 solc = "0.8.26"
 verbosity = 2
 ffi = true
+evm_version = "cancun"
 fs_permissions = [
   { access = "read-write", path = ".forge-snapshots"},
   { access = "read", path = "script/" }
@@ -16,7 +17,8 @@ fs_permissions = [
 remappings = [
   "forge-std=lib/forge-std/src",
   "@openzeppelin/contracts=lib/openzeppelin-contracts/contracts",
-  "@openzeppelin/contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts"
+  "@openzeppelin/contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts",
+  "@eth-optimism-bedrock=lib/optimism/packages/contracts-bedrock"
 ]
 
 [profile.default.fuzz]

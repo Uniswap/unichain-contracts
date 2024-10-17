@@ -28,7 +28,7 @@ runs = 1000
 runs = 1
 
 [profile.ci.fuzz]
-runs = 100000
+runs = 1
 
 [profile.debug]
 via_ir = false

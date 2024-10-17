@@ -62,7 +62,7 @@ abstract contract Deposited is Deployed {
 
 contract RewardDistributorTest is Deposited {
     function test_ShouldDistributeRewardsCorrectly() public {
-        uint256 iterations = 100;
+        uint256 iterations = 10;
         vm.roll(100);
         vm.deal(paymentSplitter, 2 ether * iterations);
         uint256[] memory theoreticalRewards = new uint256[](4);

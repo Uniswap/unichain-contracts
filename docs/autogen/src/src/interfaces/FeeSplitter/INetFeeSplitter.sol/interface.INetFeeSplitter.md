@@ -1,5 +1,5 @@
 # INetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3b755215379388bda78294afb56d7288557e61d0/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/e58b42227581bd4dbb09264be039301b9c37302d/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
 
 
 ## Functions
@@ -246,6 +246,11 @@ error WithdrawalFailed();
 ## Structs
 ### Recipient
 Recipient data for an individual recipient
+
+**Notes:**
+- admin The admin address managing the recipient
+
+- allocation The allocation of the recipient
 
 
 ```solidity

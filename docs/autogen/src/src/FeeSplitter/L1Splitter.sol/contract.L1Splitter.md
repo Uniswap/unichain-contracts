@@ -1,5 +1,5 @@
 # L1Splitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/01f4e5565a975be8c899959d029a1dc7e641a28e/src/FeeSplitter/L1Splitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3b755215379388bda78294afb56d7288557e61d0/src/FeeSplitter/L1Splitter.sol)
 
 **Inherits:**
 [IL1Splitter](/src/interfaces/FeeSplitter/IL1Splitter.sol/interface.IL1Splitter.md)
@@ -17,15 +17,6 @@ uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000;
 ```
 
 
-### WITHDRAWAL_MIN_AMOUNT
-*The minimum amount of ETH that must be sent to L1.*
-
-
-```solidity
-uint256 internal constant WITHDRAWAL_MIN_AMOUNT = 0.1 ether;
-```
-
-
 ### L1_WALLET
 
 ```solidity
@@ -37,6 +28,15 @@ address internal immutable L1_WALLET;
 
 ```solidity
 uint256 internal immutable FEE_DISBURSEMENT_INTERVAL;
+```
+
+
+### WITHDRAWAL_MIN_AMOUNT
+*The minimum amount of ETH that must be sent to L1.*
+
+
+```solidity
+uint256 internal immutable WITHDRAWAL_MIN_AMOUNT;
 ```
 
 
@@ -52,7 +52,7 @@ uint256 public lastDisbursementTime;
 
 
 ```solidity
-constructor(address l1Wallet, uint256 feeDisbursementInterval);
+constructor(address l1Wallet, uint256 feeDisbursementInterval, uint256 withdrawalMinAmount);
 ```
 
 ### withdraw

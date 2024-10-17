@@ -11,17 +11,18 @@ import {IL2StandardBridge} from '../interfaces/optimism/IL2StandardBridge.sol';
 contract L1Splitter is IL1Splitter {
     /// @dev The minimum gas limit for the FeeSplitter withdrawal transaction to L1.
     uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000;
-    /// @dev The minimum amount of ETH that must be sent to L1.
-    uint256 internal constant WITHDRAWAL_MIN_AMOUNT = 0.1 ether;
 
     address internal immutable L1_WALLET;
     uint256 internal immutable FEE_DISBURSEMENT_INTERVAL;
+    /// @dev The minimum amount of ETH that must be sent to L1.
+    uint256 internal immutable WITHDRAWAL_MIN_AMOUNT;
 
     uint256 public lastDisbursementTime;
 
-    constructor(address l1Wallet, uint256 feeDisbursementInterval) {
+    constructor(address l1Wallet, uint256 feeDisbursementInterval, uint256 withdrawalMinAmount) {
         L1_WALLET = l1Wallet;
         FEE_DISBURSEMENT_INTERVAL = feeDisbursementInterval;
+        WITHDRAWAL_MIN_AMOUNT = withdrawalMinAmount;
     }
 
     /// @inheritdoc IL1Splitter

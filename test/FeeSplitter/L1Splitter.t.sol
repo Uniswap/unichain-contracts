@@ -10,7 +10,7 @@ contract L1SplitterTest is Test {
     L1Splitter internal splitter;
 
     function setUp() public {
-        splitter = new L1Splitter(makeAddr('l1Wallet'), 1 days);
+        splitter = new L1Splitter(makeAddr('l1Wallet'), 1 days, 0.1 ether);
         vm.etch(Predeploys.L2_STANDARD_BRIDGE, address(new MockL2StandardBridge()).code);
     }
 

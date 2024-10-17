@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {FeeSplitter} from '../src/FeeSplitter/FeeSplitter.sol';
-import {L1Splitter} from '../src/FeeSplitter/L1Splitter.sol';
-import {INetFeeSplitter, NetFeeSplitter} from '../src/FeeSplitter/NetFeeSplitter.sol';
+import {FeeSplitter} from '../../src/FeeSplitter/FeeSplitter.sol';
+import {L1Splitter} from '../../src/FeeSplitter/L1Splitter.sol';
+import {INetFeeSplitter, NetFeeSplitter} from '../../src/FeeSplitter/NetFeeSplitter.sol';
 import {Script, stdJson} from 'forge-std/Script.sol';
 
-contract Deploy is Script {
+contract DeployFeeSplitters is Script {
     using stdJson for string;
 
     function run() public {
         vm.startBroadcast();
-        string memory input = vm.readFile('script/input.json');
+        string memory input = vm.readFile('script/FeeSplitters/input.json');
         string memory chainIdSlug = string(abi.encodePacked('["', vm.toString(block.chainid), '"]'));
         address l1Wallet = input.readAddress(string.concat(chainIdSlug, '.l1Wallet'));
         address netFeeRecipient = input.readAddress(string.concat(chainIdSlug, '.netFeeRecipient'));

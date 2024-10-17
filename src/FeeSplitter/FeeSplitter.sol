@@ -139,7 +139,6 @@ contract FeeSplitter is IFeeSplitter {
     }
 
     function _feeVaultWithdrawal(address _feeVault) internal {
-        // TODO: is it sufficient to check that the fee vaults are configured properly once in the constructor?
         if (IFeeVault(_feeVault).withdrawalNetwork() != IFeeVault.WithdrawalNetwork.L2) {
             revert MustWithdrawToL2();
         }

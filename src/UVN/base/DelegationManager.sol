@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IStakeManager} from "../../interfaces/UVN/IStakeManager.sol";
-import {IDelegateCallback} from "../../interfaces/UVN/IDelegateCallback.sol";
-import {OperatorData} from "./BaseStructs.sol";
+import {IDelegateCallback} from '../../interfaces/UVN/IDelegateCallback.sol';
+import {IStakeManager} from '../../interfaces/UVN/IStakeManager.sol';
+import {OperatorData} from './BaseStructs.sol';
 
 contract DelegationManager {
     IStakeManager public immutable STAKE_MANAGER;
@@ -21,6 +21,9 @@ contract DelegationManager {
     mapping(address operator => address vault) public registeredVaults;
     /// @notice Mapping of operators to their tracked data.
     mapping(address operator => OperatorData) public operatorData;
+
+    /// @notice The total delegated supply.
+    uint256 public totalDelegatedSupply;
 
     constructor(address _stakeManager) {
         STAKE_MANAGER = IStakeManager(_stakeManager);
@@ -66,6 +69,8 @@ contract DelegationManager {
 
         delegatedTo[_staker] = _operator;
         operatorData[_operator] = _operatorData;
+
+        totalDelegatedSupply += _balance;
     }
 
     function _undelegate(address _staker, address _operator, uint96 _balance) internal {
@@ -78,5 +83,7 @@ contract DelegationManager {
 
         delegatedTo[_staker] = address(0);
         operatorData[_operator] = _operatorData;
+
+        totalDelegatedSupply -= _balance;
     }
 }

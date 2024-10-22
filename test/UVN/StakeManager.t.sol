@@ -3,7 +3,8 @@ pragma solidity 0.8.23;
 
 import 'forge-std/Test.sol';
 
-import {StakeManager} from '../../src/UVN/StakeManager.sol';
+import {StakeManager} from '../../src/UVN/base/StakeManager.sol';
+import {MockL2CrossDomainMessenger} from '../mock/MockL2CrossDomainMessenger.sol';
 
 contract StakeManagerTest is Test {
     StakeManager internal stakeManager;
@@ -19,7 +20,7 @@ contract StakeManagerTest is Test {
         mockL2CrossDomainMessenger = new MockL2CrossDomainMessenger();
         mockL2CrossDomainMessenger.setSender(crossDomainStaker);
         _mockL2CrossDomainMessenger = address(mockL2CrossDomainMessenger);
-        
+
         stakeManager = new StakeManager(_mockL2CrossDomainMessenger, crossDomainStaker);
         _stakeManager = address(stakeManager);
     }

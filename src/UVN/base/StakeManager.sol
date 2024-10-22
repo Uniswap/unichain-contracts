@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IL2CrossDomainMessenger} from "../../interfaces/IL2CrossDomainMessenger.sol";
+import {IL2CrossDomainMessenger} from '../../interfaces/IL2CrossDomainMessenger.sol';
 
 /// @title StakeManager
 contract StakeManager {

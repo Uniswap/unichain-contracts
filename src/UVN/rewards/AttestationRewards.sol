@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {ICrossDomainMessenger} from "../../interfaces/IL2CrossDomainMessenger.sol";
-import {IStakeManager} from "../../interfaces/UVN/IStakeManager.sol";
-import {OperatorData} from "../base/BaseStructs.sol";
+import {INetFeeSplitter} from '../../interfaces/FeeSplitter/INetFeeSplitter.sol';
+import {IDelegationManager} from '../../interfaces/UVN/IDelegationManager.sol';
+import {OperatorData} from '../base/BaseStructs.sol';
+import {FixedPointMathLib} from 'solady/utils/FixedPointMathLib.sol';
 
 /// @title AttestationRewards
 /// @notice This contract distributes rewards in ETH for stakers that attest to blocks.
@@ -40,6 +40,17 @@ contract AttestationRewards {
     /// @notice Thrown when the vault has insufficient balance.
     error InsufficientBalance();
 
+    /// @notice AttesterData struct.
+    /// @dev    Fits in a single storage slot.
+    /// @param balanceLast The balance of the attester at the last attested epoch.
+    /// @param balanceCurrent The balance of the attester at the current epoch.
+    /// @param lastAttestedEpochNumber The last epoch number for which the rewards were distributed.
+    struct AttesterData {
+        uint96 balanceLast;
+        uint96 balanceCurrent;
+        uint32 lastAttestedEpochNumber;
+    }
+
     /// @notice EpochData struct.
     /// @dev    Fits in a single storage slot.
     /// @param rewardPerToken The reward per token value.
@@ -49,15 +60,15 @@ contract AttestationRewards {
         uint32 lastAttestedEpochNumber;
     }
 
-    mapping(address attester => uint32 lastAttestedEpochNumber) public lastAttestedEpochNumber;
+    mapping(address attester => AttesterData) public attesterData;
 
     /// @notice The domain typehash for the EIP712 signature.
     bytes32 public constant DOMAIN_TYPEHASH =
-        keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
+        keccak256('EIP712Domain(string name,uint256 chainId,address verifyingContract)');
 
     /// @notice The typehash for the Attest struct.
     bytes32 public constant ATTEST_TYPEHASH =
-        keccak256("Attest(address attester,uint128 blockNumber,bytes32 blockHash)");
+        keccak256('Attest(address attester,uint128 blockNumber,bytes32 blockHash)');
 
     /// @notice The length of an epoch.
     uint32 public constant EPOCH_LENGTH = 10;
@@ -66,20 +77,20 @@ contract AttestationRewards {
     uint256 public constant MIN_BALANCE_BPS = 100; // 1%
     uint256 public constant BPS = 10_000;
 
-    /// @notice The FeeDisburser contract.
-    FeeDisburser public immutable FEE_DISBURSER;
+    /// @notice The NetFeeSplitter contract.
+    INetFeeSplitter public immutable NET_FEE_SPLITTER;
 
-    /// @notice The StakeManager contract.
-    IStakeManager public immutable STAKE_MANAGER;
+    /// @notice The DelegationManager contract.
+    IDelegationManager public immutable DELEGATION_MANAGER;
 
     /// @notice The current epoch data.
     EpochData public epochData;
 
-    /// @param _feeDisburser The address of the FeeDisburser contract.
-    /// @param _stakeManager The address of the StakeManager contract.
-    constructor(address payable _feeDisburser, address _stakeManager) {
-        FEE_DISBURSER = FeeDisburser(_feeDisburser);
-        STAKE_MANAGER = IStakeManager(_stakeManager);
+    /// @param _netFeeSplitter The address of the NetFeeSplitter contract.
+    /// @param _delegationManager The address of the DelegationManager contract.
+    constructor(address _netFeeSplitter, address _delegationManager) {
+        NET_FEE_SPLITTER = INetFeeSplitter(_netFeeSplitter);
+        DELEGATION_MANAGER = IDelegationManager(_delegationManager);
     }
 
     /// @notice Payable fallback function
@@ -116,9 +127,9 @@ contract AttestationRewards {
         address attester = ecrecover(
             keccak256(
                 abi.encodePacked(
-                    "\x19\x01",
+                    '\x19\x01',
                     keccak256(
-                        abi.encode(DOMAIN_TYPEHASH, keccak256(bytes("StakingRewards")), block.chainid, address(this))
+                        abi.encode(DOMAIN_TYPEHASH, keccak256(bytes('StakingRewards')), block.chainid, address(this))
                     ),
                     keccak256(abi.encode(ATTEST_TYPEHASH, _blockNumber, _blockHash))
                 )
@@ -168,7 +179,9 @@ contract AttestationRewards {
 
         uint32 currentEpochNumber = _getCurrentEpochNumber();
         uint32 epochNumber = _blockNumber / EPOCH_LENGTH;
-        uint256 _totalStake = STAKE_MANAGER.totalSupply();
+
+        // TODO: this should be total delegated stake used for this rewards contract
+        uint256 _totalStake = DELEGATION_MANAGER.totalDelegatedSupply();
 
         // only attest for current epoch
         if (epochNumber != currentEpochNumber) revert NotCurrentEpoch();
@@ -177,7 +190,7 @@ contract AttestationRewards {
         if (epochData.lastAttestedEpochNumber != currentEpochNumber) {
             // NOTE: alternatively, the FeeDisburser could send the rewards to the StakingRewards contract
             //       automatically whenever it receveives eth.
-            FEE_DISBURSER.disburseFees();
+            NET_FEE_SPLITTER.withdrawFees(address(this));
             epochData.rewardPerToken = uint160(address(this).balance.divWad(_totalStake));
             epochData.lastAttestedEpochNumber = currentEpochNumber;
         }
@@ -185,23 +198,25 @@ contract AttestationRewards {
         // ensure the block hash is valid
         if (_blockHash != blockhash(_blockNumber)) revert InvalidBlockHash();
 
-        OperatorData memory _operatorData = STAKE_MANAGER.operatorData(_attester);
+        AttesterData memory _attesterData = attesterData[_attester];
 
-        _balance =
-            _blockInCurrentEpoch(_operatorData.lastSyncedBlock) ? _operatorData.sharesLast : _operatorData.sharesCurrent;
+        _balance = _attesterData.balanceLast;
+        _attesterData.balanceLast = _attesterData.balanceCurrent;
+        _attesterData.balanceCurrent = uint96(DELEGATION_MANAGER.operatorData(_attester).sharesCurrent);
 
         // ensure the attester has at least MIN_BALANCE_BPS of the total supply
         if (_balance < _totalStake.fullMulDiv(MIN_BALANCE_BPS, BPS)) revert InsufficientBalance();
 
         // only give rewards if the attester participated in the previous epoch
-        if (lastAttestedEpochNumber[_attester] != currentEpochNumber - 1) {
+        if (_attesterData.lastAttestedEpochNumber != currentEpochNumber - 1) {
             _reward = _balance.mulWad(epochData.rewardPerToken);
         }
 
-        lastAttestedEpochNumber[_attester] = currentEpochNumber;
+        _attesterData.lastAttestedEpochNumber = currentEpochNumber;
+        attesterData[_attester] = _attesterData;
 
         // Distribute rewards to the attester
-        (bool success,) = _vault.call{value: _reward}("");
+        (bool success,) = _vault.call{value: _reward}('');
         if (!success) revert TransferFailed();
 
         emit RewardsDistributed(_vault, _reward);

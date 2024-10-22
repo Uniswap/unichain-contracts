@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IDelegateCallback} from '../../interfaces/UVN/IDelegateCallback.sol';
+import {IDelegationManagerHook} from '../../interfaces/UVN/IDelegationManagerHook.sol';
 import {IStakeManager} from '../../interfaces/UVN/IStakeManager.sol';
 import {OperatorData} from './BaseStructs.sol';
 
@@ -33,23 +33,31 @@ contract DelegationManager {
     /// @dev additional checks can be added like delays, etc.
     function delegate(address _operator) external {
         uint256 balance0 = STAKE_MANAGER.balanceOf(msg.sender);
+        address vault = registeredVaults[_operator];
+
+        if (vault != address(0)) {
+            IDelegationManagerHook(vault).beforeDelegate(msg.sender, balance0);
+        }
 
         _delegate(msg.sender, _operator, uint96(balance0));
 
-        address vault = registeredVaults[_operator];
         if (vault != address(0)) {
-            IDelegateCallback(vault).notifyDelegate(msg.sender, balance0);
+            IDelegationManagerHook(vault).afterDelegate(msg.sender, balance0);
         }
     }
 
     function undelegate(address _operator) external {
         uint256 balance0 = STAKE_MANAGER.balanceOf(msg.sender);
+        address vault = registeredVaults[_operator];
+
+        if (vault != address(0)) {
+            IDelegationManagerHook(vault).beforeUndelegate(msg.sender, balance0);
+        }
 
         _undelegate(msg.sender, _operator, uint96(balance0));
 
-        address vault = registeredVaults[_operator];
         if (vault != address(0)) {
-            IDelegateCallback(vault).notifyUndelegate(msg.sender, balance0);
+            IDelegationManagerHook(vault).afterUndelegate(msg.sender, balance0);
         }
     }
 

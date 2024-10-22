@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IDelegateCallback} from '../../interfaces/UVN/IDelegateCallback.sol';
+import {IDelegationManagerHook} from '../../interfaces/UVN/IDelegationManagerHook.sol';
 import {ERC20} from 'solmate/tokens/ERC20.sol';
 import {ERC4626} from 'solmate/tokens/ERC4626.sol';
 import {SafeTransferLib} from 'solmate/utils/SafeTransferLib.sol';
 
-contract ExampleERC4626Vault is ERC4626, IDelegateCallback {
+contract ExampleERC4626Vault is ERC4626, IDelegationManagerHook {
     address public immutable DELEGATION_MANAGER;
 
     error OnlyDelegationManager();
@@ -26,22 +26,26 @@ contract ExampleERC4626Vault is ERC4626, IDelegateCallback {
         return address(this).balance;
     }
 
+    function beforeDelegate(address _staker, uint256 _balance) public onlyDelegationManager {}
+
     /// @notice Notify the vault that a staker has delegated their shares to an operator
     /// @dev The delegation manager is permissioned to mint shares to the staker
     /// @param _staker The staker that delegated their shares
     /// @param _assets The amount of assets to delegate
-    function notifyDelegate(address _staker, uint256 _assets) public onlyDelegationManager {
+    function afterDelegate(address _staker, uint256 _assets) public onlyDelegationManager {
         uint256 shares = convertToShares(_assets);
         _mint(_staker, shares);
 
         emit Deposit(_staker, _staker, _assets, shares);
     }
 
+    function beforeUndelegate(address _staker, uint256 _balance) public onlyDelegationManager {}
+
     /// @notice Notify the vault that a staker has undelegated their shares from an operator
     /// @dev The delegation manager is permissioned to burn shares from the staker
     /// @param _staker The staker that undelegated their shares
     /// @param _assets The amount of assets to undelegate
-    function notifyUndelegate(address _staker, uint256 _assets) public onlyDelegationManager {
+    function afterUndelegate(address _staker, uint256 _assets) public onlyDelegationManager {
         uint256 shares = convertToShares(_assets);
 
         _burn(_staker, shares);

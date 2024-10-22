@@ -35,7 +35,7 @@ contract ExampleERC4626VaultTest is UVNSetupTest {
         vm.deal(_vault, 100);
 
         vm.prank(_delegationManager);
-        vault.notifyDelegate(alice, 100);
+        vault.afterDelegate(alice, 100);
 
         assertEq(vault.balanceOf(alice), 100);
         assertEq(vault.totalAssets(), 100);

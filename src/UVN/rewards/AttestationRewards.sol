@@ -204,8 +204,8 @@ contract AttestationRewards {
         _attesterData.balanceLast = _attesterData.balanceCurrent;
         _attesterData.balanceCurrent = uint96(DELEGATION_MANAGER.operatorData(_attester).sharesCurrent);
 
-        // ensure the attester has at least MIN_BALANCE_BPS of the total supply
-        if (_balance < _totalStake.fullMulDiv(MIN_BALANCE_BPS, BPS)) revert InsufficientBalance();
+        // // ensure the attester has at least MIN_BALANCE_BPS of the total supply
+        // if (_balance < _totalStake.fullMulDiv(MIN_BALANCE_BPS, BPS)) revert InsufficientBalance();
 
         // only give rewards if the attester participated in the previous epoch
         if (_attesterData.lastAttestedEpochNumber != currentEpochNumber - 1) {
@@ -220,12 +220,6 @@ contract AttestationRewards {
         if (!success) revert TransferFailed();
 
         emit RewardsDistributed(_vault, _reward);
-    }
-
-    function _blockInCurrentEpoch(uint32 _blockNumber) internal view returns (bool) {
-        uint32 currentEpochNumber = _getCurrentEpochNumber();
-        return
-            _blockNumber >= currentEpochNumber * EPOCH_LENGTH && _blockNumber < (currentEpochNumber + 1) * EPOCH_LENGTH;
     }
 
     /// @notice Gets the current epoch number.

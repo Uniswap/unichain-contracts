@@ -4,25 +4,11 @@ pragma solidity 0.8.23;
 import 'forge-std/Test.sol';
 
 import {StakeManager} from '../../src/UVN/base/StakeManager.sol';
-import {MockL2CrossDomainMessenger} from '../mock/MockL2CrossDomainMessenger.sol';
+import {UVNSetupTest} from './UVNSetup.t.sol';
 
-contract StakeManagerTest is Test {
-    StakeManager internal stakeManager;
-    address internal _stakeManager;
-
-    MockL2CrossDomainMessenger internal mockL2CrossDomainMessenger;
-    address internal _mockL2CrossDomainMessenger;
-
-    address internal alice = makeAddr('alice');
-
-    function setUp() public {
-        address crossDomainStaker = makeAddr('crossDomainStaker');
-        mockL2CrossDomainMessenger = new MockL2CrossDomainMessenger();
-        mockL2CrossDomainMessenger.setSender(crossDomainStaker);
-        _mockL2CrossDomainMessenger = address(mockL2CrossDomainMessenger);
-
-        stakeManager = new StakeManager(_mockL2CrossDomainMessenger, crossDomainStaker);
-        _stakeManager = address(stakeManager);
+contract StakeManagerTest is UVNSetupTest {
+    function setUp() public override {
+        super.setUp();
     }
 
     function test_RevertIf_OnlyCrossDomainStaker() public {

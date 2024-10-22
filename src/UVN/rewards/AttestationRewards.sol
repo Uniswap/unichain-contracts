@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import {INetFeeSplitter} from '../../interfaces/FeeSplitter/INetFeeSplitter.sol';
 import {IDelegationManager} from '../../interfaces/UVN/IDelegationManager.sol';
 import {OperatorData} from '../base/BaseStructs.sol';
-import {FixedPointMathLib} from 'solady/utils/FixedPointMathLib.sol';
+import {FixedPointMathLib} from 'solmate/utils/FixedPointMathLib.sol';
 
 /// @title AttestationRewards
 /// @notice This contract distributes rewards in ETH for stakers that attest to blocks.
@@ -191,7 +191,7 @@ contract AttestationRewards {
             // NOTE: alternatively, the FeeDisburser could send the rewards to the StakingRewards contract
             //       automatically whenever it receveives eth.
             NET_FEE_SPLITTER.withdrawFees(address(this));
-            epochData.rewardPerToken = uint160(address(this).balance.divWad(_totalStake));
+            epochData.rewardPerToken = uint160(address(this).balance.divWadDown(_totalStake));
             epochData.lastAttestedEpochNumber = currentEpochNumber;
         }
 
@@ -209,7 +209,7 @@ contract AttestationRewards {
 
         // only give rewards if the attester participated in the previous epoch
         if (_attesterData.lastAttestedEpochNumber != currentEpochNumber - 1) {
-            _reward = _balance.mulWad(epochData.rewardPerToken);
+            _reward = _balance.mulWadDown(epochData.rewardPerToken);
         }
 
         _attesterData.lastAttestedEpochNumber = currentEpochNumber;

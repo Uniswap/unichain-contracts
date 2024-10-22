@@ -16,3 +16,6 @@
 [submodule "lib/forge-chronicles"]
 	path = lib/forge-chronicles
 	url = https://github.com/gretzke/forge-chronicles
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/Vectorized/solady

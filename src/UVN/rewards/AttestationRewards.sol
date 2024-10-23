@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import {INetFeeSplitter} from '../../interfaces/FeeSplitter/INetFeeSplitter.sol';
 import {IDelegationManager} from '../../interfaces/UVN/IDelegationManager.sol';
 import {OperatorData} from '../base/BaseStructs.sol';
-import {console2} from 'forge-std/console2.sol';
 import {FixedPointMathLib} from 'solmate/utils/FixedPointMathLib.sol';
 
 /// @title AttestationRewards
@@ -73,10 +72,6 @@ contract AttestationRewards {
 
     /// @notice The length of an epoch.
     uint32 public constant EPOCH_LENGTH = 10;
-
-    /// @notice The minimum balance in bps (relative to totalStake) for an attester to be eligible for rewards.
-    uint256 public constant MIN_BALANCE_BPS = 100; // 1%
-    uint256 public constant BPS = 10_000;
 
     /// @notice The NetFeeSplitter contract.
     INetFeeSplitter public immutable NET_FEE_SPLITTER;
@@ -204,9 +199,6 @@ contract AttestationRewards {
         _balance = _attesterData.balanceLast;
         _attesterData.balanceCurrent = uint96(DELEGATION_MANAGER.operatorData(_attester).sharesCurrent);
         _attesterData.balanceLast = _attesterData.balanceCurrent;
-
-        // // ensure the attester has at least MIN_BALANCE_BPS of the total supply
-        // if (_balance < _totalStake.fullMulDiv(MIN_BALANCE_BPS, BPS)) revert InsufficientBalance();
 
         // only give rewards if the attester participated in the previous epoch
         if (_attesterData.lastAttestedEpochNumber + 1 == currentEpochNumber) {

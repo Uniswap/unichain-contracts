@@ -38,7 +38,9 @@ contract DelegationManager {
     /// @notice Modifier to ensure the caller has waited the required number of blocks since their last delegation.
     modifier onlyAfterDelegationDelay(address _staker) {
         uint32 _lastDelegatedAt = lastDelegatedAt[_staker];
-        if (block.number - _lastDelegatedAt < DELEGATION_DELAY_BLOCKS && _lastDelegatedAt != 0) revert DelegationDelay();
+        if (block.number - _lastDelegatedAt < DELEGATION_DELAY_BLOCKS && _lastDelegatedAt != 0) {
+            revert DelegationDelay();
+        }
         _;
         lastDelegatedAt[_staker] = uint32(block.number);
     }

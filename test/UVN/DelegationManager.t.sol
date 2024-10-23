@@ -3,8 +3,8 @@ pragma solidity ^0.8.23;
 
 import 'forge-std/Test.sol';
 
-import {DelegationManager} from '../../src/UVN/base/DelegationManager.sol';
 import {OperatorData} from '../../src/UVN/base/BaseStructs.sol';
+import {DelegationManager} from '../../src/UVN/base/DelegationManager.sol';
 import {UVNSetupTest} from './UVNSetup.t.sol';
 
 contract DelegationManagerTest is UVNSetupTest {

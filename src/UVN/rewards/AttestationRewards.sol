@@ -8,8 +8,7 @@ import {FixedPointMathLib} from 'solmate/utils/FixedPointMathLib.sol';
 
 /// @title AttestationRewards
 /// @notice This contract distributes rewards in ETH for stakers that attest to blocks.
-///         The contract is inspired on `StakingRewards.sol` from Uniswap:
-///         https://github.com/Uniswap/liquidity-staker/blob/3edce550aeeb7b0c17a10701ff4484d6967e345f/contracts/StakingRewards.sol
+/// @author Inspired by https://github.com/Uniswap/MultiStaker/blob/main/src/example-stakers/CrossDomainStaker/L2/StakingRewards.sol
 contract AttestationRewards {
     using FixedPointMathLib for uint256;
 

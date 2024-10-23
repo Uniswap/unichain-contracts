@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import {IL2CrossDomainMessenger} from '../../interfaces/IL2CrossDomainMessenger.sol';
 
 /// @title StakeManager
+/// @notice Syncs balances of stakers on L2 with their L1 balance.
 contract StakeManager {
     /// @notice Emitted when `staker` balance is updated
     event Synced(address indexed staker, uint256 oldValue, uint256 newValue);

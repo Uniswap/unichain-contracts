@@ -48,4 +48,6 @@ contract ExampleERC4626VaultTest is UVNSetupTest {
 
         assertEq(balance0 + 100, alice.balance);
     }
+
+    function test_sharesAccounting() public {}
 }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import {INetFeeSplitter} from '../../interfaces/FeeSplitter/INetFeeSplitter.sol';
 import {IDelegationManager} from '../../interfaces/UVN/IDelegationManager.sol';
 import {OperatorData} from '../base/BaseStructs.sol';
+import {console2} from 'forge-std/console2.sol';
 import {FixedPointMathLib} from 'solmate/utils/FixedPointMathLib.sol';
 
 /// @title AttestationRewards
@@ -201,14 +202,14 @@ contract AttestationRewards {
         AttesterData memory _attesterData = attesterData[_attester];
 
         _balance = _attesterData.balanceLast;
-        _attesterData.balanceLast = _attesterData.balanceCurrent;
         _attesterData.balanceCurrent = uint96(DELEGATION_MANAGER.operatorData(_attester).sharesCurrent);
+        _attesterData.balanceLast = _attesterData.balanceCurrent;
 
         // // ensure the attester has at least MIN_BALANCE_BPS of the total supply
         // if (_balance < _totalStake.fullMulDiv(MIN_BALANCE_BPS, BPS)) revert InsufficientBalance();
 
         // only give rewards if the attester participated in the previous epoch
-        if (_attesterData.lastAttestedEpochNumber != currentEpochNumber - 1) {
+        if (_attesterData.lastAttestedEpochNumber + 1 == currentEpochNumber) {
             _reward = _balance.mulWadDown(epochData.rewardPerToken);
         }
 

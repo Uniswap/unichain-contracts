@@ -25,13 +25,15 @@ contract AttestationRewardsTest is UVNSetupTest {
         attestationRewards = new AttestationRewards(_mockNetFeeSplitter, _delegationManager);
         _attestationRewards = address(attestationRewards);
 
+        epochLength = uint32(attestationRewards.EPOCH_LENGTH());
+
+        vm.roll(epochLength);
+
         vm.prank(_mockL2CrossDomainMessenger);
         stakeManager.sync(alice, 100, '');
 
         vm.prank(alice);
         delegationManager.delegate(operator);
-
-        epochLength = uint32(attestationRewards.EPOCH_LENGTH());
     }
 
     function test_fuzz_Attest(uint32 _blockNumber, uint256 _value) public {
@@ -71,11 +73,56 @@ contract AttestationRewardsTest is UVNSetupTest {
 
         (uint96 balanceLast1, uint96 balanceCurrent1, uint32 lastAttestedEpochNumber1) =
             attestationRewards.attesterData(operator);
-        // Last balance is current
-        assertEq(balanceLast1, balanceCurrent0);
+        // Last balance is current shares at the time of the last attestation (which was not updated)
+        assertEq(balanceLast1, _sharesCurrent);
         // Current balance is the current shares in operatorData
         assertEq(balanceCurrent1, _sharesCurrent);
         // Last attested epoch number is the current epoch
         assertEq(lastAttestedEpochNumber1, _blockNumber / epochLength);
+    }
+
+    function test_Attest_usesLastBalance() public {
+        uint32 nextEpoch = epochLength * 1;
+        vm.roll(nextEpoch);
+
+        vm.deal(_mockNetFeeSplitter, 1 ether);
+
+        uint256 balance0 = operator.balance;
+
+        (uint96 balanceLast0, uint96 balanceCurrent0, uint32 lastAttestedEpochNumber0) =
+            attestationRewards.attesterData(operator);
+
+        // Attester has not attested before
+        assertEq(balanceLast0, 0);
+        assertEq(balanceCurrent0, 0);
+        assertEq(lastAttestedEpochNumber0, 0);
+
+        vm.prank(operator);
+        attestationRewards.attest(nextEpoch, blockhash(nextEpoch));
+
+        // Assert that the operator's balance is unchanged
+        assertEq(operator.balance, balance0);
+
+        nextEpoch = nextEpoch + epochLength;
+
+        // Roll to next epoch
+        vm.roll(nextEpoch);
+
+        (uint96 balanceLast1, uint96 balanceCurrent1, uint32 lastAttestedEpochNumber1) =
+            attestationRewards.attesterData(operator);
+        (, uint96 sharesCurrent,) = delegationManager.operatorData(operator);
+
+        // Assert that the last balance is the sharesCurrent at the time of the last attestation (which was not updated)
+        assertEq(balanceLast1, sharesCurrent);
+        // Assert that the current balance is the sharesCurrent fetched from delegationManager
+        assertEq(balanceCurrent1, sharesCurrent);
+        // Assert that the last attested epoch number is the last epoch
+        assertEq(lastAttestedEpochNumber1, (nextEpoch / epochLength) - 1);
+
+        vm.prank(operator);
+        attestationRewards.attest(nextEpoch, blockhash(nextEpoch));
+
+        // Assert that the operator received rewards proportional to their balance
+        assertEq(operator.balance, balance0 + 1 ether);
     }
 }

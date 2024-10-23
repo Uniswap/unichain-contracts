@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import 'forge-std/Test.sol';
 
+import {DelegationManager} from '../../src/UVN/base/DelegationManager.sol';
 import {OperatorData} from '../../src/UVN/base/BaseStructs.sol';
 import {UVNSetupTest} from './UVNSetup.t.sol';
 
@@ -39,6 +40,8 @@ contract DelegationManagerTest is UVNSetupTest {
 
         assertEq(delegationManager.totalDelegatedSupply(), 100);
 
+        vm.roll(block.number + delegationManager.DELEGATION_DELAY_BLOCKS() + 1);
+
         vm.prank(alice);
         delegationManager.undelegate(operator);
 
@@ -48,5 +51,16 @@ contract DelegationManagerTest is UVNSetupTest {
         assertEq(_sharesCurrent, 0);
         assertEq(lastSyncedBlock, block.number);
         assertEq(delegationManager.totalDelegatedSupply(), 0);
+    }
+
+    function test_Undelegate_revertsWithDelegationDelay() public {
+        vm.prank(alice);
+        delegationManager.delegate(operator);
+
+        vm.roll(block.number + delegationManager.DELEGATION_DELAY_BLOCKS() - 1);
+
+        vm.prank(alice);
+        vm.expectRevert(DelegationManager.DelegationDelay.selector);
+        delegationManager.undelegate(operator);
     }
 }

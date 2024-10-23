@@ -5,6 +5,9 @@ import {IDelegationManagerHook} from '../../interfaces/UVN/IDelegationManagerHoo
 import {IStakeManager} from '../../interfaces/UVN/IStakeManager.sol';
 import {OperatorData} from './BaseStructs.sol';
 
+/// @title Delegation Manager
+/// @notice Manages delegation of staker balances to operators.
+/// @dev Operators can register contracts to receive callbacks before and after delegate/undelegate events.
 contract DelegationManager {
     IStakeManager public immutable STAKE_MANAGER;
 
@@ -18,6 +21,15 @@ contract DelegationManager {
     error NotDelegated();
     /// @notice Thrown when the caller has not waited the required delay since their last delegation.
     error DelegationDelay();
+
+    /// @notice Emitted on new delegation/undelegation actions
+    /// @param _staker The staker that delegated/undelegated
+    /// @param _operator The operator that was delegated/undelegated to
+    /// @param _sharesLast The last shares value for the operator
+    /// @param _sharesCurrent The current shares value for the operator
+    event DelegationUpdated(
+        address indexed _staker, address indexed _operator, uint96 _sharesLast, uint96 _sharesCurrent
+    );
 
     /// @notice Mapping of stakers to their currently delegated operator.
     mapping(address staker => address operator) public delegatedTo;
@@ -95,6 +107,8 @@ contract DelegationManager {
         operatorData[_operator] = _operatorData;
 
         totalDelegatedSupply += _balance;
+
+        emit DelegationUpdated(_staker, _operator, _operatorData.sharesLast, _operatorData.sharesCurrent);
     }
 
     function _undelegate(address _staker, address _operator, uint96 _balance) internal {
@@ -109,5 +123,7 @@ contract DelegationManager {
         operatorData[_operator] = _operatorData;
 
         totalDelegatedSupply -= _balance;
+
+        emit DelegationUpdated(_staker, _operator, _operatorData.sharesLast, _operatorData.sharesCurrent);
     }
 }

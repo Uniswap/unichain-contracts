@@ -69,7 +69,7 @@ contract AttestationRewards {
     bytes32 public constant ATTEST_TYPEHASH =
         keccak256('Attest(address attester,uint128 blockNumber,bytes32 blockHash)');
 
-    /// @notice The length of an epoch.
+    /// @notice The length of an epoch in blocks.
     uint32 public constant EPOCH_LENGTH = 10;
 
     /// @notice The NetFeeSplitter contract.
@@ -172,6 +172,9 @@ contract AttestationRewards {
     {
         if (_blockNumber % EPOCH_LENGTH != 0) revert NotEpochStart();
 
+        // ensure the block hash is valid
+        if (_blockHash != blockhash(_blockNumber)) revert InvalidBlockHash();
+
         uint32 currentEpochNumber = _getCurrentEpochNumber();
         uint32 epochNumber = _blockNumber / EPOCH_LENGTH;
 
@@ -189,9 +192,6 @@ contract AttestationRewards {
             epochData.rewardPerToken = uint160(address(this).balance.divWadDown(_totalStake));
             epochData.lastAttestedEpochNumber = currentEpochNumber;
         }
-
-        // ensure the block hash is valid
-        if (_blockHash != blockhash(_blockNumber)) revert InvalidBlockHash();
 
         AttesterData memory _attesterData = attesterData[_attester];
 

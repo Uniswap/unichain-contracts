@@ -34,7 +34,7 @@ contract DelegationManager {
     /// @notice Mapping of stakers to their currently delegated operator.
     mapping(address staker => address operator) public delegatedTo;
     /// @notice Mapping of stakers to the block number at which their delegation was last updated.
-    mapping(address staker => uint32 lastDelegatedAt) public lastDelegatedAt;
+    mapping(address staker => uint32 lastDelegatedBlock) public lastDelegatedBlock;
     /// @notice Register a vault to receive callbacks on delegate and undelegate events.
     mapping(address operator => address vault) public registeredVaults;
     /// @notice Mapping of operators to their tracked data.
@@ -49,12 +49,12 @@ contract DelegationManager {
 
     /// @notice Modifier to ensure the caller has waited the required number of blocks since their last delegation.
     modifier onlyAfterDelegationDelay(address _staker) {
-        uint32 _lastDelegatedAt = lastDelegatedAt[_staker];
-        if (block.number - _lastDelegatedAt < DELEGATION_DELAY_BLOCKS && _lastDelegatedAt != 0) {
+        uint32 _lastDelegatedBlock = lastDelegatedBlock[_staker];
+        if (_lastDelegatedBlock != 0 && block.number - _lastDelegatedBlock < DELEGATION_DELAY_BLOCKS) {
             revert DelegationDelay();
         }
         _;
-        lastDelegatedAt[_staker] = uint32(block.number);
+        lastDelegatedBlock[_staker] = uint32(block.number);
     }
 
     /// Simple functions to delegate and undelegate to an operator.

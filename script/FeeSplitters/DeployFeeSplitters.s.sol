@@ -19,7 +19,7 @@ contract DeployFeeSplitters is Script {
         uint256 feeDisbursementInterval = 1 hours;
         uint256 withdrawalMinAmount = 0.01 ether;
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: netFeeRecipient, allocation: 10_000});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: netFeeRecipient, allocation: 10_000});
         address[] memory initialRecipients = new address[](1);
         initialRecipients[0] = netFeeRecipient;
         L1Splitter l1Splitter = new L1Splitter(l1Wallet, feeDisbursementInterval, withdrawalMinAmount);

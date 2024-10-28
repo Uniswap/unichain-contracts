@@ -18,18 +18,18 @@ contract NetFeeSplitterTest is Test {
         recipients[0] = makeAddr('recipient');
         recipients[1] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](2);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 100});
-        recipientData[1] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 100});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: 100});
+        recipientData[1] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: 100});
         vm.expectRevert(INetFeeSplitter.DuplicateRecipient.selector);
         new NetFeeSplitter(recipients, recipientData);
     }
 
-    function test_RevertIf_AdminZero() public {
+    function test_RevertIf_SetterZero() public {
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: address(0), allocation: 100});
-        vm.expectRevert(INetFeeSplitter.AdminZero.selector);
+        recipientData[0] = INetFeeSplitter.Recipient({setter: address(0), allocation: 100});
+        vm.expectRevert(INetFeeSplitter.SetterZero.selector);
         new NetFeeSplitter(recipients, recipientData);
     }
 
@@ -37,7 +37,7 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = address(0);
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 100});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: 100});
         vm.expectRevert(INetFeeSplitter.RecipientZero.selector);
         new NetFeeSplitter(recipients, recipientData);
     }
@@ -46,8 +46,7 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 0});
-        INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 0});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: 0});
         vm.expectRevert(INetFeeSplitter.AllocationZero.selector);
         new NetFeeSplitter(recipients, recipientData);
     }
@@ -57,7 +56,7 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: allocation});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: allocation});
         vm.expectRevert(INetFeeSplitter.InvalidTotalAllocation.selector);
         new NetFeeSplitter(recipients, recipientData);
     }
@@ -66,18 +65,18 @@ contract NetFeeSplitterTest is Test {
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 10_000});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         vm.expectRevert(INetFeeSplitter.RecipientZero.selector);
         splitter.transfer(makeAddr('sender'), address(0), 1);
     }
 
-    function test_RevertIf_TransferInitiatorNotAdmin(address initiator) public {
-        vm.assume(initiator != makeAddr('admin'));
+    function test_RevertIf_TransferInitiatorNotSetter(address initiator) public {
+        vm.assume(initiator != makeAddr('setter'));
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 10_000});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         vm.expectRevert(INetFeeSplitter.Unauthorized.selector);
         vm.prank(initiator);
@@ -85,28 +84,28 @@ contract NetFeeSplitterTest is Test {
     }
 
     function test_ShouldTransferAllocation() public {
-        address admin_ = makeAddr('admin');
+        address setter_ = makeAddr('setter');
         address recipient_ = makeAddr('recipient');
         address[] memory recipients = new address[](1);
         recipients[0] = recipient_;
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: admin_, allocation: 10_000});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: setter_, allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         (bool success,) = address(splitter).call{value: 1 ether}('');
         assertTrue(success);
         address newRecipient = makeAddr('newRecipient');
-        assertEq(splitter.adminOf(newRecipient), address(0));
+        assertEq(splitter.setterOf(newRecipient), address(0));
         assertEq(splitter.balanceOf(newRecipient), 0);
         assertEq(splitter.earnedFees(recipient_), 1 ether);
         assertEq(splitter.earnedFees(newRecipient), 0);
         vm.expectEmit(true, true, true, true);
-        emit INetFeeSplitter.TransferAllocation(admin_, recipient_, newRecipient, 1);
-        vm.prank(admin_);
+        emit INetFeeSplitter.AllocationTransferred(setter_, recipient_, newRecipient, 1);
+        vm.prank(setter_);
         splitter.transfer(recipient_, newRecipient, 1);
         assertEq(
-            splitter.adminOf(newRecipient),
+            splitter.setterOf(newRecipient),
             newRecipient,
-            'should create recipient data with the recipient being the admin'
+            'should create recipient data with the recipient being the setter'
         );
         assertEq(splitter.balanceOf(recipient_), 9999, 'should transfer the allocation to the new recipient');
         assertEq(splitter.balanceOf(newRecipient), 1, 'should receive the allocation');
@@ -118,32 +117,32 @@ contract NetFeeSplitterTest is Test {
         assertGt(splitter.earnedFees(newRecipient), 0, 'new recipient should receive fees');
     }
 
-    function test_RevertIf_TransferAdminNotAdmin(address initiator) public {
-        vm.assume(initiator != makeAddr('admin'));
+    function test_RevertIf_TransferSetterNotSetter(address initiator) public {
+        vm.assume(initiator != makeAddr('setter'));
         address[] memory recipients = new address[](1);
         recipients[0] = makeAddr('recipient');
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: makeAddr('admin'), allocation: 10_000});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         vm.expectRevert(INetFeeSplitter.Unauthorized.selector);
         vm.prank(initiator);
-        splitter.transferAdmin(makeAddr('recipient'), makeAddr('newAdmin'));
+        splitter.transferSetter(makeAddr('recipient'), makeAddr('newSetter'));
     }
 
-    function test_ShouldTransferAdmin() public {
-        address admin_ = makeAddr('admin');
+    function test_ShouldTransferSetter() public {
+        address setter_ = makeAddr('setter');
         address recipient_ = makeAddr('recipient');
-        address newAdmin_ = makeAddr('newAdmin');
+        address newSetter_ = makeAddr('newSetter');
         address[] memory recipients = new address[](1);
         recipients[0] = recipient_;
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        recipientData[0] = INetFeeSplitter.Recipient({admin: admin_, allocation: 10_000});
+        recipientData[0] = INetFeeSplitter.Recipient({setter: setter_, allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
         vm.expectEmit(true, true, true, true);
-        emit INetFeeSplitter.TransferAdmin(recipient_, admin_, newAdmin_);
-        vm.prank(admin_);
-        splitter.transferAdmin(recipient_, newAdmin_);
-        assertEq(splitter.adminOf(recipient_), newAdmin_);
+        emit INetFeeSplitter.SetterTransferred(recipient_, setter_, newSetter_);
+        vm.prank(setter_);
+        splitter.transferSetter(recipient_, newSetter_);
+        assertEq(splitter.setterOf(recipient_), newSetter_);
     }
 
     function test_ShouldDistributeAndWithdrawFeesCorrectly(
@@ -166,7 +165,7 @@ contract NetFeeSplitterTest is Test {
         uint256 totalAllocation;
         for (uint256 i = 0; i < recipientDataLen; i++) {
             recipientData[i] = recipientData_[i];
-            recipientData[i].admin = admin(i);
+            recipientData[i].setter = setter(i);
             recipients[i] = recipient(i);
             recipientData[i].allocation = bound(recipientData[i].allocation, 1 ether, 100 ether);
             totalAllocation += recipientData[i].allocation;
@@ -195,14 +194,14 @@ contract NetFeeSplitterTest is Test {
             uint256 expectedFees = totalFees * recipientData[i].allocation / 10_000;
             assertEq(splitter.earnedFees(recipients[i]), expectedFees);
             vm.prank(recipients[i]);
-            splitter.withdrawFees(recipientData[i].admin);
+            splitter.withdrawFees(recipientData[i].setter);
             assertEq(splitter.earnedFees(recipients[i]), 0);
-            assertEq(recipientData[i].admin.balance, expectedFees);
+            assertEq(recipientData[i].setter.balance, expectedFees);
         }
     }
 
-    function admin(uint256 i) internal returns (address) {
-        return makeAddr(string(abi.encodePacked('admin', i)));
+    function setter(uint256 i) internal returns (address) {
+        return makeAddr(string(abi.encodePacked('setter', i)));
     }
 
     function recipient(uint256 i) internal returns (address) {

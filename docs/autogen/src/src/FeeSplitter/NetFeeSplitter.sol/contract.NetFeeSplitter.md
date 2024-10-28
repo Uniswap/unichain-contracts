@@ -1,10 +1,10 @@
 # NetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/01f4e5565a975be8c899959d029a1dc7e641a28e/src/FeeSplitter/NetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/0d11217a8d1ea234543e2ac46c4298f0b5f3b3f8/src/FeeSplitter/NetFeeSplitter.sol)
 
 **Inherits:**
 [INetFeeSplitter](/src/interfaces/FeeSplitter/INetFeeSplitter.sol/interface.INetFeeSplitter.md)
 
-Splits net fees between multiple recipients. Recipients are managed by admins. Admins can transfer the entire allocation or a portion of it to other recipients.
+Splits net fees between multiple recipients. Recipients are managed by setters. Setters can transfer the entire allocation or a portion of it to other recipients.
 
 
 ## State Variables
@@ -84,20 +84,20 @@ function transfer(address from, address recipient, uint256 allocation) external;
 |`allocation`|`uint256`|The allocation to transfer|
 
 
-### transferAdmin
+### transferSetter
 
-Transfers the admin of a recipient to a new admin
+Transfers the setter of a recipient to a new setter
 
 
 ```solidity
-function transferAdmin(address recipient, address newAdmin) external;
+function transferSetter(address recipient, address newSetter) external;
 ```
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
 |`recipient`|`address`|The recipient address|
-|`newAdmin`|`address`|The new admin address|
+|`newSetter`|`address`|The new setter address|
 
 
 ### withdrawFees
@@ -163,13 +163,13 @@ function balanceOf(address recipient) public view returns (uint256);
 |`<none>`|`uint256`|allocation The allocation of the recipient|
 
 
-### adminOf
+### setterOf
 
-Gets the admin of a recipient
+Gets the setter of a recipient
 
 
 ```solidity
-function adminOf(address recipient) public view returns (address);
+function setterOf(address recipient) public view returns (address);
 ```
 **Parameters**
 
@@ -181,7 +181,7 @@ function adminOf(address recipient) public view returns (address);
 
 |Name|Type|Description|
 |----|----|-----------|
-|`<none>`|`address`|admin The admin of the recipient|
+|`<none>`|`address`|setter The setter of the recipient|
 
 
 ### _calculateFees

@@ -17,13 +17,13 @@ contract DeployFeeSplitters is Script {
         address netFeeRecipient = input.readAddress(string.concat(chainIdSlug, '.netFeeRecipient'));
         address opWallet = input.readAddress(string.concat(chainIdSlug, '.opWallet'));
         address l1SplitterOwner = input.readAddress(string.concat(chainIdSlug, '.l1SplitterOwner'));
-        uint48 feeDisbursementInterval = 1 hours;
-        uint256 withdrawalMinAmount = 0.01 ether;
+        uint48 feeDisbursementInterval = uint48(input.readUint(string.concat(chainIdSlug, '.feeDisbursementInterval')));
+        uint256 minWithdrawalAmount = input.readUint(string.concat(chainIdSlug, '.minWithdrawalAmount'));
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
         recipientData[0] = INetFeeSplitter.Recipient({setter: netFeeRecipient, allocation: 10_000});
         address[] memory initialRecipients = new address[](1);
         initialRecipients[0] = netFeeRecipient;
-        L1Splitter l1Splitter = new L1Splitter(l1SplitterOwner, l1Wallet, feeDisbursementInterval, withdrawalMinAmount);
+        L1Splitter l1Splitter = new L1Splitter(l1SplitterOwner, l1Wallet, feeDisbursementInterval, minWithdrawalAmount);
         NetFeeSplitter netFeeSplitter = new NetFeeSplitter(initialRecipients, recipientData);
         new FeeSplitter(opWallet, address(l1Splitter), address(netFeeSplitter));
         vm.stopBroadcast();

@@ -18,7 +18,8 @@ contract L1NetRecipientTest is Test {
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
         recipientData[0] = INetFeeSplitter.Recipient({setter: makeAddr('setter'), allocation: 10_000});
         NetFeeSplitter splitter = new NetFeeSplitter(recipients, recipientData);
-        recipient = new L1NetRecipient(address(splitter), makeAddr('owner'), makeAddr('l1Wallet'), 0, 0.1 ether);
+        recipient =
+            new L1NetRecipient(address(splitter), makeAddr('owner'), makeAddr('l1Wallet'), 10 minutes, 0.1 ether);
         vm.prank(makeAddr('setter'));
         splitter.transferAllocationAndSetSetter(makeAddr('recipient'), address(recipient), makeAddr('setter'), 10_000);
         vm.etch(Predeploys.L2_STANDARD_BRIDGE, address(new MockL2StandardBridge()).code);
@@ -26,6 +27,7 @@ contract L1NetRecipientTest is Test {
         assertTrue(success);
         assertEq(address(Predeploys.L2_STANDARD_BRIDGE).balance, 0);
         assertEq(splitter.earnedFees(address(recipient)), 10 ether);
+        vm.warp(block.timestamp + 11 minutes);
         vm.expectEmit(true, true, true, true);
         emit IL1Splitter.Withdrawal(makeAddr('l1Wallet'), 10 ether);
         recipient.withdraw();

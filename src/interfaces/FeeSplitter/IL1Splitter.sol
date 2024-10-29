@@ -27,6 +27,15 @@ interface IL1Splitter {
     /// @notice Thrown when the contract is withdrawn before the disbursement interval is reached
     error DisbursementIntervalNotReached();
 
+    /// @notice Thrown when the address is zero
+    error AddressZero();
+
+    /// @notice Thrown when the disbursement interval is less than the minimum disbursement interval
+    error MinDisbursementInterval();
+
+    /// @notice Thrown when the minimum withdrawal amount is less than the minimum withdrawal amount
+    error MinWithdrawalAmount();
+
     /// @notice Withdraws the balance of the contract to L1
     /// @return The amount of ETH withdrawn
     function withdraw() external returns (uint256);

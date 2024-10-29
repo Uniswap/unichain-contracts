@@ -1,5 +1,5 @@
 # IL1Splitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/cdc1949bdb3dee7a056f4123f4443d9d835fc39d/src/interfaces/FeeSplitter/IL1Splitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/ee199923a093ed2a625368ca03e88e027a4e1411/src/interfaces/FeeSplitter/IL1Splitter.sol)
 
 
 ## Functions
@@ -191,5 +191,29 @@ Thrown when the contract is withdrawn before the disbursement interval is reache
 
 ```solidity
 error DisbursementIntervalNotReached();
+```
+
+### AddressZero
+Thrown when the address is zero
+
+
+```solidity
+error AddressZero();
+```
+
+### MinDisbursementInterval
+Thrown when the disbursement interval is less than the minimum disbursement interval
+
+
+```solidity
+error MinDisbursementInterval();
+```
+
+### MinWithdrawalAmount
+Thrown when the minimum withdrawal amount is less than the minimum withdrawal amount
+
+
+```solidity
+error MinWithdrawalAmount();
 ```
 

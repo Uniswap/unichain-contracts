@@ -40,6 +40,7 @@ contract L1SplitterTest is Test {
     }
 
     function test_ShouldUpdateL1Recipient(address newRecipient) public {
+        vm.assume(newRecipient != address(0));
         assertEq(splitter.l1Recipient(), makeAddr('l1Wallet'));
         vm.prank(owner);
         splitter.updateL1Recipient(newRecipient);
@@ -47,6 +48,7 @@ contract L1SplitterTest is Test {
     }
 
     function test_ShouldUpdateFeeDisbursementInterval(uint48 newInterval) public {
+        vm.assume(newInterval >= 10 minutes);
         assertEq(splitter.feeDisbursementInterval(), 1 days);
         vm.prank(owner);
         splitter.updateFeeDisbursementInterval(newInterval);
@@ -54,6 +56,7 @@ contract L1SplitterTest is Test {
     }
 
     function test_ShouldUpdateMinWithdrawalAmount(uint256 newAmount) public {
+        newAmount = bound(newAmount, 0.1 ether, type(uint256).max);
         assertEq(splitter.minWithdrawalAmount(), 0.1 ether);
         vm.prank(owner);
         splitter.updateMinWithdrawalAmount(newAmount);

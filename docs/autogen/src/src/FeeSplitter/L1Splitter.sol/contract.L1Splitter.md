@@ -1,5 +1,5 @@
 # L1Splitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/330b4211f3f7a08be1badb3c08eefa3cadab8329/src/FeeSplitter/L1Splitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/ee199923a093ed2a625368ca03e88e027a4e1411/src/FeeSplitter/L1Splitter.sol)
 
 **Inherits:**
 [IL1Splitter](/src/interfaces/FeeSplitter/IL1Splitter.sol/interface.IL1Splitter.md), Ownable2Step
@@ -14,6 +14,20 @@ Withdraws the L1 fees to the L1 wallet via the L2 Standard Bridge.
 
 ```solidity
 uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000;
+```
+
+
+### MIN_DISBURSEMENT_INTERVAL
+
+```solidity
+uint48 internal constant MIN_DISBURSEMENT_INTERVAL = 10 minutes;
+```
+
+
+### MIN_WITHDRAWAL_AMOUNT
+
+```solidity
+uint256 internal constant MIN_WITHDRAWAL_AMOUNT = 0.01 ether;
 ```
 
 

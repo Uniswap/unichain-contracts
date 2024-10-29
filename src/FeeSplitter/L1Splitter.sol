@@ -12,6 +12,8 @@ import {Ownable, Ownable2Step} from '@openzeppelin/contracts/access/Ownable2Step
 contract L1Splitter is IL1Splitter, Ownable2Step {
     /// @dev The minimum gas limit for the FeeSplitter withdrawal transaction to L1.
     uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000;
+    uint48 internal constant MIN_DISBURSEMENT_INTERVAL = 10 minutes;
+    uint256 internal constant MIN_WITHDRAWAL_AMOUNT = 0.01 ether;
 
     /// @inheritdoc IL1Splitter
     address public l1Recipient;
@@ -64,16 +66,19 @@ contract L1Splitter is IL1Splitter, Ownable2Step {
     }
 
     function _updateL1Recipient(address newRecipient) internal {
+        if (newRecipient == address(0)) revert AddressZero();
         emit L1RecipientUpdated(l1Recipient, newRecipient);
         l1Recipient = newRecipient;
     }
 
     function _updateFeeDisbursementInterval(uint48 newInterval) internal {
+        if (newInterval < MIN_DISBURSEMENT_INTERVAL) revert MinDisbursementInterval();
         emit FeeDisbursementIntervalUpdated(feeDisbursementInterval, newInterval);
         feeDisbursementInterval = newInterval;
     }
 
     function _updateMinWithdrawalAmount(uint256 newAmount) internal {
+        if (newAmount < MIN_WITHDRAWAL_AMOUNT) revert MinWithdrawalAmount();
         emit MinWithdrawalAmountUpdated(minWithdrawalAmount, newAmount);
         minWithdrawalAmount = newAmount;
     }

@@ -42,20 +42,23 @@ contract NetFeeSplitter is INetFeeSplitter {
     }
 
     /// @inheritdoc INetFeeSplitter
-    function transferAllocation(address from, address recipient, uint256 allocation) external {
-        if (setterOf(recipient) == address(0)) revert SetterZero();
-        _transfer(from, recipient, allocation);
+    function transferAllocation(address oldRecipient, address newRecipient, uint256 allocation) external {
+        if (setterOf(newRecipient) == address(0)) revert SetterZero();
+        _transfer(oldRecipient, newRecipient, allocation);
     }
 
     /// @inheritdoc INetFeeSplitter
-    function transferAllocationAndSetSetter(address from, address recipient, address newAdmin, uint256 allocation)
-        external
-    {
-        if (setterOf(recipient) != address(0)) revert SetterAlreadySet();
+    function transferAllocationAndSetSetter(
+        address oldRecipient,
+        address newRecipient,
+        address newAdmin,
+        uint256 allocation
+    ) external {
+        if (setterOf(newRecipient) != address(0)) revert SetterAlreadySet();
         if (newAdmin == address(0)) revert SetterZero();
-        recipients[recipient] = Recipient(newAdmin, 0);
-        emit SetterTransferred(recipient, address(0), newAdmin);
-        _transfer(from, recipient, allocation);
+        recipients[newRecipient] = Recipient(newAdmin, 0);
+        emit SetterTransferred(newRecipient, address(0), newAdmin);
+        _transfer(oldRecipient, newRecipient, allocation);
     }
 
     /// @inheritdoc INetFeeSplitter
@@ -94,17 +97,17 @@ contract NetFeeSplitter is INetFeeSplitter {
         return recipients[recipient].setter;
     }
 
-    function _transfer(address from, address recipient, uint256 allocation) private {
-        if (setterOf(from) != msg.sender) revert Unauthorized();
-        if (recipient == address(0)) revert RecipientZero();
+    function _transfer(address oldRecipient, address newRecipient, uint256 allocation) private {
+        if (setterOf(oldRecipient) != msg.sender) revert Unauthorized();
+        if (newRecipient == address(0)) revert RecipientZero();
         if (allocation == 0) revert AllocationZero();
-        _updateFees(from);
-        _updateFees(recipient);
+        _updateFees(oldRecipient);
+        _updateFees(newRecipient);
 
-        if (balanceOf(from) < allocation) revert InsufficientAllocation();
-        recipients[from].allocation -= allocation;
-        recipients[recipient].allocation += allocation;
-        emit AllocationTransferred(msg.sender, from, recipient, allocation);
+        if (balanceOf(oldRecipient) < allocation) revert InsufficientAllocation();
+        recipients[oldRecipient].allocation -= allocation;
+        recipients[newRecipient].allocation += allocation;
+        emit AllocationTransferred(msg.sender, oldRecipient, newRecipient, allocation);
     }
 
     function _updateFees(address account) private {

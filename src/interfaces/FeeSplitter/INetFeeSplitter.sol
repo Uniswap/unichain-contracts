@@ -60,20 +60,24 @@ interface INetFeeSplitter {
     error WithdrawalFailed();
 
     /// @notice Transfers a allocation from one recipient to another
-    /// @param from The recipient address to transfer from
-    /// @param recipient The recipient address to transfer to
+    /// @param oldRecipient The recipient address to transfer from
+    /// @param newRecipient The recipient address to transfer to
     /// @param allocation The allocation to transfer
     /// @dev reverts if the recipient doesn't have an admin
-    function transferAllocation(address from, address recipient, uint256 allocation) external;
+    function transferAllocation(address oldRecipient, address newRecipient, uint256 allocation) external;
 
     /// @notice Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
-    /// @param from The recipient address to transfer from
-    /// @param recipient The recipient address to transfer to
+    /// @param oldRecipient The recipient address to transfer from
+    /// @param newRecipient The recipient address to transfer to
     /// @param newAdmin The new setter address for the recipient
     /// @param allocation The allocation to transfer
     /// @dev reverts if the recipient already has a setter
-    function transferAllocationAndSetSetter(address from, address recipient, address newAdmin, uint256 allocation)
-        external;
+    function transferAllocationAndSetSetter(
+        address oldRecipient,
+        address newRecipient,
+        address newAdmin,
+        uint256 allocation
+    ) external;
 
     /// @notice Transfers the setter of a recipient to a new setter
     /// @param recipient The recipient address

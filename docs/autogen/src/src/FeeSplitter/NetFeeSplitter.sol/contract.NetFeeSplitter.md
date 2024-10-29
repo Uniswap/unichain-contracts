@@ -1,5 +1,5 @@
 # NetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/a1d3e2da21a1281f5cbf2a247c8426504035b002/src/FeeSplitter/NetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/ebe5190805cfc36208bc730ba357e35243c0271b/src/FeeSplitter/NetFeeSplitter.sol)
 
 **Inherits:**
 [INetFeeSplitter](/src/interfaces/FeeSplitter/INetFeeSplitter.sol/interface.INetFeeSplitter.md)
@@ -75,14 +75,14 @@ Transfers a allocation from one recipient to another
 
 
 ```solidity
-function transferAllocation(address from, address recipient, uint256 allocation) external;
+function transferAllocation(address oldRecipient, address newRecipient, uint256 allocation) external;
 ```
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
-|`from`|`address`|The recipient address to transfer from|
-|`recipient`|`address`|The recipient address to transfer to|
+|`oldRecipient`|`address`|The recipient address to transfer from|
+|`newRecipient`|`address`|The recipient address to transfer to|
 |`allocation`|`uint256`|The allocation to transfer|
 
 
@@ -94,15 +94,19 @@ Transfers the allocation of a recipient to another recipient and sets the setter
 
 
 ```solidity
-function transferAllocationAndSetSetter(address from, address recipient, address newAdmin, uint256 allocation)
-    external;
+function transferAllocationAndSetSetter(
+    address oldRecipient,
+    address newRecipient,
+    address newAdmin,
+    uint256 allocation
+) external;
 ```
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
-|`from`|`address`|The recipient address to transfer from|
-|`recipient`|`address`|The recipient address to transfer to|
+|`oldRecipient`|`address`|The recipient address to transfer from|
+|`newRecipient`|`address`|The recipient address to transfer to|
 |`newAdmin`|`address`|The new setter address for the recipient|
 |`allocation`|`uint256`|The allocation to transfer|
 
@@ -211,7 +215,7 @@ function setterOf(address recipient) public view returns (address);
 
 
 ```solidity
-function _transfer(address from, address recipient, uint256 allocation) private;
+function _transfer(address oldRecipient, address newRecipient, uint256 allocation) private;
 ```
 
 ### _updateFees

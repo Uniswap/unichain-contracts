@@ -24,10 +24,10 @@ remappings = [
 runs = 1000
 
 [profile.pr.fuzz]
-runs = 1
+runs = 1000
 
 [profile.ci.fuzz]
-runs = 1
+runs = 1000
 
 [profile.debug]
 via_ir = false

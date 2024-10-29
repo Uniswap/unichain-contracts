@@ -1,5 +1,5 @@
 # L1Splitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/cdc1949bdb3dee7a056f4123f4443d9d835fc39d/src/FeeSplitter/L1Splitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/330b4211f3f7a08be1badb3c08eefa3cadab8329/src/FeeSplitter/L1Splitter.sol)
 
 **Inherits:**
 [IL1Splitter](/src/interfaces/FeeSplitter/IL1Splitter.sol/interface.IL1Splitter.md), Ownable2Step
@@ -17,13 +17,6 @@ uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000;
 ```
 
 
-### lastDisbursementTime
-
-```solidity
-uint48 public lastDisbursementTime;
-```
-
-
 ### l1Recipient
 
 ```solidity
@@ -35,6 +28,13 @@ address public l1Recipient;
 
 ```solidity
 uint48 public feeDisbursementInterval;
+```
+
+
+### lastDisbursementTime
+
+```solidity
+uint48 public lastDisbursementTime;
 ```
 
 

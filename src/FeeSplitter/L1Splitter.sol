@@ -14,12 +14,11 @@ contract L1Splitter is IL1Splitter, Ownable2Step {
     uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000;
 
     /// @inheritdoc IL1Splitter
-    uint48 public lastDisbursementTime;
-
-    /// @inheritdoc IL1Splitter
     address public l1Recipient;
     /// @inheritdoc IL1Splitter
     uint48 public feeDisbursementInterval;
+    /// @inheritdoc IL1Splitter
+    uint48 public lastDisbursementTime;
     /// @inheritdoc IL1Splitter
     uint256 public minWithdrawalAmount;
 

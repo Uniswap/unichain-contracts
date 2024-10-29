@@ -1,5 +1,5 @@
 # NetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/0d11217a8d1ea234543e2ac46c4298f0b5f3b3f8/src/FeeSplitter/NetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/a1d3e2da21a1281f5cbf2a247c8426504035b002/src/FeeSplitter/NetFeeSplitter.sol)
 
 **Inherits:**
 [INetFeeSplitter](/src/interfaces/FeeSplitter/INetFeeSplitter.sol/interface.INetFeeSplitter.md)
@@ -67,13 +67,15 @@ constructor(address[] memory initialRecipients, Recipient[] memory recipientData
 receive() external payable;
 ```
 
-### transfer
+### transferAllocation
 
 Transfers a allocation from one recipient to another
 
+*reverts if the recipient doesn't have an admin*
+
 
 ```solidity
-function transfer(address from, address recipient, uint256 allocation) external;
+function transferAllocation(address from, address recipient, uint256 allocation) external;
 ```
 **Parameters**
 
@@ -81,6 +83,27 @@ function transfer(address from, address recipient, uint256 allocation) external;
 |----|----|-----------|
 |`from`|`address`|The recipient address to transfer from|
 |`recipient`|`address`|The recipient address to transfer to|
+|`allocation`|`uint256`|The allocation to transfer|
+
+
+### transferAllocationAndSetSetter
+
+Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
+
+*reverts if the recipient already has a setter*
+
+
+```solidity
+function transferAllocationAndSetSetter(address from, address recipient, address newAdmin, uint256 allocation)
+    external;
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`from`|`address`|The recipient address to transfer from|
+|`recipient`|`address`|The recipient address to transfer to|
+|`newAdmin`|`address`|The new setter address for the recipient|
 |`allocation`|`uint256`|The allocation to transfer|
 
 
@@ -184,11 +207,11 @@ function setterOf(address recipient) public view returns (address);
 |`<none>`|`address`|setter The setter of the recipient|
 
 
-### _calculateFees
+### _transfer
 
 
 ```solidity
-function _calculateFees(address account) private view returns (uint256);
+function _transfer(address from, address recipient, uint256 allocation) private;
 ```
 
 ### _updateFees
@@ -196,5 +219,12 @@ function _calculateFees(address account) private view returns (uint256);
 
 ```solidity
 function _updateFees(address account) private;
+```
+
+### _calculateFees
+
+
+```solidity
+function _calculateFees(address account) private view returns (uint256);
 ```
 

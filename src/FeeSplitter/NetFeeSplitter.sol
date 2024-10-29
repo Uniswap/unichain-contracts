@@ -42,20 +42,20 @@ contract NetFeeSplitter is INetFeeSplitter {
     }
 
     /// @inheritdoc INetFeeSplitter
-    function transfer(address from, address recipient, uint256 allocation) external {
-        if (recipient == address(0)) revert RecipientZero();
-        if (setterOf(from) != msg.sender) revert Unauthorized();
-        if (setterOf(recipient) == address(0)) {
-            // recipient does not exist yet, make recipient the setter
-            recipients[recipient] = Recipient(recipient, 0);
-        }
-        _updateFees(from);
-        _updateFees(recipient);
+    function transferAllocation(address from, address recipient, uint256 allocation) external {
+        if (setterOf(recipient) == address(0)) revert SetterZero();
+        _transfer(from, recipient, allocation);
+    }
 
-        if (balanceOf(from) < allocation) revert InsufficientAllocation();
-        recipients[from].allocation -= allocation;
-        recipients[recipient].allocation += allocation;
-        emit AllocationTransferred(msg.sender, from, recipient, allocation);
+    /// @inheritdoc INetFeeSplitter
+    function transferAllocationAndSetSetter(address from, address recipient, address newAdmin, uint256 allocation)
+        external
+    {
+        if (setterOf(recipient) != address(0)) revert SetterAlreadySet();
+        if (newAdmin == address(0)) revert SetterZero();
+        recipients[recipient] = Recipient(newAdmin, 0);
+        emit SetterTransferred(recipient, address(0), newAdmin);
+        _transfer(from, recipient, allocation);
     }
 
     /// @inheritdoc INetFeeSplitter
@@ -94,12 +94,25 @@ contract NetFeeSplitter is INetFeeSplitter {
         return recipients[recipient].setter;
     }
 
-    function _calculateFees(address account) private view returns (uint256) {
-        return (recipients[account].allocation * (_index - _indexOf[account])) / MAGNITUDE;
+    function _transfer(address from, address recipient, uint256 allocation) private {
+        if (setterOf(from) != msg.sender) revert Unauthorized();
+        if (recipient == address(0)) revert RecipientZero();
+        if (allocation == 0) revert AllocationZero();
+        _updateFees(from);
+        _updateFees(recipient);
+
+        if (balanceOf(from) < allocation) revert InsufficientAllocation();
+        recipients[from].allocation -= allocation;
+        recipients[recipient].allocation += allocation;
+        emit AllocationTransferred(msg.sender, from, recipient, allocation);
     }
 
     function _updateFees(address account) private {
         _earned[account] += _calculateFees(account);
         _indexOf[account] = _index;
+    }
+
+    function _calculateFees(address account) private view returns (uint256) {
+        return (recipients[account].allocation * (_index - _indexOf[account])) / MAGNITUDE;
     }
 }

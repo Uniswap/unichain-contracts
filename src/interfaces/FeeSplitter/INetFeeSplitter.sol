@@ -38,10 +38,13 @@ interface INetFeeSplitter {
     /// @notice Thrown when an setter address is zero
     error SetterZero();
 
+    /// @notice Thrown when a recipient already has a setter
+    error SetterAlreadySet();
+
     /// @notice Thrown when a recipient address is zero
     error RecipientZero();
 
-    /// @notice Thrown when a recipient allocation is zero
+    /// @notice Thrown when a recipient allocation is zero or zero allocation is transferred
     error AllocationZero();
 
     /// @notice Thrown when the total allocation is not the same as the sum of the recipient balances
@@ -60,7 +63,17 @@ interface INetFeeSplitter {
     /// @param from The recipient address to transfer from
     /// @param recipient The recipient address to transfer to
     /// @param allocation The allocation to transfer
-    function transfer(address from, address recipient, uint256 allocation) external;
+    /// @dev reverts if the recipient doesn't have an admin
+    function transferAllocation(address from, address recipient, uint256 allocation) external;
+
+    /// @notice Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
+    /// @param from The recipient address to transfer from
+    /// @param recipient The recipient address to transfer to
+    /// @param newAdmin The new setter address for the recipient
+    /// @param allocation The allocation to transfer
+    /// @dev reverts if the recipient already has a setter
+    function transferAllocationAndSetSetter(address from, address recipient, address newAdmin, uint256 allocation)
+        external;
 
     /// @notice Transfers the setter of a recipient to a new setter
     /// @param recipient The recipient address

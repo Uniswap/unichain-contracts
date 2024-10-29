@@ -1,15 +1,17 @@
 # INetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/0d11217a8d1ea234543e2ac46c4298f0b5f3b3f8/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/a1d3e2da21a1281f5cbf2a247c8426504035b002/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
 
 
 ## Functions
-### transfer
+### transferAllocation
 
 Transfers a allocation from one recipient to another
 
+*reverts if the recipient doesn't have an admin*
+
 
 ```solidity
-function transfer(address from, address recipient, uint256 allocation) external;
+function transferAllocation(address from, address recipient, uint256 allocation) external;
 ```
 **Parameters**
 
@@ -17,6 +19,27 @@ function transfer(address from, address recipient, uint256 allocation) external;
 |----|----|-----------|
 |`from`|`address`|The recipient address to transfer from|
 |`recipient`|`address`|The recipient address to transfer to|
+|`allocation`|`uint256`|The allocation to transfer|
+
+
+### transferAllocationAndSetSetter
+
+Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
+
+*reverts if the recipient already has a setter*
+
+
+```solidity
+function transferAllocationAndSetSetter(address from, address recipient, address newAdmin, uint256 allocation)
+    external;
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`from`|`address`|The recipient address to transfer from|
+|`recipient`|`address`|The recipient address to transfer to|
+|`newAdmin`|`address`|The new setter address for the recipient|
 |`allocation`|`uint256`|The allocation to transfer|
 
 
@@ -195,6 +218,14 @@ Thrown when an setter address is zero
 error SetterZero();
 ```
 
+### SetterAlreadySet
+Thrown when a recipient already has a setter
+
+
+```solidity
+error SetterAlreadySet();
+```
+
 ### RecipientZero
 Thrown when a recipient address is zero
 
@@ -204,7 +235,7 @@ error RecipientZero();
 ```
 
 ### AllocationZero
-Thrown when a recipient allocation is zero
+Thrown when a recipient allocation is zero or zero allocation is transferred
 
 
 ```solidity

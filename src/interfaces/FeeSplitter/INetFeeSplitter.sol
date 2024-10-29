@@ -63,7 +63,7 @@ interface INetFeeSplitter {
     /// @param oldRecipient The recipient address to transfer from
     /// @param newRecipient The recipient address to transfer to
     /// @param allocation The allocation to transfer
-    /// @dev reverts if the recipient doesn't have an admin
+    /// @dev reverts if the recipient doesn't have a setter
     function transferAllocation(address oldRecipient, address newRecipient, uint256 allocation) external;
 
     /// @notice Transfers the allocation of a recipient to another recipient and sets the setter of the recipient

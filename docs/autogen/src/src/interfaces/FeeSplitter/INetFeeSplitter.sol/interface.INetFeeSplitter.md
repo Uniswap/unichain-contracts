@@ -1,5 +1,5 @@
 # INetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/ebe5190805cfc36208bc730ba357e35243c0271b/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b115e82f2662033ce3e147f80def00bf221cc04e/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
 
 
 ## Functions
@@ -7,7 +7,7 @@
 
 Transfers a allocation from one recipient to another
 
-*reverts if the recipient doesn't have an admin*
+*reverts if the recipient doesn't have a setter*
 
 
 ```solidity

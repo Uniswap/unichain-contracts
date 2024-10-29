@@ -164,10 +164,12 @@ contract NetFeeSplitterTest is Test {
         assertEq(splitter.balanceOf(newRecipient), 1, 'should receive the allocation');
         (success,) = address(splitter).call{value: 1 ether}('');
         assertTrue(success);
-        assertGt(
-            splitter.earnedFees(recipient_), 1 ether, 'recipient should keep previous fees in addition to new fees'
+        assertEq(
+            splitter.earnedFees(recipient_),
+            1 ether + 1 ether * 9999 / 10_000,
+            'recipient should keep previous fees in addition to new fees'
         );
-        assertGt(splitter.earnedFees(newRecipient), 0, 'new recipient should receive fees');
+        assertEq(splitter.earnedFees(newRecipient), 1 ether / 10_000, 'new recipient should receive fees');
     }
 
     function test_RevertIf_TransferSetterNotSetter(address initiator) public {

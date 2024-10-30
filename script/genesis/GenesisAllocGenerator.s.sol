@@ -24,9 +24,9 @@ contract GenesisAllocGenerator is Script {
         {
             // deploy optimsism fee forwarder contract and copy code and storage to address
             address opRecipient = address(0xa3d596EAfaB6B13Ab18D40FaE1A962700C84ADEa); // Op fee recipient on L1
-            address opAdmin = address(0xb4e696eafab6b13ab18d40fae1a962700c84befb); // Admin of fee forwarder on L1
-            uint48 opFeeDisbursementInterval = 1 days; // TODO set correct value
-            uint256 opMinWithdrawalAmount = 10 ether; // TODO set correct value
+            address opAdmin = address(0xb4E696eAFAB6B13AB18D40fAE1a962700C84BefB); // Admin of fee forwarder on L1
+            uint48 opFeeDisbursementInterval = 1 days;
+            uint256 opMinWithdrawalAmount = 10 ether;
             address opForwarder =
                 address(new L1Splitter(opAdmin, opRecipient, opFeeDisbursementInterval, opMinWithdrawalAmount));
             vm.etch(opForwarderAddress, opForwarder.code);
@@ -37,7 +37,7 @@ contract GenesisAllocGenerator is Script {
         {
             // deploy l1 fee forwarder contract and copy code and storage to address
             address l1Wallet = address(0x2F60A5184c63ca94f82a27100643DbAbe4F3f7Fd); // L1 fee recipient on L1
-            address l1Admin = address(0xa356d5d10aa8a842b31530de71ea86c0760cb2c2); // Admin of fee forwarder on L1
+            address l1Admin = address(0xa356d5D10aA8A842B31530dE71EA86c0760CB2C2); // Admin of fee forwarder on L1
             uint48 l1FeeDisbursementInterval = 1 days; // TODO set correct value
             uint256 l1MinWithdrawalAmount = 1 ether; // TODO set correct value
             address l1Forwarder =

@@ -50,9 +50,9 @@ contract GenesisAllocGenerator is Script {
         {
             // deploy net fee splitter contract and copy code and storage to address
             address labsRecipient = address(0xaE85BbB6c1c1807a64A88F1a1f978740c8a0Dba0); // temporary EOA admin + recipient for labs
-            uint256 labsAllocation = 2500; // TODO set correct value
+            uint256 labsAllocation = 2400;
             address foundationRecipient = address(0x3fCbACd76037534D2AAeB9a17f4e631dd64fbe31); // temporary EOA admin + recipient for foundation
-            uint256 foundationAllocation = 7500; // TODO set correct value
+            uint256 foundationAllocation = 7600;
 
             INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](2);
             recipientData[0] = INetFeeSplitter.Recipient({setter: labsRecipient, allocation: labsAllocation});

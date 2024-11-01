@@ -101,10 +101,10 @@ contract NetFeeSplitter is INetFeeSplitter {
         if (setterOf(oldRecipient) != msg.sender) revert Unauthorized();
         if (newRecipient == address(0)) revert RecipientZero();
         if (allocation == 0) revert AllocationZero();
+        if (balanceOf(oldRecipient) < allocation) revert InsufficientAllocation();
         _updateFees(oldRecipient);
         _updateFees(newRecipient);
 
-        if (balanceOf(oldRecipient) < allocation) revert InsufficientAllocation();
         recipients[oldRecipient].allocation -= allocation;
         recipients[newRecipient].allocation += allocation;
         emit AllocationTransferred(msg.sender, oldRecipient, newRecipient, allocation);

@@ -1,5 +1,5 @@
 # NetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b115e82f2662033ce3e147f80def00bf221cc04e/src/FeeSplitter/NetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/fb9024ae9d58cf7bc4a43f01cec0f0f78196a82a/src/FeeSplitter/NetFeeSplitter.sol)
 
 **Inherits:**
 [INetFeeSplitter](/src/interfaces/FeeSplitter/INetFeeSplitter.sol/interface.INetFeeSplitter.md)
@@ -97,7 +97,7 @@ Transfers the allocation of a recipient to another recipient and sets the setter
 function transferAllocationAndSetSetter(
     address oldRecipient,
     address newRecipient,
-    address newAdmin,
+    address newSetter,
     uint256 allocation
 ) external;
 ```
@@ -107,7 +107,7 @@ function transferAllocationAndSetSetter(
 |----|----|-----------|
 |`oldRecipient`|`address`|The recipient address to transfer from|
 |`newRecipient`|`address`|The recipient address to transfer to|
-|`newAdmin`|`address`|The new setter address for the recipient|
+|`newSetter`|`address`|The new setter address for the recipient|
 |`allocation`|`uint256`|The allocation to transfer|
 
 

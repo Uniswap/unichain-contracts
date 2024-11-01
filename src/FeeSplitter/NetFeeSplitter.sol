@@ -51,13 +51,13 @@ contract NetFeeSplitter is INetFeeSplitter {
     function transferAllocationAndSetSetter(
         address oldRecipient,
         address newRecipient,
-        address newAdmin,
+        address newSetter,
         uint256 allocation
     ) external {
         if (setterOf(newRecipient) != address(0)) revert SetterAlreadySet();
-        if (newAdmin == address(0)) revert SetterZero();
-        recipients[newRecipient] = Recipient(newAdmin, 0);
-        emit SetterTransferred(newRecipient, address(0), newAdmin);
+        if (newSetter == address(0)) revert SetterZero();
+        recipients[newRecipient] = Recipient(newSetter, 0);
+        emit SetterTransferred(newRecipient, address(0), newSetter);
         _transfer(oldRecipient, newRecipient, allocation);
     }
 

@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Owned} from "solmate/auth/Owned.sol";
+import {Owned} from 'solmate/auth/Owned.sol';
 
 /// @title Builder System Transactions
 contract BuilderSystemTransactions is Owned(msg.sender) {
     error Unauthorized();
+    error InvalidFlashblockIndex();
+
     event BuilderAdded(address indexed builder);
     event BuilderRemoved(address indexed builder);
     event FlashblockIndexSet(uint8 flashblockIndex);
 
     mapping(address => bool) public builders;
-    uint8 public flashblockIndex;
+    uint8 public lastFlashblockIndex;
+    uint256 public lastBlockNumber;
 
     modifier onlyBuilder() {
         if (!builders[msg.sender]) {
@@ -26,33 +29,27 @@ contract BuilderSystemTransactions is Owned(msg.sender) {
         }
     }
 
-    /// @notice Sets the flashblock index
+    /// @notice Increments the flashblock index
     /// @dev Only a builder can set the flashblock index
-    /// @param _flashblockIndex The new flashblock index
-    function setFlashblockIndex(uint8 _flashblockIndex) external onlyBuilder {
-        flashblockIndex = _flashblockIndex;
-        emit FlashblockIndexSet(_flashblockIndex);
+    /// @dev The flashblock index is reset when a new block is reached
+    function incrementFlashblockIndex() external onlyBuilder {
+        uint8 _lastFlashblockIndex;
+        if (block.number == lastBlockNumber) {
+            // same block, increment flashblock index
+            _lastFlashblockIndex = lastFlashblockIndex + 1;
+        } else {
+            // new block, reset flashblock index and update block number
+            lastBlockNumber = block.number;
+        }
+
+        lastFlashblockIndex = _lastFlashblockIndex;
+        emit FlashblockIndexSet(_lastFlashblockIndex);
     }
 
     /// @notice Gets the current flashblock index
     /// @return flashblockIndex The current flashblock index
     function getFlashblockIndex() external view returns (uint8) {
-        return uint8(flashblockIndex);
-    }
-
-    /// @notice Gets the "Unichain Block" using the current block number and flashblock index
-    /// @dev The Unichain Block that uniquely identifies the current block and flashblock
-    ///   The top bit is flipped to indicate it is a Unichain Block
-    ///   The block number is shifted by 8 bits to the left
-    ///   The flashblock index is inserted in the last 8 bits
-    /// @return unichainBlock The Unichain Block
-    function getUnichainBlock() external view returns (uint256 unichainBlock) {
-        // flip the top bit to indicate it is a unichain block
-        unichainBlock |= 1 << 255;
-        // insert the block number shifted by 8 bits
-        unichainBlock |= block.number << 8;
-        // insert the flashblock index and return
-        return unichainBlock |= flashblockIndex;
+        return uint8(lastFlashblockIndex);
     }
 
     /// @notice Adds a builder to the list of builders

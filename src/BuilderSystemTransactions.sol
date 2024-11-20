@@ -48,7 +48,7 @@ contract BuilderSystemTransactions is Owned(msg.sender) {
     /// @notice Gets the current flashblock index
     /// @return flashblockIndex The current flashblock index
     function getFlashblockIndex() external view returns (uint8) {
-        return uint8(lastFlashblockIndex);
+        return lastFlashblockIndex;
     }
 
     /// @notice Adds a builder to the list of builders

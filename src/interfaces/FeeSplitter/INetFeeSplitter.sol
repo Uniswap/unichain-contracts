@@ -3,25 +3,25 @@ pragma solidity ^0.8.26;
 
 interface INetFeeSplitter {
     /// @notice Recipient data for an individual recipient
-    /// @custom:field admin The admin address managing the recipient
+    /// @custom:field setter The setter address managing the recipient
     /// @custom:field allocation The allocation of the recipient
     struct Recipient {
-        address admin;
+        address setter;
         uint256 allocation;
     }
 
     /// @notice Emitted when a recipient's allocation is transferred
-    /// @param admin The admin address managing the recipient
+    /// @param setter The setter address managing the recipient
     /// @param from The previous recipient address
     /// @param to The new recipient address
     /// @param allocation The allocation transferred
-    event TransferAllocation(address indexed admin, address indexed from, address indexed to, uint256 allocation);
+    event AllocationTransferred(address indexed setter, address indexed from, address indexed to, uint256 allocation);
 
-    /// @notice Emitted when a recipient's admin is transferred
+    /// @notice Emitted when a recipient's setter is transferred
     /// @param recipient The recipient address
-    /// @param previousAdmin The previous admin address
-    /// @param newAdmin The new admin address
-    event TransferAdmin(address indexed recipient, address indexed previousAdmin, address indexed newAdmin);
+    /// @param previousSetter The previous setter address
+    /// @param newSetter The new setter address
+    event SetterTransferred(address indexed recipient, address indexed previousSetter, address indexed newSetter);
 
     /// @notice Emitted when fees are withdrawn by recipient
     /// @param recipient The recipient address
@@ -35,19 +35,22 @@ interface INetFeeSplitter {
     /// @notice Thrown when a duplicate recipient is added
     error DuplicateRecipient();
 
-    /// @notice Thrown when an admin address is zero
-    error AdminZero();
+    /// @notice Thrown when an setter address is zero
+    error SetterZero();
+
+    /// @notice Thrown when a recipient already has a setter
+    error SetterAlreadySet();
 
     /// @notice Thrown when a recipient address is zero
     error RecipientZero();
 
-    /// @notice Thrown when a recipient allocation is zero
+    /// @notice Thrown when a recipient allocation is zero or zero allocation is transferred
     error AllocationZero();
 
     /// @notice Thrown when the total allocation is not the same as the sum of the recipient balances
     error InvalidTotalAllocation();
 
-    /// @notice Thrown when the caller is not the admin
+    /// @notice Thrown when the caller is not the setter
     error Unauthorized();
 
     /// @notice Thrown when there is insufficient allocation to perform a transfer
@@ -57,15 +60,29 @@ interface INetFeeSplitter {
     error WithdrawalFailed();
 
     /// @notice Transfers a allocation from one recipient to another
-    /// @param from The recipient address to transfer from
-    /// @param recipient The recipient address to transfer to
+    /// @param oldRecipient The recipient address to transfer from
+    /// @param newRecipient The recipient address to transfer to
     /// @param allocation The allocation to transfer
-    function transfer(address from, address recipient, uint256 allocation) external;
+    /// @dev reverts if the recipient doesn't have a setter
+    function transferAllocation(address oldRecipient, address newRecipient, uint256 allocation) external;
 
-    /// @notice Transfers the admin of a recipient to a new admin
+    /// @notice Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
+    /// @param oldRecipient The recipient address to transfer from
+    /// @param newRecipient The recipient address to transfer to
+    /// @param newSetter The new setter address for the recipient
+    /// @param allocation The allocation to transfer
+    /// @dev reverts if the recipient already has a setter
+    function transferAllocationAndSetSetter(
+        address oldRecipient,
+        address newRecipient,
+        address newSetter,
+        uint256 allocation
+    ) external;
+
+    /// @notice Transfers the setter of a recipient to a new setter
     /// @param recipient The recipient address
-    /// @param newAdmin The new admin address
-    function transferAdmin(address recipient, address newAdmin) external;
+    /// @param newSetter The new setter address
+    function transferSetter(address recipient, address newSetter) external;
 
     /// @notice Withdraws the fees earned by a recipient
     /// @param to The address to withdraw the fees to
@@ -82,8 +99,8 @@ interface INetFeeSplitter {
     /// @return allocation The allocation of the recipient
     function balanceOf(address recipient) external view returns (uint256);
 
-    /// @notice Gets the admin of a recipient
+    /// @notice Gets the setter of a recipient
     /// @param recipient The recipient address
-    /// @return admin The admin of the recipient
-    function adminOf(address recipient) external view returns (address);
+    /// @return setter The setter of the recipient
+    function setterOf(address recipient) external view returns (address);
 }

@@ -34,7 +34,7 @@ jobs:
         id: build
 
       - name: Run Forge tests
-        run: forge test --isolate -vvv
+        run: forge test -vvv
         id: test
         env:
           FORGE_SNAPSHOT_CHECK: true

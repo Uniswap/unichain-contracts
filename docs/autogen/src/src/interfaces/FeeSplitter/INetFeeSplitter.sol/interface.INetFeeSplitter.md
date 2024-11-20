@@ -1,39 +1,66 @@
 # INetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/e58b42227581bd4dbb09264be039301b9c37302d/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/fb9024ae9d58cf7bc4a43f01cec0f0f78196a82a/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
 
 
 ## Functions
-### transfer
+### transferAllocation
 
 Transfers a allocation from one recipient to another
 
+*reverts if the recipient doesn't have a setter*
+
 
 ```solidity
-function transfer(address from, address recipient, uint256 allocation) external;
+function transferAllocation(address oldRecipient, address newRecipient, uint256 allocation) external;
 ```
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
-|`from`|`address`|The recipient address to transfer from|
-|`recipient`|`address`|The recipient address to transfer to|
+|`oldRecipient`|`address`|The recipient address to transfer from|
+|`newRecipient`|`address`|The recipient address to transfer to|
 |`allocation`|`uint256`|The allocation to transfer|
 
 
-### transferAdmin
+### transferAllocationAndSetSetter
 
-Transfers the admin of a recipient to a new admin
+Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
+
+*reverts if the recipient already has a setter*
 
 
 ```solidity
-function transferAdmin(address recipient, address newAdmin) external;
+function transferAllocationAndSetSetter(
+    address oldRecipient,
+    address newRecipient,
+    address newSetter,
+    uint256 allocation
+) external;
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`oldRecipient`|`address`|The recipient address to transfer from|
+|`newRecipient`|`address`|The recipient address to transfer to|
+|`newSetter`|`address`|The new setter address for the recipient|
+|`allocation`|`uint256`|The allocation to transfer|
+
+
+### transferSetter
+
+Transfers the setter of a recipient to a new setter
+
+
+```solidity
+function transferSetter(address recipient, address newSetter) external;
 ```
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
 |`recipient`|`address`|The recipient address|
-|`newAdmin`|`address`|The new admin address|
+|`newSetter`|`address`|The new setter address|
 
 
 ### withdrawFees
@@ -99,13 +126,13 @@ function balanceOf(address recipient) external view returns (uint256);
 |`<none>`|`uint256`|allocation The allocation of the recipient|
 
 
-### adminOf
+### setterOf
 
-Gets the admin of a recipient
+Gets the setter of a recipient
 
 
 ```solidity
-function adminOf(address recipient) external view returns (address);
+function setterOf(address recipient) external view returns (address);
 ```
 **Parameters**
 
@@ -117,33 +144,33 @@ function adminOf(address recipient) external view returns (address);
 
 |Name|Type|Description|
 |----|----|-----------|
-|`<none>`|`address`|admin The admin of the recipient|
+|`<none>`|`address`|setter The setter of the recipient|
 
 
 ## Events
-### TransferAllocation
+### AllocationTransferred
 Emitted when a recipient's allocation is transferred
 
 
 ```solidity
-event TransferAllocation(address indexed admin, address indexed from, address indexed to, uint256 allocation);
+event AllocationTransferred(address indexed setter, address indexed from, address indexed to, uint256 allocation);
 ```
 
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
-|`admin`|`address`|The admin address managing the recipient|
+|`setter`|`address`|The setter address managing the recipient|
 |`from`|`address`|The previous recipient address|
 |`to`|`address`|The new recipient address|
 |`allocation`|`uint256`|The allocation transferred|
 
-### TransferAdmin
-Emitted when a recipient's admin is transferred
+### SetterTransferred
+Emitted when a recipient's setter is transferred
 
 
 ```solidity
-event TransferAdmin(address indexed recipient, address indexed previousAdmin, address indexed newAdmin);
+event SetterTransferred(address indexed recipient, address indexed previousSetter, address indexed newSetter);
 ```
 
 **Parameters**
@@ -151,8 +178,8 @@ event TransferAdmin(address indexed recipient, address indexed previousAdmin, ad
 |Name|Type|Description|
 |----|----|-----------|
 |`recipient`|`address`|The recipient address|
-|`previousAdmin`|`address`|The previous admin address|
-|`newAdmin`|`address`|The new admin address|
+|`previousSetter`|`address`|The previous setter address|
+|`newSetter`|`address`|The new setter address|
 
 ### Withdrawn
 Emitted when fees are withdrawn by recipient
@@ -187,12 +214,20 @@ Thrown when a duplicate recipient is added
 error DuplicateRecipient();
 ```
 
-### AdminZero
-Thrown when an admin address is zero
+### SetterZero
+Thrown when an setter address is zero
 
 
 ```solidity
-error AdminZero();
+error SetterZero();
+```
+
+### SetterAlreadySet
+Thrown when a recipient already has a setter
+
+
+```solidity
+error SetterAlreadySet();
 ```
 
 ### RecipientZero
@@ -204,7 +239,7 @@ error RecipientZero();
 ```
 
 ### AllocationZero
-Thrown when a recipient allocation is zero
+Thrown when a recipient allocation is zero or zero allocation is transferred
 
 
 ```solidity
@@ -220,7 +255,7 @@ error InvalidTotalAllocation();
 ```
 
 ### Unauthorized
-Thrown when the caller is not the admin
+Thrown when the caller is not the setter
 
 
 ```solidity
@@ -248,14 +283,14 @@ error WithdrawalFailed();
 Recipient data for an individual recipient
 
 **Notes:**
-- admin The admin address managing the recipient
+- setter The setter address managing the recipient
 
 - allocation The allocation of the recipient
 
 
 ```solidity
 struct Recipient {
-    address admin;
+    address setter;
     uint256 allocation;
 }
 ```

@@ -1,7 +1,10 @@
 {
     "1301": {
         "l1Wallet": "0x2C91f6a418060aD902B4C44D5d967BDd45e36E6e",
+        "l1SplitterOwner": "0x2C91f6a418060aD902B4C44D5d967BDd45e36E6e",
         "netFeeRecipient": "0x253caA9e7A5d2A28018a3A8de775ad5f9e9DDB96",
-        "opWallet": "0x44FE90c7333cDcc7E8E67A95598CD5C989bf174b"
+        "opWallet": "0x44FE90c7333cDcc7E8E67A95598CD5C989bf174b",
+        "feeDisbursementInterval": 3600,
+        "minWithdrawalAmount": 10000000000000000
     }
 }

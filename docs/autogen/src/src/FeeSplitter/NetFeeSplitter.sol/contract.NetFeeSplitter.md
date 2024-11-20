@@ -1,10 +1,10 @@
 # NetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/01f4e5565a975be8c899959d029a1dc7e641a28e/src/FeeSplitter/NetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/fb9024ae9d58cf7bc4a43f01cec0f0f78196a82a/src/FeeSplitter/NetFeeSplitter.sol)
 
 **Inherits:**
 [INetFeeSplitter](/src/interfaces/FeeSplitter/INetFeeSplitter.sol/interface.INetFeeSplitter.md)
 
-Splits net fees between multiple recipients. Recipients are managed by admins. Admins can transfer the entire allocation or a portion of it to other recipients.
+Splits net fees between multiple recipients. Recipients are managed by setters. Setters can transfer the entire allocation or a portion of it to other recipients.
 
 
 ## State Variables
@@ -67,37 +67,64 @@ constructor(address[] memory initialRecipients, Recipient[] memory recipientData
 receive() external payable;
 ```
 
-### transfer
+### transferAllocation
 
 Transfers a allocation from one recipient to another
 
+*reverts if the recipient doesn't have a setter*
+
 
 ```solidity
-function transfer(address from, address recipient, uint256 allocation) external;
+function transferAllocation(address oldRecipient, address newRecipient, uint256 allocation) external;
 ```
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
-|`from`|`address`|The recipient address to transfer from|
-|`recipient`|`address`|The recipient address to transfer to|
+|`oldRecipient`|`address`|The recipient address to transfer from|
+|`newRecipient`|`address`|The recipient address to transfer to|
 |`allocation`|`uint256`|The allocation to transfer|
 
 
-### transferAdmin
+### transferAllocationAndSetSetter
 
-Transfers the admin of a recipient to a new admin
+Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
+
+*reverts if the recipient already has a setter*
 
 
 ```solidity
-function transferAdmin(address recipient, address newAdmin) external;
+function transferAllocationAndSetSetter(
+    address oldRecipient,
+    address newRecipient,
+    address newSetter,
+    uint256 allocation
+) external;
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`oldRecipient`|`address`|The recipient address to transfer from|
+|`newRecipient`|`address`|The recipient address to transfer to|
+|`newSetter`|`address`|The new setter address for the recipient|
+|`allocation`|`uint256`|The allocation to transfer|
+
+
+### transferSetter
+
+Transfers the setter of a recipient to a new setter
+
+
+```solidity
+function transferSetter(address recipient, address newSetter) external;
 ```
 **Parameters**
 
 |Name|Type|Description|
 |----|----|-----------|
 |`recipient`|`address`|The recipient address|
-|`newAdmin`|`address`|The new admin address|
+|`newSetter`|`address`|The new setter address|
 
 
 ### withdrawFees
@@ -163,13 +190,13 @@ function balanceOf(address recipient) public view returns (uint256);
 |`<none>`|`uint256`|allocation The allocation of the recipient|
 
 
-### adminOf
+### setterOf
 
-Gets the admin of a recipient
+Gets the setter of a recipient
 
 
 ```solidity
-function adminOf(address recipient) public view returns (address);
+function setterOf(address recipient) public view returns (address);
 ```
 **Parameters**
 
@@ -181,14 +208,14 @@ function adminOf(address recipient) public view returns (address);
 
 |Name|Type|Description|
 |----|----|-----------|
-|`<none>`|`address`|admin The admin of the recipient|
+|`<none>`|`address`|setter The setter of the recipient|
 
 
-### _calculateFees
+### _transfer
 
 
 ```solidity
-function _calculateFees(address account) private view returns (uint256);
+function _transfer(address oldRecipient, address newRecipient, uint256 allocation) private;
 ```
 
 ### _updateFees
@@ -196,5 +223,12 @@ function _calculateFees(address account) private view returns (uint256);
 
 ```solidity
 function _updateFees(address account) private;
+```
+
+### _calculateFees
+
+
+```solidity
+function _calculateFees(address account) private view returns (uint256);
 ```
 

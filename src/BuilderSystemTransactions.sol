@@ -6,7 +6,6 @@ import {Owned} from 'solmate/auth/Owned.sol';
 /// @title Builder System Transactions
 contract BuilderSystemTransactions is Owned(msg.sender) {
     error Unauthorized();
-    error InvalidFlashblockIndex();
 
     event BuilderAdded(address indexed builder);
     event BuilderRemoved(address indexed builder);

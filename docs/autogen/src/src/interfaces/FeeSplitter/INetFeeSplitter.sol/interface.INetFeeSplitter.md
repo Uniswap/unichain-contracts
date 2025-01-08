@@ -1,5 +1,5 @@
 # INetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/fb9024ae9d58cf7bc4a43f01cec0f0f78196a82a/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/01b16016c9ca0bdf466dccf23f199a62de47a78e/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
 
 
 ## Functions
@@ -283,9 +283,9 @@ error WithdrawalFailed();
 Recipient data for an individual recipient
 
 **Notes:**
-- setter The setter address managing the recipient
+- field: setter The setter address managing the recipient
 
-- allocation The allocation of the recipient
+- field: allocation The allocation of the recipient
 
 
 ```solidity

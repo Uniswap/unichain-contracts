@@ -1,5 +1,5 @@
 # IFeeVault
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/e58b42227581bd4dbb09264be039301b9c37302d/src/interfaces/optimism/IFeeVault.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/01b16016c9ca0bdf466dccf23f199a62de47a78e/src/interfaces/optimism/IFeeVault.sol)
 
 from https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts-bedrock/src/universal/FeeVault.sol
 
@@ -12,7 +12,7 @@ Use the `withdrawalNetwork()` getter as this is deprecated
 and is subject to be removed in the future.
 
 **Note:**
-
+legacy: 
 
 
 ```solidity
@@ -33,7 +33,7 @@ Use the `recipient()` getter as this is deprecated
 and is subject to be removed in the future.
 
 **Note:**
-
+legacy: 
 
 
 ```solidity
@@ -54,7 +54,7 @@ Use the `minWithdrawalAmount()` getter as this is deprecated
 and is subject to be removed in the future.
 
 **Note:**
-
+legacy: 
 
 
 ```solidity
@@ -82,9 +82,9 @@ function withdraw() external;
 Enum representing where the FeeVault withdraws funds to.
 
 **Notes:**
-- L1 FeeVault withdraws funds to L1.
+- value: L1 FeeVault withdraws funds to L1.
 
-- L2 FeeVault withdraws funds to L2.
+- value: L2 FeeVault withdraws funds to L2.
 
 
 ```solidity

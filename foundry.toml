@@ -17,7 +17,8 @@ remappings = [
   "forge-std=lib/forge-std/src",
   "@openzeppelin/contracts=lib/openzeppelin-contracts/contracts",
   "@openzeppelin/contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts",
-  "@eth-optimism-bedrock=lib/optimism/packages/contracts-bedrock"
+  "@eth-optimism-bedrock=lib/optimism/packages/contracts-bedrock",
+  "solmate/=lib/solmate/src/"
 ]
 
 [profile.default.fuzz]

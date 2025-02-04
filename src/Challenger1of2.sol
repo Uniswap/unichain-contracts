@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.26;
 
 import {Address} from '@openzeppelin/contracts/utils/Address.sol';
 
@@ -64,7 +64,6 @@ contract Challenger1of2 {
      * @dev Executes a call as the Challenger (must be called by
      * Optimism or counter party signer).
      * @param _target Address to call.
-     * @param _value Amount of ETH to send.
      * @param _data Data for function call.
      */
     function execute(address _target, bytes memory _data) external payable {
@@ -72,10 +71,10 @@ contract Challenger1of2 {
             msg.sender == OTHER_SIGNER || msg.sender == OP_SIGNER,
             'Challenger1of2: must be an approved signer to execute'
         );
-        require(_target.isContract(), 'Challenger1of2: target must be a contract');
 
-        bytes memory result =
-            Address.functionCallWithValue(_target, _data, msg.value, 'Challenger1of2: failed to execute');
+        require(_target.code.length > 0, 'Challenger1of2: target must be a contract');
+
+        bytes memory result = Address.functionCallWithValue(_target, _data, msg.value);
 
         emit ChallengerCallExecuted(msg.sender, _target, msg.value, _data, result);
     }

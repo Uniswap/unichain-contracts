@@ -5,6 +5,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 /**
  * @title Challenger1of2
+ * @notice based off https://github.com/base-org/contracts/blob/4e227669098218ce50381f83ee3a611945913f62/src/Challenger1of2.sol, modified for the permissioned dispute game
  * @dev This contract serves the role of the Challenger.
  * It enforces a simple 1 of 2 design, where neither party can remove the other's
  * permissions to execute a Challenger call.

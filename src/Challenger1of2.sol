@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Address} from '@openzeppelin/contracts/utils/Address.sol';
 
 /**
  * @title Challenger1of2
@@ -37,7 +37,9 @@ contract Challenger1of2 {
      * @param _data The data of the call being made.
      * @param _result The result of the call being made.
      */
-    event ChallengerCallExecuted(address indexed _caller, address indexed _target, uint256 _value, bytes _data, bytes _result);
+    event ChallengerCallExecuted(
+        address indexed _caller, address indexed _target, uint256 _value, bytes _data, bytes _result
+    );
 
     /*//////////////////////////////////////////////////////////////
                             Constructor
@@ -48,8 +50,8 @@ contract Challenger1of2 {
      * @param _otherSigner Address of counter party signer.
      */
     constructor(address _opSigner, address _otherSigner) {
-        require(_opSigner != address(0), "Challenger1of2: opSigner cannot be zero address");
-        require(_otherSigner != address(0), "Challenger1of2: otherSigner cannot be zero address");
+        require(_opSigner != address(0), 'Challenger1of2: opSigner cannot be zero address');
+        require(_otherSigner != address(0), 'Challenger1of2: otherSigner cannot be zero address');
 
         OP_SIGNER = _opSigner;
         OTHER_SIGNER = _otherSigner;
@@ -68,13 +70,13 @@ contract Challenger1of2 {
     function execute(address _target, bytes memory _data) external payable {
         require(
             msg.sender == OTHER_SIGNER || msg.sender == OP_SIGNER,
-            "Challenger1of2: must be an approved signer to execute"
+            'Challenger1of2: must be an approved signer to execute'
         );
-        require(_target.isContract(), "Challenger1of2: target must be a contract");
+        require(_target.isContract(), 'Challenger1of2: target must be a contract');
 
-        bytes memory result = Address.functionCallWithValue(_target, _data, msg.value, "Challenger1of2: failed to execute");
+        bytes memory result =
+            Address.functionCallWithValue(_target, _data, msg.value, 'Challenger1of2: failed to execute');
 
         emit ChallengerCallExecuted(msg.sender, _target, msg.value, _data, result);
     }
 }
-

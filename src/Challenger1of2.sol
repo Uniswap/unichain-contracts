@@ -65,16 +65,16 @@ contract Challenger1of2 {
      * @param _value Amount of ETH to send.
      * @param _data Data for function call.
      */
-    function execute(address _target, uint256 _value, bytes memory _data) external payable {
+    function execute(address _target, bytes memory _data) external payable {
         require(
             msg.sender == OTHER_SIGNER || msg.sender == OP_SIGNER,
             "Challenger1of2: must be an approved signer to execute"
         );
         require(_target.isContract(), "Challenger1of2: target must be a contract");
 
-        bytes memory result = Address.functionCallWithValue(_target, _data, _value, "Challenger1of2: failed to execute");
+        bytes memory result = Address.functionCallWithValue(_target, _data, msg.value, "Challenger1of2: failed to execute");
 
-        emit ChallengerCallExecuted(msg.sender, _target, _value, _data, result);
+        emit ChallengerCallExecuted(msg.sender, _target, msg.value, _data, result);
     }
 }
 

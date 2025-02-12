@@ -1,5 +1,5 @@
 # L2StakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/01f4e5565a975be8c899959d029a1dc7e641a28e/src/L2StakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/2b39a73852bb4fead37417039aa931063fb8280f/src/L2StakeManager.sol)
 
 **Inherits:**
 ERC20Votes

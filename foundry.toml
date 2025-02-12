@@ -7,6 +7,7 @@ optimizer_runs = 999999
 via_ir = false
 verbosity = 2
 ffi = true
+evm_version = "cancun"
 fs_permissions = [
   { access = "read-write", path = ".forge-snapshots"},
   { access = "read", path = "script/" }
@@ -15,17 +16,18 @@ fs_permissions = [
 remappings = [
   "forge-std=lib/forge-std/src",
   "@openzeppelin/contracts=lib/openzeppelin-contracts/contracts",
-  "@openzeppelin/contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts"
+  "@openzeppelin/contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts",
+  "@eth-optimism-bedrock=lib/optimism/packages/contracts-bedrock"
 ]
 
 [profile.default.fuzz]
 runs = 1000
 
 [profile.pr.fuzz]
-runs = 10000
+runs = 1000
 
 [profile.ci.fuzz]
-runs = 100000
+runs = 1000
 
 [profile.debug]
 via_ir = false

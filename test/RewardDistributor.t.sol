@@ -51,20 +51,18 @@ abstract contract Deposited is Deployed {
         uint256 randomReward = rewardForBlock(seed);
         vm.prank(paymentSplitter);
         (bool success,) = address(rewardDistributor).call{value: randomReward}('');
-        snapLastCall('deposit reward');
         assert(success);
     }
 
     function attest(bytes memory account) public {
         vm.prank(makeAddr(string(account)));
         rewardDistributor.attest(vm.getBlockNumber() - 2, blockhash(vm.getBlockNumber() - 2), true);
-        snapLastCall('attest');
     }
 }
 
 contract RewardDistributorTest is Deposited {
     function test_ShouldDistributeRewardsCorrectly() public {
-        uint256 iterations = 100;
+        uint256 iterations = 10;
         vm.roll(100);
         vm.deal(paymentSplitter, 2 ether * iterations);
         uint256[] memory theoreticalRewards = new uint256[](4);

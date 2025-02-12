@@ -1,0 +1,138 @@
+{
+  "chainId": "1301",
+  "latest": {
+    "L1Splitter": {
+      "address": "0x03060844a69ce66d756abc4b082b526780603220",
+      "proxy": false,
+      "deploymentTxn": "0x039299bc17285612b0929c5d1eb38fbc64b026a573134fe8398bf2fcc93a79d6",
+      "timestamp": 1729184452,
+      "commitHash": "2bf9086"
+    },
+    "NetFeeSplitter": {
+      "address": "0x9f0fd0259fe61d7093594becda80f5aba6b0a191",
+      "proxy": false,
+      "deploymentTxn": "0x0a73871b596992a475d93d322b001dd2fd11a66e55aadb651d27c1266109560a",
+      "timestamp": 1729184452,
+      "commitHash": "2bf9086"
+    },
+    "FeeSplitter": {
+      "address": "0x8ae8710611e58edf83978ddd833dfdee1ed1fb8e",
+      "proxy": false,
+      "deploymentTxn": "0x5ebd1c9fc0018a32731f995f74e5b6b9a5613d599b5a0eb102fed4021c57c965",
+      "timestamp": 1729184452,
+      "commitHash": "2bf9086"
+    },
+    "BaseFeeVault": {
+      "address": "0xeb82050bb91e4879e256e0cf9a7c4bd58916aa6e",
+      "proxy": false,
+      "version": "1.5.0-beta.3",
+      "deploymentTxn": "0xa5a27a164ef19ae88fe038ece8b69529b052b0e3d62bf9ab54ccd46fda250804",
+      "timestamp": 1729207536,
+      "commitHash": "e94713b"
+    },
+    "L1FeeVault": {
+      "address": "0xc1fb143b9df08eb0612abca237dfe3726da2ed15",
+      "proxy": false,
+      "version": "1.5.0-beta.3",
+      "deploymentTxn": "0xfeb6c39156180e79dcc7d9a812c5da41e100d52c0ec98caf6d0bac5fa4f699ee",
+      "timestamp": 1729207536,
+      "commitHash": "e94713b"
+    },
+    "SequencerFeeVault": {
+      "address": "0x95fc06e1f6330f2829f0622d6158f5b1e21597b0",
+      "proxy": false,
+      "version": "1.5.0-beta.3",
+      "deploymentTxn": "0x7ddd493bd128019feccb73940462add28edf17e9b6aad841ff3c3cae3af2b673",
+      "timestamp": 1729207536,
+      "commitHash": "e94713b"
+    }
+  },
+  "history": [
+    {
+      "contracts": {
+        "BaseFeeVault": {
+          "address": "0xeb82050bb91e4879e256e0cf9a7c4bd58916aa6e",
+          "proxy": false,
+          "version": "1.5.0-beta.3",
+          "deploymentTxn": "0xa5a27a164ef19ae88fe038ece8b69529b052b0e3d62bf9ab54ccd46fda250804",
+          "input": {
+            "constructor": {
+              "_recipient": "0x8Ae8710611e58eDF83978dDd833dFdEE1eD1FB8e",
+              "_minWithdrawalAmount": "1",
+              "_withdrawalNetwork": "1"
+            }
+          }
+        },
+        "L1FeeVault": {
+          "address": "0xc1fb143b9df08eb0612abca237dfe3726da2ed15",
+          "proxy": false,
+          "version": "1.5.0-beta.3",
+          "deploymentTxn": "0xfeb6c39156180e79dcc7d9a812c5da41e100d52c0ec98caf6d0bac5fa4f699ee",
+          "input": {
+            "constructor": {
+              "_recipient": "0x8Ae8710611e58eDF83978dDd833dFdEE1eD1FB8e",
+              "_minWithdrawalAmount": "1",
+              "_withdrawalNetwork": "1"
+            }
+          }
+        },
+        "SequencerFeeVault": {
+          "address": "0x95fc06e1f6330f2829f0622d6158f5b1e21597b0",
+          "proxy": false,
+          "version": "1.5.0-beta.3",
+          "deploymentTxn": "0x7ddd493bd128019feccb73940462add28edf17e9b6aad841ff3c3cae3af2b673",
+          "input": {
+            "constructor": {
+              "_recipient": "0x8Ae8710611e58eDF83978dDd833dFdEE1eD1FB8e",
+              "_minWithdrawalAmount": "1",
+              "_withdrawalNetwork": "1"
+            }
+          }
+        }
+      },
+      "timestamp": 1729207536,
+      "commitHash": "e94713b"
+    },
+    {
+      "contracts": {
+        "L1Splitter": {
+          "address": "0x03060844a69ce66d756abc4b082b526780603220",
+          "proxy": false,
+          "deploymentTxn": "0x039299bc17285612b0929c5d1eb38fbc64b026a573134fe8398bf2fcc93a79d6",
+          "input": {
+            "constructor": {
+              "l1Wallet": "0x2C91f6a418060aD902B4C44D5d967BDd45e36E6e",
+              "feeDisbursementInterval": "3600",
+              "withdrawalMinAmount": "10000000000000000"
+            }
+          }
+        },
+        "NetFeeSplitter": {
+          "address": "0x9f0fd0259fe61d7093594becda80f5aba6b0a191",
+          "proxy": false,
+          "deploymentTxn": "0x0a73871b596992a475d93d322b001dd2fd11a66e55aadb651d27c1266109560a",
+          "input": {
+            "constructor": {
+              "initialRecipients": "[0x253caA9e7A5d2A28018a3A8de775ad5f9e9DDB96]",
+              "recipientData": "[(0x253caA9e7A5d2A28018a3A8de775ad5f9e9DDB96, 10000)]"
+            }
+          }
+        },
+        "FeeSplitter": {
+          "address": "0x8ae8710611e58edf83978ddd833dfdee1ed1fb8e",
+          "proxy": false,
+          "deploymentTxn": "0x5ebd1c9fc0018a32731f995f74e5b6b9a5613d599b5a0eb102fed4021c57c965",
+          "input": {
+            "constructor": {
+              "optimismWallet": "0x44FE90c7333cDcc7E8E67A95598CD5C989bf174b",
+              "l1FeeRecipient": "0x03060844a69Ce66d756abc4b082B526780603220",
+              "netFeeRecipient": "0x9f0Fd0259fe61D7093594bECdA80f5AbA6B0A191"
+            }
+          }
+        }
+      },
+      "timestamp": 1729184452,
+      "commitHash": "2bf9086"
+    }
+  ]
+}

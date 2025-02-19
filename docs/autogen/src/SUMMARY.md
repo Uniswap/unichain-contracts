@@ -15,4 +15,3 @@
       - [IFeeVault](src/interfaces/optimism/IFeeVault.sol/interface.IFeeVault.md)
       - [IL2StandardBridge](src/interfaces/optimism/IL2StandardBridge.sol/interface.IL2StandardBridge.md)
     - [IL2CrossDomainMessenger](src/interfaces/IL2CrossDomainMessenger.sol/interface.IL2CrossDomainMessenger.md)
-  - [Challenger1of2](src/Challenger1of2.sol/contract.Challenger1of2.md)

@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import {IRewardDistributorParams} from '../../interfaces/UVN/L2/IRewardDistributorParams.sol';
+import {IRewardPuller} from '../../interfaces/UVN/L2/IRewardPuller.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 
 contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
@@ -9,11 +10,18 @@ contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
 
     uint256 private _attestationWindowLength;
     uint256 private _attestationPeriod;
+    IRewardPuller private _rewardPuller;
 
-    constructor(address admin, uint256 attestationWindowLength_, uint256 attestationPeriod_) {
+    constructor(
+        address admin,
+        uint256 attestationWindowLength_,
+        uint256 attestationPeriod_,
+        IRewardPuller rewardPuller_
+    ) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _setAttestationWindowLength(attestationWindowLength_);
         _setAttestationPeriod(attestationPeriod_);
+        _setRewardPuller(rewardPuller_);
     }
 
     function setAttestationWindowLength(uint256 newAttestationWindowLength) external onlyRole(PARAM_SETTER_ROLE) {
@@ -24,12 +32,20 @@ contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
         _setAttestationPeriod(newAttestationPeriod);
     }
 
+    function setRewardPuller(IRewardPuller newRewardPuller) external onlyRole(PARAM_SETTER_ROLE) {
+        _setRewardPuller(newRewardPuller);
+    }
+
     function attestationWindowLength() public view returns (uint256) {
         return _attestationWindowLength;
     }
 
     function attestationPeriod() public view returns (uint256) {
         return _attestationPeriod;
+    }
+
+    function rewardPuller() public view returns (IRewardPuller) {
+        return _rewardPuller;
     }
 
     function _setAttestationWindowLength(uint256 newAttestationWindowLength) internal {
@@ -46,5 +62,12 @@ contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
         uint256 oldAttestationPeriod = _attestationPeriod;
         _attestationPeriod = newAttestationPeriod;
         emit AttestationPeriodUpdated(oldAttestationPeriod, newAttestationPeriod);
+    }
+
+    function _setRewardPuller(IRewardPuller newRewardPuller) internal {
+        if (!newRewardPuller.supportsInterface(type(IRewardPuller).interfaceId)) revert InvalidRewardPuller();
+        IRewardPuller oldRewardPuller = _rewardPuller;
+        _rewardPuller = newRewardPuller;
+        emit RewardPullerUpdated(address(oldRewardPuller), address(newRewardPuller));
     }
 }

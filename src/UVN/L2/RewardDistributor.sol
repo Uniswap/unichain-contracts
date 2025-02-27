@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import {IFeeSplitter} from '../../interfaces/FeeSplitter/IFeeSplitter.sol';
 import {INetFeeSplitter} from '../../interfaces/FeeSplitter/INetFeeSplitter.sol';
 import {IRewardDistributor} from '../../interfaces/UVN/L2/IRewardDistributor.sol';
-
+import {IRewardPuller} from '../../interfaces/UVN/L2/IRewardPuller.sol';
 import {Search} from '../../libraries/Search.sol';
 import {RewardDistributorParams} from './RewardDistributorParams.sol';
 import {IVotes} from '@openzeppelin/contracts/governance/utils/IVotes.sol';
@@ -16,8 +16,6 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     using MessageHashUtils for bytes32;
     using Search for uint256[];
 
-    IFeeSplitter private immutable FEE_SPLITTER;
-    INetFeeSplitter private immutable NET_FEE_SPLITTER;
     IVotes private immutable L2_STAKE_MANAGER;
 
     struct Window {
@@ -27,7 +25,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         bytes32 mostVotedBlockHash;
         bytes32 mostVotedHash;
         uint256 mostVotedHashVotes;
-        uint256 nextWindowBlockNumber;
+        uint256 nextWindow;
         mapping(bytes32 hash => uint256 votes) attestations;
     }
 
@@ -50,16 +48,14 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
     constructor(
         address admin,
-        address feeSplitter,
-        address l2StakeManager,
+        IVotes l2StakeManager,
+        IRewardPuller rewardPuller_,
         uint256 attestationWindowLength_,
         uint256 attestationPeriod_
-    ) RewardDistributorParams(admin, attestationWindowLength_, attestationPeriod_) {
-        FEE_SPLITTER = IFeeSplitter(feeSplitter);
-        NET_FEE_SPLITTER = INetFeeSplitter(FEE_SPLITTER.NET_FEE_RECIPIENT());
-        L2_STAKE_MANAGER = IVotes(l2StakeManager);
+    ) RewardDistributorParams(admin, attestationWindowLength_, attestationPeriod_, rewardPuller_) {
+        L2_STAKE_MANAGER = l2StakeManager;
         uint256 blockNumber = block.number - 1;
-        _windows[blockNumber].nextWindowBlockNumber = blockNumber + attestationWindowLength();
+        _windows[blockNumber].nextWindow = _encodeNextWindow(blockNumber + attestationWindowLength(), 0);
         _windows[blockNumber].blockHash = blockhash(blockNumber);
         _windowBlockNumbers.push(blockNumber);
         emit AttestationWindowScheduled(blockNumber, blockNumber + attestationWindowLength());
@@ -67,8 +63,13 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     }
 
     receive() external payable {
-        // TODO: anyone can fund the contract, funds should be automatically allocated to the scheduled window
-        if (msg.sender != address(NET_FEE_SPLITTER)) revert InvalidSender();
+        Window storage currentWindow = _currentWindow();
+        (uint256 nextWindow, uint256 reward) = _decodeNextWindow(currentWindow.nextWindow);
+        currentWindow.nextWindow = _encodeNextWindow(nextWindow, reward + msg.value);
+        emit RewardReceived(nextWindow, msg.value);
+        if (block.number > nextWindow) {
+            _scheduleNextWindow();
+        }
     }
 
     /// @notice Attest to a window of blocks
@@ -91,7 +92,8 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
         // uh oh I hope you aren't double signing
         if (a.attestations[blockNumber].votedHash != bytes32(0)) revert BlockAlreadyAttested();
-        if (block.number > _nextWindow()) _scheduleNextWindow();
+
+        if (block.number > (_currentWindow().nextWindow >> 128)) rewardPuller().pullRewards();
 
         // 1. store the attestation
         uint256 votes = L2_STAKE_MANAGER.getPastVotes(operator, blockNumber);
@@ -102,7 +104,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
         // 2. keep track of what most voted hash is (including and excluding additional data)
         Window storage window = _windows[blockNumber];
-        if (window.nextWindowBlockNumber == 0) revert WindowNotFound();
+        if (window.nextWindow == 0) revert WindowNotFound();
         window.attestations[votedHash] += votes;
         uint256 votesForHash = window.attestations[votedHash];
         if (votesForHash > window.mostVotedHashVotes) {
@@ -133,7 +135,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         } else {
             // window in the future
             uint256 lastWindow = _windowBlockNumbers[_windowBlockNumbers.length - 1];
-            uint256 scheduledWindowEnd = _windows[lastWindow].nextWindowBlockNumber;
+            (uint256 scheduledWindowEnd,) = _decodeNextWindow(_windows[lastWindow].nextWindow);
             if (_windowDelayed(scheduledWindowEnd, attestationWindowLength())) {
                 return blockNumber <= block.number ? Status.Delayed : Status.NonExistent;
             } else if (blockNumber <= scheduledWindowEnd) {
@@ -146,20 +148,15 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
     /// @dev The first attestation to the current window will schedule the next window. Windows are scheduled every `attestationWindowLength` blocks. If there are no attestations during the current window, the next window is not scheduled. In this case the current window will be extended until the next attestation occurs. After this, the next window will be scheduled automatically in the same interval again.
     function _scheduleNextWindow() private {
-        // TODO: create reward puller contract that is controlled by the admin and can be replaced to pull rewards from other sources in the future
-        FEE_SPLITTER.distributeFees();
-        uint256 reward = NET_FEE_SPLITTER.withdrawFees(address(this));
-        if (reward == 0) revert NoRewardsAvailable();
-
-        Window storage latestWindow = _windows[_windowBlockNumbers[_windowBlockNumbers.length - 1]];
-        uint256 nextWindow = latestWindow.nextWindowBlockNumber;
+        Window storage currentWindow = _currentWindow();
+        (uint256 nextWindow, uint256 reward) = _decodeNextWindow(currentWindow.nextWindow);
         uint256 attestationWindowLength_ = attestationWindowLength();
         if (_windowDelayed(nextWindow, attestationWindowLength_)) {
             // entire window has not received any attestations
             // extend the current window
             emit AttestationWindowExtended(nextWindow, block.number - 1);
             nextWindow = block.number - 1;
-            latestWindow.nextWindowBlockNumber = nextWindow;
+            currentWindow.nextWindow = _encodeNextWindow(nextWindow, reward);
         }
 
         _windows[nextWindow].reward = reward;
@@ -167,7 +164,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         // safe guard, returns 0 for older than 256 blocks, should not happen because of the check when setting the attestation window length
         assert(blockHash != bytes32(0));
         _windows[nextWindow].blockHash = blockHash;
-        _windows[nextWindow].nextWindowBlockNumber = nextWindow + attestationWindowLength_;
+        _windows[nextWindow].nextWindow = _encodeNextWindow(nextWindow + attestationWindowLength_, 0);
         _windows[nextWindow].totalSupply = L2_STAKE_MANAGER.getPastTotalSupply(nextWindow);
         _windowBlockNumbers.push(nextWindow);
         emit AttestationWindowScheduled(nextWindow, nextWindow + attestationWindowLength_);
@@ -177,8 +174,18 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         // TODO: implement
     }
 
-    function _nextWindow() private view returns (uint256) {
-        return _windows[_windowBlockNumbers[_windowBlockNumbers.length - 1]].nextWindowBlockNumber;
+    function _currentWindow() private view returns (Window storage window) {
+        return _windows[_windowBlockNumbers[_windowBlockNumbers.length - 1]];
+    }
+
+    function _encodeNextWindow(uint256 blockNumber, uint256 reward) private pure returns (uint256) {
+        assert(blockNumber < type(uint128).max);
+        assert(reward < type(uint128).max);
+        return blockNumber << 128 | reward;
+    }
+
+    function _decodeNextWindow(uint256 nextWindow) private pure returns (uint256 blockNumber, uint256 reward) {
+        return (nextWindow >> 128, nextWindow & type(uint128).max);
     }
 
     function _acceptingAttestations(uint256 blockNumber) private view returns (bool) {

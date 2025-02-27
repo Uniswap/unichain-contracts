@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import {IRewardDistributor, RewardDistributor} from '../../src/UVN/L2/RewardDistributor.sol';
-import {MockFeeSplitter} from '../mock/MockFeeSplitter.sol';
+import {MockRewardPuller} from '../mock/MockRewardPuller.sol';
 import {MockVotesToken} from '../mock/MockVotesToken.sol';
 import {MessageHashUtils} from '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 
@@ -12,7 +12,7 @@ abstract contract RewardDistributorTestBase is Test {
     uint256 constant DEFAULT_ATTESTATION_WINDOW_LENGTH = 10;
 
     RewardDistributor rd;
-    MockFeeSplitter mockFeeSplitter;
+    MockRewardPuller mockRewardPuller;
     MockVotesToken mockVotesToken;
     Vm.Wallet operator = vm.createWallet('operator');
 
@@ -20,10 +20,10 @@ abstract contract RewardDistributorTestBase is Test {
 
     function setUp() public {
         vm.roll(1000);
-        mockFeeSplitter = new MockFeeSplitter(1 ether);
+        mockRewardPuller = new MockRewardPuller(1 ether);
         mockVotesToken = new MockVotesToken();
         rd = new RewardDistributor(
-            address(this), address(mockFeeSplitter), address(mockVotesToken), DEFAULT_ATTESTATION_WINDOW_LENGTH, 1000
+            address(this), mockVotesToken, mockRewardPuller, DEFAULT_ATTESTATION_WINDOW_LENGTH, 1000
         );
         mockVotesToken.mint(address(this), 1_000_000 ether);
         rd.grantRole(rd.PARAM_SETTER_ROLE(), address(this));
@@ -37,6 +37,10 @@ abstract contract RewardDistributorTestBase is Test {
 
     function assertStatus(uint256 blockNumber, IRewardDistributor.Status status) internal view {
         assertEq(uint8(rd.status(blockNumber)), uint8(status));
+    }
+
+    function assertStatus(uint256 blockNumber, IRewardDistributor.Status status, string memory message) internal view {
+        assertEq(uint8(rd.status(blockNumber)), uint8(status), message);
     }
 }
 
@@ -69,38 +73,59 @@ contract RewardDistributorTest is RewardDistributorTestBase {
 
     function test_shouldInitializeWindowsCorrectly(uint256 attestationWindowLength, uint256 attestationDelay) public {
         // Usually an attestation will occur on the first block of the next window, and the next window will be scheduled automatically after the `attestationWindowLength` blocks. If there is a delay of less than `attestationWindowLength` blocks, the next window will still be scheduled the same as if there was no delay.
+        attestationWindowLength = bound(attestationWindowLength, 1, 256);
+        rd.setAttestationWindowLength(attestationWindowLength);
+        // attest to the current window, on the next attestation the new window will be scheduled after the new `attestationWindowLength` blocks
+        rd.attest(block.number - 1, bytes32(0), 'data', signAttestation(block.number, 'data'));
+        vm.roll(block.number + DEFAULT_ATTESTATION_WINDOW_LENGTH);
+        attestationDelay = bound(attestationDelay, 0, attestationWindowLength - 1);
+        // attest to the next window
+        uint256 attestationBlockNumber = block.number - 1;
+        vm.roll(block.number + attestationDelay);
+        assertStatus(attestationBlockNumber, IRewardDistributor.Status.Scheduled, 'Window should be scheduled');
+        vm.expectEmit();
+        emit IRewardDistributor.AttestationWindowScheduled(
+            attestationBlockNumber, attestationBlockNumber + attestationWindowLength
+        );
+        rd.attest(attestationBlockNumber, bytes32(0), 'data', signAttestation(attestationBlockNumber, 'data'));
+        assertStatus(
+            attestationBlockNumber, IRewardDistributor.Status.Active, 'First attestation should activate the window'
+        );
+    }
+
+    function test_shouldInitializeWindowsCorrectlyAfterDelay(uint256 attestationWindowLength, uint256 attestationDelay)
+        public
+    {
         // Should the delay be larger than `attestationWindowLength`, it means that the next window is not scheduled automatically. In this case the current window will be extended until the next attestation occurs.
         attestationWindowLength = bound(attestationWindowLength, 1, 256);
         rd.setAttestationWindowLength(attestationWindowLength);
         // attest to the current window, on the next attestation the new window will be scheduled after the new `attestationWindowLength` blocks
         rd.attest(block.number - 1, bytes32(0), 'data', signAttestation(block.number, 'data'));
         vm.roll(block.number + DEFAULT_ATTESTATION_WINDOW_LENGTH);
-        // Half of the attestation intervals will be shorter or equal to the attestation window length on average, meaning that the next window will be not extended
-        attestationDelay = bound(attestationDelay, 0, attestationWindowLength * 2);
-        if (attestationDelay > attestationWindowLength) {
-            // the other half will be larger, randomize up to 512 blocks
-            attestationDelay = bound(attestationDelay, attestationWindowLength + 1, 512);
-        }
+        attestationDelay = bound(attestationDelay, attestationWindowLength, attestationWindowLength + 512);
         // attest to the next window
-        uint256 attestationBlockNumber =
-            attestationDelay >= attestationWindowLength ? block.number + attestationDelay : block.number;
+        uint256 attestationBlockNumber = block.number + attestationDelay - 1;
         vm.roll(block.number + attestationDelay);
-        if (attestationDelay >= attestationWindowLength) {
-            uint256 originalAttestationBlockNumber = block.number - attestationDelay - 1;
-            vm.expectEmit();
-            emit IRewardDistributor.AttestationWindowExtended(
-                originalAttestationBlockNumber, attestationBlockNumber - 1
-            );
-        }
+        uint256 originalAttestationBlockNumber = block.number - attestationDelay - 1;
+        assertStatus(originalAttestationBlockNumber, IRewardDistributor.Status.Delayed, 'Window should be delayed');
+        assertStatus(attestationBlockNumber, IRewardDistributor.Status.Delayed, 'Window should be delayed');
+        vm.expectEmit();
+        emit IRewardDistributor.AttestationWindowExtended(originalAttestationBlockNumber, attestationBlockNumber);
         vm.expectEmit();
         emit IRewardDistributor.AttestationWindowScheduled(
-            attestationBlockNumber - 1, attestationBlockNumber + attestationWindowLength - 1
+            attestationBlockNumber, attestationBlockNumber + attestationWindowLength
         );
-        rd.attest(attestationBlockNumber - 1, bytes32(0), 'data', signAttestation(attestationBlockNumber, 'data'));
-        uint256 waitForNextWindow = attestationDelay < attestationWindowLength
-            ? attestationWindowLength - attestationDelay
-            : attestationWindowLength;
-        vm.roll(block.number + waitForNextWindow);
+        rd.attest(attestationBlockNumber, bytes32(0), 'data', signAttestation(attestationBlockNumber, 'data'));
+        assertStatus(
+            attestationBlockNumber,
+            IRewardDistributor.Status.Active,
+            'First attestation of delayed window should activate the window'
+        );
+        assertStatus(
+            originalAttestationBlockNumber,
+            IRewardDistributor.Status.Active,
+            'Original unextended window should be active'
+        );
     }
 
     function test_shouldReturnCorrectStatus() public {

@@ -34,6 +34,10 @@ abstract contract RewardDistributorTestBase is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(operator, dataHash.toEthSignedMessageHash());
         return abi.encodePacked(r, s, v);
     }
+
+    function assertStatus(uint256 blockNumber, IRewardDistributor.Status status) internal view {
+        assertEq(uint8(rd.status(blockNumber)), uint8(status));
+    }
 }
 
 contract RewardDistributorTest is RewardDistributorTestBase {
@@ -90,12 +94,25 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         }
         vm.expectEmit();
         emit IRewardDistributor.AttestationWindowScheduled(
-            attestationBlockNumber - 1, attestationBlockNumber + attestationWindowLength - 1, 1 ether
+            attestationBlockNumber - 1, attestationBlockNumber + attestationWindowLength - 1
         );
         rd.attest(attestationBlockNumber - 1, bytes32(0), 'data', signAttestation(attestationBlockNumber, 'data'));
         uint256 waitForNextWindow = attestationDelay < attestationWindowLength
             ? attestationWindowLength - attestationDelay
             : attestationWindowLength;
         vm.roll(block.number + waitForNextWindow);
+    }
+
+    function test_shouldReturnCorrectStatus() public {
+        uint256 blockNumber = block.number;
+        assertStatus(blockNumber - 1, IRewardDistributor.Status.Active);
+        assertStatus(blockNumber, IRewardDistributor.Status.Scheduled);
+        assertStatus(blockNumber + rd.attestationWindowLength(), IRewardDistributor.Status.NonExistent);
+        vm.roll(blockNumber + rd.attestationWindowLength() * 2);
+        assertStatus(blockNumber, IRewardDistributor.Status.Delayed);
+        assertStatus(block.number - 1, IRewardDistributor.Status.Delayed);
+        assertStatus(blockNumber - 1, IRewardDistributor.Status.Active);
+        rd.setAttestationPeriod(rd.attestationWindowLength() * 2 + 1);
+        assertStatus(blockNumber - 1, IRewardDistributor.Status.Finalized);
     }
 }

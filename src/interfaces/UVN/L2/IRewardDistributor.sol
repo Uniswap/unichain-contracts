@@ -4,9 +4,15 @@ pragma solidity 0.8.26;
 import {IRewardDistributorParams} from './IRewardDistributorParams.sol';
 
 interface IRewardDistributor is IRewardDistributorParams {
-    event AttestationWindowScheduled(
-        uint256 indexed currentWindowEnd, uint256 indexed scheduledNextWindowEnd, uint256 reward
-    );
+    enum Status {
+        NonExistent,
+        Scheduled,
+        Delayed,
+        Active,
+        Finalized
+    }
+
+    event AttestationWindowScheduled(uint256 indexed currentWindowEnd, uint256 indexed scheduledNextWindowEnd);
     event AttestationWindowExtended(uint256 indexed originalWindowEnd, uint256 indexed newWindowEnd);
     event Attested(address indexed operator, uint256 indexed blockNumber, bytes32 votedHash);
 

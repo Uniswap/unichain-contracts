@@ -42,6 +42,14 @@ abstract contract RewardDistributorTestBase is Test {
     function assertStatus(uint256 blockNumber, IRewardDistributor.Status status, string memory message) internal view {
         assertEq(uint8(rd.status(blockNumber)), uint8(status), message);
     }
+
+    function assertStatusRange(uint256 lower, uint256 upper, IRewardDistributor.Status status, string memory message)
+        internal
+        view
+    {
+        assertEq(uint8(rd.status(lower)), uint8(status), string(abi.encodePacked(message, ' (lower)')));
+        assertEq(uint8(rd.status(upper)), uint8(status), string(abi.encodePacked(message, ' (upper)')));
+    }
 }
 
 contract RewardDistributorTest is RewardDistributorTestBase {
@@ -54,7 +62,7 @@ contract RewardDistributorTest is RewardDistributorTestBase {
     function test_shouldNotBeAbleToAttestBlockBeforeAttestationPeriod(uint256 blockNumber, uint256 attestationPeriod)
         public
     {
-        attestationPeriod = bound(attestationPeriod, 1, block.number - 1);
+        attestationPeriod = bound(attestationPeriod, rd.attestationWindowLength(), block.number - 1);
         rd.setAttestationPeriod(attestationPeriod);
         blockNumber = bound(blockNumber, 0, block.number - rd.attestationPeriod() - 1);
         vm.expectRevert(IRewardDistributor.AttestationPeriodPassed.selector);
@@ -82,15 +90,12 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         // attest to the next window
         uint256 attestationBlockNumber = block.number - 1;
         vm.roll(block.number + attestationDelay);
-        assertStatus(attestationBlockNumber, IRewardDistributor.Status.Scheduled, 'Window should be scheduled');
+        assertStatus(attestationBlockNumber, IRewardDistributor.Status.Active, 'Window should become active');
         vm.expectEmit();
         emit IRewardDistributor.AttestationWindowScheduled(
             attestationBlockNumber, attestationBlockNumber + attestationWindowLength
         );
         rd.attest(attestationBlockNumber, bytes32(0), 'data', signAttestation(attestationBlockNumber, 'data'));
-        assertStatus(
-            attestationBlockNumber, IRewardDistributor.Status.Active, 'First attestation should activate the window'
-        );
     }
 
     function test_shouldInitializeWindowsCorrectlyAfterDelay(uint256 attestationWindowLength, uint256 attestationDelay)
@@ -106,9 +111,11 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         // attest to the next window
         uint256 attestationBlockNumber = block.number + attestationDelay - 1;
         vm.roll(block.number + attestationDelay);
+        assertEq(attestationBlockNumber, block.number - 1);
         uint256 originalAttestationBlockNumber = block.number - attestationDelay - 1;
-        assertStatus(originalAttestationBlockNumber, IRewardDistributor.Status.Delayed, 'Window should be delayed');
-        assertStatus(attestationBlockNumber, IRewardDistributor.Status.Delayed, 'Window should be delayed');
+        assertStatus(originalAttestationBlockNumber, IRewardDistributor.Status.Active, 'Window becomes active');
+        assertStatus(attestationBlockNumber, IRewardDistributor.Status.Active, 'Window extends to the previous block');
+        assertStatus(attestationBlockNumber + 1, IRewardDistributor.Status.Delayed, 'Next window is delayed');
         vm.expectEmit();
         emit IRewardDistributor.AttestationWindowExtended(originalAttestationBlockNumber, attestationBlockNumber);
         vm.expectEmit();
@@ -117,26 +124,78 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         );
         rd.attest(attestationBlockNumber, bytes32(0), 'data', signAttestation(attestationBlockNumber, 'data'));
         assertStatus(
-            attestationBlockNumber,
-            IRewardDistributor.Status.Active,
-            'First attestation of delayed window should activate the window'
-        );
-        assertStatus(
-            originalAttestationBlockNumber,
-            IRewardDistributor.Status.Active,
-            'Original unextended window should be active'
+            attestationBlockNumber + 1, IRewardDistributor.Status.Scheduled, 'Delayed window should become scheduled'
         );
     }
 
-    function test_shouldReturnCorrectStatus() public {
+    function test_shouldReturnCorrectStatusEndToEnd() public {
         uint256 blockNumber = block.number;
-        assertStatus(blockNumber - 1, IRewardDistributor.Status.Active);
-        assertStatus(blockNumber, IRewardDistributor.Status.Scheduled);
-        assertStatus(blockNumber + rd.attestationWindowLength(), IRewardDistributor.Status.NonExistent);
-        vm.roll(blockNumber + rd.attestationWindowLength() * 2);
-        assertStatus(blockNumber, IRewardDistributor.Status.Delayed);
-        assertStatus(block.number - 1, IRewardDistributor.Status.Delayed);
-        assertStatus(blockNumber - 1, IRewardDistributor.Status.Active);
+        assertStatus(blockNumber - 1, IRewardDistributor.Status.Active, 'Current window should be active');
+        assertEq(rd.latestActiveWindow(), blockNumber - 1);
+        assertStatusRange(
+            blockNumber,
+            blockNumber + rd.attestationWindowLength() - 1,
+            IRewardDistributor.Status.Scheduled,
+            'Next window should be scheduled'
+        );
+        assertStatusRange(
+            blockNumber + rd.attestationWindowLength(),
+            blockNumber + rd.attestationWindowLength() * 2 - 1,
+            IRewardDistributor.Status.Pending,
+            'Window after scheduled window should be pending'
+        );
+        assertStatus(
+            blockNumber + rd.attestationWindowLength() * 2,
+            IRewardDistributor.Status.NonExistent,
+            'Window after scheduled window should not exist'
+        );
+        // move time forward one window length to activate scheduled window
+        vm.roll(block.number + rd.attestationWindowLength() + 1);
+        assertStatusRange(
+            blockNumber,
+            blockNumber + rd.attestationWindowLength() - 1,
+            IRewardDistributor.Status.Active,
+            'Scheduled window should become active'
+        );
+        assertEq(rd.latestActiveWindow(), blockNumber + rd.attestationWindowLength() - 1);
+        assertStatusRange(
+            blockNumber + rd.attestationWindowLength(),
+            blockNumber + rd.attestationWindowLength() * 2 - 1,
+            IRewardDistributor.Status.Pending,
+            'Window after active should become pending until the next attestation schedules the window'
+        );
+        assertStatus(
+            blockNumber + rd.attestationWindowLength() * 2,
+            IRewardDistributor.Status.NonExistent,
+            'Windows after pending window should not exist'
+        );
+        // move time forward one more window length, because there are no attestations during the pending window, it's extended and the next window will become delayed
+        vm.roll(block.number + rd.attestationWindowLength());
+        assertStatusRange(
+            blockNumber,
+            blockNumber + rd.attestationWindowLength() - 1,
+            IRewardDistributor.Status.Active,
+            'Scheduled window that became active should still be active'
+        );
+        assertStatusRange(
+            blockNumber + rd.attestationWindowLength(),
+            block.number - 1,
+            IRewardDistributor.Status.Active,
+            'Active window should extend to the last block'
+        );
+        assertEq(rd.latestActiveWindow(), block.number - 1);
+        assertStatusRange(
+            block.number,
+            block.number + rd.attestationWindowLength() - 1,
+            IRewardDistributor.Status.Delayed,
+            'Next window should be delayed'
+        );
+        assertStatus(
+            block.number + rd.attestationWindowLength(),
+            IRewardDistributor.Status.NonExistent,
+            'Window after delayed window should remain non existent'
+        );
+        // set attestation period so initial window is now finalized
         rd.setAttestationPeriod(rd.attestationWindowLength() * 2 + 1);
         assertStatus(blockNumber - 1, IRewardDistributor.Status.Finalized);
     }

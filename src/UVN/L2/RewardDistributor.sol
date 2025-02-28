@@ -26,6 +26,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         bytes32 mostVotedHash;
         uint256 mostVotedHashVotes;
         uint256 nextWindow;
+        uint256 index;
         mapping(bytes32 hash => uint256 votes) attestations;
     }
 
@@ -62,6 +63,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         _windows[blockNumber].totalSupply = L2_STAKE_MANAGER.getPastTotalSupply(blockNumber);
     }
 
+    /// @dev contract can receive rewards by either pulling from the rewardPuller or by being sent ETH directly to this contract
     receive() external payable {
         Window storage currentWindow = _currentWindow();
         (uint256 nextWindow, uint256 reward) = _decodeNextWindow(currentWindow.nextWindow);
@@ -72,13 +74,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         }
     }
 
-    /// @notice Attest to a window of blocks
-    /// @dev The window is always identified by the block number of the last block in the window
-    /// @dev The additional data has to match the data of other operators to be able to reach consensus
-    /// @param blockNumber The block number of the last block in the window
-    /// @param blockHash The block hash of the last block in the window
-    /// @param additionalData Additional data to include in the attestation
-    /// @param signature The signature of the operator
+    /// @inheritdoc IRewardDistributor
     function attest(uint256 blockNumber, bytes32 blockHash, bytes memory additionalData, bytes memory signature)
         external
     {
@@ -119,31 +115,50 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         emit Attested(operator, blockNumber, votedHash);
     }
 
-    /// @notice Get the status of the window that contains the given block number
-    /// @param blockNumber The block number to check
-    /// @return The status of the window containing the block number
-    function status(uint256 blockNumber) external view returns (Status) {
-        uint256 windowIndex = _findWindowIndex(blockNumber);
+    /// @inheritdoc IRewardDistributor
+    function status(uint256 targetBlockNumber) external view returns (Status) {
+        uint256 windowIndex = _findWindowIndex(targetBlockNumber);
         if (windowIndex != type(uint256).max) {
-            // window found
+            // window found, must be active or finalized
             uint256 windowEnd = _windowBlockNumbers[windowIndex];
+            // window finalizes after the attestation period has passed
             if (!_acceptingAttestations(windowEnd)) {
                 return Status.Finalized;
-            } else {
-                return Status.Active;
             }
-        } else {
-            // window in the future
-            uint256 lastWindow = _windowBlockNumbers[_windowBlockNumbers.length - 1];
-            (uint256 scheduledWindowEnd,) = _decodeNextWindow(_windows[lastWindow].nextWindow);
-            if (_windowDelayed(scheduledWindowEnd, attestationWindowLength())) {
-                return blockNumber <= block.number ? Status.Delayed : Status.NonExistent;
-            } else if (blockNumber <= scheduledWindowEnd) {
-                return Status.Scheduled;
-            } else {
-                return Status.NonExistent;
-            }
+            return Status.Active;
         }
+        Window storage currentWindow = _currentWindow();
+        (uint256 scheduledWindowEnd,) = _decodeNextWindow(currentWindow.nextWindow);
+        uint256 attestationWindowLength_ = attestationWindowLength();
+        if (block.number > scheduledWindowEnd + attestationWindowLength_) {
+            // no attestations during the pending window were made, thus the next window could not be scheduled. Extend the current window until the next attestation occurs.
+            if (targetBlockNumber < block.number) return Status.Active;
+            if (targetBlockNumber < block.number + attestationWindowLength_) return Status.Delayed;
+            return Status.NonExistent;
+        }
+        // currently a window is scheduled
+        if (targetBlockNumber <= scheduledWindowEnd) {
+            // if the scheduled window has passed without any attestations, it becomes active
+            return block.number > scheduledWindowEnd ? Status.Active : Status.Scheduled;
+        }
+        // the window after the scheduled/active window is pending
+        if (targetBlockNumber <= scheduledWindowEnd + attestationWindowLength_) return Status.Pending;
+        // windows after the pending window do not exist yet
+        return Status.NonExistent;
+    }
+
+    /// @inheritdoc IRewardDistributor
+    function latestActiveWindow() external view returns (uint256) {
+        // @audit invariant: there is always at least one active window an operator can attest to
+        uint256 currentWindowBlockNumber = _windowBlockNumbers[_windowBlockNumbers.length - 1];
+        Window storage currentWindow = _windows[currentWindowBlockNumber];
+        (uint256 nextWindowEnd,) = _decodeNextWindow(currentWindow.nextWindow);
+        // a window is scheduled, the latest active window is in storage
+        if (block.number < nextWindowEnd) return currentWindowBlockNumber;
+        // the window is pending, activate the scheduled window
+        if (block.number < nextWindowEnd + attestationWindowLength()) return nextWindowEnd;
+        // a window is delayed, the active window is extended to the last block
+        return block.number - 1;
     }
 
     /// @dev The first attestation to the current window will schedule the next window. Windows are scheduled every `attestationWindowLength` blocks. If there are no attestations during the current window, the next window is not scheduled. In this case the current window will be extended until the next attestation occurs. After this, the next window will be scheduled automatically in the same interval again.
@@ -161,12 +176,13 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
         _windows[nextWindow].reward = reward;
         bytes32 blockHash = blockhash(nextWindow);
-        // safe guard, returns 0 for older than 256 blocks, should not happen because of the check when setting the attestation window length
+        // @audit safe guard, returns 0 for older than 256 blocks, should not happen because of the check when setting the attestation window length
         assert(blockHash != bytes32(0));
         _windows[nextWindow].blockHash = blockHash;
         _windows[nextWindow].nextWindow = _encodeNextWindow(nextWindow + attestationWindowLength_, 0);
         _windows[nextWindow].totalSupply = L2_STAKE_MANAGER.getPastTotalSupply(nextWindow);
         _windowBlockNumbers.push(nextWindow);
+        _windows[nextWindow].index = _windowBlockNumbers.length - 1;
         emit AttestationWindowScheduled(nextWindow, nextWindow + attestationWindowLength_);
     }
 
@@ -198,6 +214,9 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
     /// @dev perform an exponential search first to find a range that contains the block number and reduces the search space for recent block numbers
     function _findWindowIndex(uint256 blockNumber) private view returns (uint256) {
+        uint256 index = _windows[blockNumber].index;
+        // first window has an index of 0, needs to be retrieved via binary search
+        if (index != 0) return index;
         (uint256 left, uint256 right) = _windowBlockNumbers.exponentialSearchDesc(blockNumber);
         if (left == right) return left;
         if (right == type(uint256).max) return type(uint256).max;

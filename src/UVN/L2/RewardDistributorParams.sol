@@ -19,39 +19,45 @@ contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
         IRewardPuller rewardPuller_
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _setAttestationWindowLength(attestationWindowLength_);
         _setAttestationPeriod(attestationPeriod_);
+        _setAttestationWindowLength(attestationWindowLength_);
         _setRewardPuller(rewardPuller_);
     }
 
+    /// @inheritdoc IRewardDistributorParams
     function setAttestationWindowLength(uint256 newAttestationWindowLength) external onlyRole(PARAM_SETTER_ROLE) {
         _setAttestationWindowLength(newAttestationWindowLength);
     }
 
+    /// @inheritdoc IRewardDistributorParams
     function setAttestationPeriod(uint256 newAttestationPeriod) external onlyRole(PARAM_SETTER_ROLE) {
         _setAttestationPeriod(newAttestationPeriod);
     }
 
+    /// @inheritdoc IRewardDistributorParams
     function setRewardPuller(IRewardPuller newRewardPuller) external onlyRole(PARAM_SETTER_ROLE) {
         _setRewardPuller(newRewardPuller);
     }
 
+    /// @inheritdoc IRewardDistributorParams
     function attestationWindowLength() public view returns (uint256) {
         return _attestationWindowLength;
     }
 
+    /// @inheritdoc IRewardDistributorParams
     function attestationPeriod() public view returns (uint256) {
         return _attestationPeriod;
     }
 
+    /// @inheritdoc IRewardDistributorParams
     function rewardPuller() public view returns (IRewardPuller) {
         return _rewardPuller;
     }
 
     function _setAttestationWindowLength(uint256 newAttestationWindowLength) internal {
         if (newAttestationWindowLength == 0) revert AmountZero();
-        // Only the last 256 blockhashes are available, limiting the attestation window length to 256 blocks
         if (newAttestationWindowLength > 256) revert AttestationWindowLengthTooLarge();
+        if (attestationPeriod() < newAttestationWindowLength) revert AttestationPeriodTooShort();
         uint256 oldAttestationWindowLength = _attestationWindowLength;
         _attestationWindowLength = newAttestationWindowLength;
         emit AttestationWindowLengthUpdated(oldAttestationWindowLength, newAttestationWindowLength);
@@ -59,6 +65,7 @@ contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
 
     function _setAttestationPeriod(uint256 newAttestationPeriod) internal {
         if (newAttestationPeriod == 0) revert AmountZero();
+        if (newAttestationPeriod < attestationWindowLength()) revert AttestationPeriodTooShort();
         uint256 oldAttestationPeriod = _attestationPeriod;
         _attestationPeriod = newAttestationPeriod;
         emit AttestationPeriodUpdated(oldAttestationPeriod, newAttestationPeriod);

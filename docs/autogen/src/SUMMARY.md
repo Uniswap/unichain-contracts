@@ -20,6 +20,7 @@
         - [IRewardDistributor](src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
         - [IRewardDistributorParams](src/interfaces/UVN/L2/IRewardDistributorParams.sol/interface.IRewardDistributorParams.md)
         - [IRewardPuller](src/interfaces/UVN/L2/IRewardPuller.sol/interface.IRewardPuller.md)
+        - [IStakeTable](src/interfaces/UVN/L2/IStakeTable.sol/interface.IStakeTable.md)
     - [❱ optimism](src/interfaces/optimism/README.md)
       - [IFeeVault](src/interfaces/optimism/IFeeVault.sol/interface.IFeeVault.md)
       - [IL2StandardBridge](src/interfaces/optimism/IL2StandardBridge.sol/interface.IL2StandardBridge.md)

@@ -1,5 +1,5 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/f7ee30d3904bcf7f9e6eea33683d2c2c6ac756df/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/59d8d0f3dfaec834d237a9218ae7c1d8d99315b3/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
@@ -9,7 +9,7 @@
 ### L2_STAKE_MANAGER
 
 ```solidity
-IVotes private immutable L2_STAKE_MANAGER;
+IStakeTable private immutable L2_STAKE_MANAGER;
 ```
 
 
@@ -48,7 +48,7 @@ mapping(address operator => Attestations attestations) private _attestations;
 ```solidity
 constructor(
     address admin,
-    IVotes l2StakeManager,
+    IStakeTable l2StakeManager,
     IRewardPuller rewardPuller_,
     uint256 attestationWindowLength_,
     uint256 attestationPeriod_
@@ -80,7 +80,7 @@ function attest(uint256 blockNumber, bytes32 blockHash, bytes memory additionalD
 |----|----|-----------|
 |`blockNumber`|`uint256`|The block number of the last block in the window|
 |`blockHash`|`bytes32`|The block hash of the last block in the window|
-|`additionalData`|`bytes`|Additional data to include in the attestation|
+|`additionalData`|`bytes`|Additional data to include in the attestation, e.g., information whether priority ordering was maintained in the block or the root of the next stake table|
 |`signature`|`bytes`|The signature of the operator|
 
 
@@ -90,7 +90,7 @@ Get the status of the window that contains the given block number
 
 
 ```solidity
-function status(uint256 targetBlockNumber) external view returns (Status);
+function status(uint256 targetBlockNumber) public view returns (Status);
 ```
 **Parameters**
 
@@ -103,6 +103,27 @@ function status(uint256 targetBlockNumber) external view returns (Status);
 |Name|Type|Description|
 |----|----|-----------|
 |`<none>`|`Status`|The status of the window containing the block number|
+
+
+### attestationResult
+
+Get the result of the attestation for the given block number
+
+
+```solidity
+function attestationResult(uint256 targetBlockNumber) external view returns (AttestationResult);
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`targetBlockNumber`|`uint256`|The block number to check|
+
+**Returns**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`<none>`|`AttestationResult`|The result of the attestation|
 
 
 ### latestActiveWindow
@@ -136,11 +157,25 @@ function _scheduleNextWindow() private;
 function _processRewards(address operator) private;
 ```
 
+### _finalizeWindow
+
+
+```solidity
+function _finalizeWindow(uint256 window) private;
+```
+
 ### _currentWindow
 
 
 ```solidity
 function _currentWindow() private view returns (Window storage window);
+```
+
+### _status
+
+
+```solidity
+function _status(uint256 targetBlockNumber, uint256 windowIndex) private view returns (Status);
 ```
 
 ### _encodeNextWindow
@@ -185,6 +220,7 @@ function _findWindowIndex(uint256 blockNumber) private view returns (uint256);
 
 ```solidity
 struct Window {
+    bool finalized;
     uint256 reward;
     uint256 totalSupply;
     bytes32 blockHash;

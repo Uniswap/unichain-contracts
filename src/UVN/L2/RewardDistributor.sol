@@ -5,9 +5,9 @@ import {IFeeSplitter} from '../../interfaces/FeeSplitter/IFeeSplitter.sol';
 import {INetFeeSplitter} from '../../interfaces/FeeSplitter/INetFeeSplitter.sol';
 import {IRewardDistributor} from '../../interfaces/UVN/L2/IRewardDistributor.sol';
 import {IRewardPuller} from '../../interfaces/UVN/L2/IRewardPuller.sol';
+import {IStakeTable} from '../../interfaces/UVN/L2/IStakeTable.sol';
 import {Search} from '../../libraries/Search.sol';
 import {RewardDistributorParams} from './RewardDistributorParams.sol';
-import {IVotes} from '@openzeppelin/contracts/governance/utils/IVotes.sol';
 import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import {MessageHashUtils} from '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 
@@ -16,9 +16,10 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     using MessageHashUtils for bytes32;
     using Search for uint256[];
 
-    IVotes private immutable L2_STAKE_MANAGER;
+    IStakeTable private immutable L2_STAKE_MANAGER;
 
     struct Window {
+        bool finalized;
         uint256 reward;
         uint256 totalSupply;
         bytes32 blockHash;
@@ -49,7 +50,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
     constructor(
         address admin,
-        IVotes l2StakeManager,
+        IStakeTable l2StakeManager,
         IRewardPuller rewardPuller_,
         uint256 attestationWindowLength_,
         uint256 attestationPeriod_
@@ -79,8 +80,8 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         external
     {
         if (blockNumber >= block.number) revert NoBlockHashAvailable();
+        if (_windows[blockNumber].finalized) revert WindowAlreadyFinalized();
         if (!_acceptingAttestations(blockNumber)) revert AttestationPeriodPassed();
-
         bytes32 votedHash = keccak256(abi.encode(blockNumber, blockHash, additionalData)).toEthSignedMessageHash();
         address operator = votedHash.recover(signature);
 
@@ -88,11 +89,11 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
         // uh oh I hope you aren't double signing
         if (a.attestations[blockNumber].votedHash != bytes32(0)) revert BlockAlreadyAttested();
-
-        if (block.number > (_currentWindow().nextWindow >> 128)) rewardPuller().pullRewards();
+        if (block.number > _currentWindow().nextWindow >> 128) rewardPuller().pullRewards();
 
         // 1. store the attestation
         uint256 votes = L2_STAKE_MANAGER.getPastVotes(operator, blockNumber);
+        if (votes == 0) revert ZeroVotes();
         a.attestations[blockNumber] = Attestation({votedHash: votedHash, votes: votes, next: 0});
 
         a.attestations[a.tail].next = blockNumber;
@@ -116,35 +117,27 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     }
 
     /// @inheritdoc IRewardDistributor
-    function status(uint256 targetBlockNumber) external view returns (Status) {
+    function status(uint256 targetBlockNumber) public view returns (Status) {
         uint256 windowIndex = _findWindowIndex(targetBlockNumber);
-        if (windowIndex != type(uint256).max) {
-            // window found, must be active or finalized
+        return _status(targetBlockNumber, windowIndex);
+    }
+
+    /// @inheritdoc IRewardDistributor
+    function attestationResult(uint256 targetBlockNumber) external view returns (AttestationResult) {
+        uint256 windowIndex = _findWindowIndex(targetBlockNumber);
+        Status s = _status(targetBlockNumber, windowIndex);
+        if (s == Status.Active || s == Status.Finalized) {
+            // window is active with no attestations
+            if (windowIndex == type(uint256).max) return AttestationResult.Pending;
             uint256 windowEnd = _windowBlockNumbers[windowIndex];
-            // window finalizes after the attestation period has passed
-            if (!_acceptingAttestations(windowEnd)) {
-                return Status.Finalized;
+            Window storage w = _windows[windowEnd];
+            // window is active with sufficient attestations
+            if (w.mostVotedHashVotes > w.totalSupply / 2) {
+                return w.mostVotedBlockHash == w.blockHash ? AttestationResult.Valid : AttestationResult.Invalid;
             }
-            return Status.Active;
+            return _acceptingAttestations(windowEnd) ? AttestationResult.Pending : AttestationResult.InsufficientVotes;
         }
-        Window storage currentWindow = _currentWindow();
-        (uint256 scheduledWindowEnd,) = _decodeNextWindow(currentWindow.nextWindow);
-        uint256 attestationWindowLength_ = attestationWindowLength();
-        if (block.number > scheduledWindowEnd + attestationWindowLength_) {
-            // no attestations during the pending window were made, thus the next window could not be scheduled. Extend the current window until the next attestation occurs.
-            if (targetBlockNumber < block.number) return Status.Active;
-            if (targetBlockNumber < block.number + attestationWindowLength_) return Status.Delayed;
-            return Status.NonExistent;
-        }
-        // currently a window is scheduled
-        if (targetBlockNumber <= scheduledWindowEnd) {
-            // if the scheduled window has passed without any attestations, it becomes active
-            return block.number > scheduledWindowEnd ? Status.Active : Status.Scheduled;
-        }
-        // the window after the scheduled/active window is pending
-        if (targetBlockNumber <= scheduledWindowEnd + attestationWindowLength_) return Status.Pending;
-        // windows after the pending window do not exist yet
-        return Status.NonExistent;
+        return AttestationResult.Pending;
     }
 
     /// @inheritdoc IRewardDistributor
@@ -187,11 +180,75 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     }
 
     function _processRewards(address operator) private {
-        // TODO: implement
+        Attestations storage a = _attestations[operator];
+        uint256 head = a.head;
+        if (head == 0) {
+            a.head = a.tail;
+            return;
+        }
+        _finalizeWindow(head);
+        Window storage w = _windows[head];
+        if (!w.finalized) return;
+        Attestation storage attestation = a.attestations[head];
+        a.head = attestation.next;
+        if (attestation.votedHash == w.mostVotedHash) {
+            address beneficiary = L2_STAKE_MANAGER.beneficiary(operator);
+            uint256 rewards = w.reward * attestation.votes / w.mostVotedHashVotes;
+            (bool success,) = beneficiary.call{value: rewards}('');
+            if (!success) revert RewardDistributionFailed();
+        }
+    }
+
+    function _finalizeWindow(uint256 window) private {
+        Window storage w = _windows[window];
+        uint256 blockNumber = _windowBlockNumbers[w.index];
+        if (w.finalized || _acceptingAttestations(blockNumber)) return;
+        w.finalized = true;
+        uint256 totalSupply = w.totalSupply;
+        uint256 attestationRatio = totalSupply == 0 ? 0 : w.mostVotedHashVotes * 1e18 / totalSupply;
+        uint256 rewardsToDistribute = w.reward * attestationRatio / 1e18;
+        uint256 unclaimedRewards = w.reward - rewardsToDistribute;
+        w.reward = rewardsToDistribute;
+        (bool success,) = address(this).call{value: unclaimedRewards}('');
+        assert(success);
+        AttestationResult result;
+        if (0.5e18 > attestationRatio) result = AttestationResult.InsufficientVotes;
+        else result = w.mostVotedBlockHash == w.blockHash ? AttestationResult.Valid : AttestationResult.Invalid;
+        emit WindowFinalized(window, result, attestationRatio, rewardsToDistribute);
     }
 
     function _currentWindow() private view returns (Window storage window) {
         return _windows[_windowBlockNumbers[_windowBlockNumbers.length - 1]];
+    }
+
+    function _status(uint256 targetBlockNumber, uint256 windowIndex) private view returns (Status) {
+        if (windowIndex != type(uint256).max) {
+            // window found, must be active or finalized
+            uint256 windowEnd = _windowBlockNumbers[windowIndex];
+            // window finalizes after the attestation period has passed
+            if (!_acceptingAttestations(windowEnd)) {
+                return Status.Finalized;
+            }
+            return Status.Active;
+        }
+        Window storage currentWindow = _currentWindow();
+        (uint256 scheduledWindowEnd,) = _decodeNextWindow(currentWindow.nextWindow);
+        uint256 attestationWindowLength_ = attestationWindowLength();
+        if (block.number > scheduledWindowEnd + attestationWindowLength_) {
+            // no attestations during the pending window were made, thus the next window could not be scheduled. Extend the current window until the next attestation occurs.
+            if (targetBlockNumber < block.number) return Status.Active;
+            if (targetBlockNumber < block.number + attestationWindowLength_) return Status.Delayed;
+            return Status.NonExistent;
+        }
+        // currently a window is scheduled
+        if (targetBlockNumber <= scheduledWindowEnd) {
+            // if the scheduled window has passed without any attestations, it becomes active
+            return block.number > scheduledWindowEnd ? Status.Active : Status.Scheduled;
+        }
+        // the window after the scheduled/active window is pending
+        if (targetBlockNumber <= scheduledWindowEnd + attestationWindowLength_) return Status.Pending;
+        // windows after the pending window do not exist yet
+        return Status.NonExistent;
     }
 
     function _encodeNextWindow(uint256 blockNumber, uint256 reward) private pure returns (uint256) {

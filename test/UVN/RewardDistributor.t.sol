@@ -57,7 +57,9 @@ abstract contract RewardDistributorTestBase is Test {
     }
 
     function attest(Vm.Wallet memory operator_, uint256 blockNumber, bytes32 blockHash) internal {
-        rd.attest(blockNumber, blockHash, 'data', signAttestation(operator_, blockNumber, blockHash, 'data'));
+        rd.attest(
+            blockNumber, blockHash, 'data', signAttestation(operator_, blockNumber, blockHash, 'data'), bytes32(0)
+        );
     }
 
     function signAttestation(uint256 blockNumber, bytes memory data) internal returns (bytes memory) {
@@ -111,7 +113,7 @@ contract RewardDistributorTest is RewardDistributorTestBase {
     function test_shouldNotBeAbleToAttestFutureBlock(uint256 blockNumber) public {
         blockNumber = bound(blockNumber, block.number, type(uint256).max);
         vm.expectRevert(IRewardDistributor.NoBlockHashAvailable.selector);
-        rd.attest(blockNumber, bytes32(0), new bytes(0), new bytes(0));
+        rd.attest(blockNumber, bytes32(0), new bytes(0), new bytes(0), bytes32(0));
     }
 
     function test_shouldNotBeAbleToAttestBlockBeforeAttestationPeriod(uint256 blockNumber, uint256 attestationPeriod)
@@ -121,7 +123,7 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         rd.setAttestationPeriod(attestationPeriod);
         blockNumber = bound(blockNumber, 0, block.number - rd.attestationPeriod() - 1);
         vm.expectRevert(IRewardDistributor.AttestationPeriodPassed.selector);
-        rd.attest(blockNumber, bytes32(0), new bytes(0), new bytes(0));
+        rd.attest(blockNumber, bytes32(0), new bytes(0), new bytes(0), bytes32(0));
     }
 
     function test_shouldNotBeAbleToAttestSameBlockTwice() public {
@@ -129,9 +131,9 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         bytes memory signatureA = signAttestation(blockNumber, 'dataA');
         bytes memory signatureB = signAttestation(blockNumber, 'dataB');
 
-        rd.attest(blockNumber, blockhash(blockNumber), 'dataA', signatureA);
+        rd.attest(blockNumber, blockhash(blockNumber), 'dataA', signatureA, bytes32(0));
         vm.expectRevert(IRewardDistributor.BlockAlreadyAttested.selector);
-        rd.attest(blockNumber, blockhash(blockNumber), 'dataB', signatureB);
+        rd.attest(blockNumber, blockhash(blockNumber), 'dataB', signatureB, bytes32(0));
     }
 
     // this only works on the nightly version of forge right now

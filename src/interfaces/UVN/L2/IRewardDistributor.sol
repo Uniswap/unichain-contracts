@@ -39,7 +39,7 @@ interface IRewardDistributor is IRewardDistributorParams {
     event AttestationWindowExtended(uint256 indexed originalWindowEnd, uint256 indexed newWindowEnd);
 
     /// @notice Emitted when an attestation is submitted
-    event Attested(address indexed operator, uint256 indexed blockNumber, bytes32 votedHash);
+    event Attested(address indexed operator, uint256 indexed blockNumber, bytes32 indexed graffiti, bytes32 votedHash);
 
     /// @notice Emitted when rewards are received
     event RewardReceived(uint256 indexed window, uint256 amount);
@@ -83,9 +83,15 @@ interface IRewardDistributor is IRewardDistributorParams {
     /// @param blockNumber The block number of the last block in the window
     /// @param blockHash The block hash of the last block in the window
     /// @param additionalData Additional data to include in the attestation, e.g., information whether priority ordering was maintained in the block or the root of the next stake table
+    /// @param graffiti The graffiti allows operators to include information about their node in the attestation (e.g., version number)
     /// @param signature The signature of the operator
-    function attest(uint256 blockNumber, bytes32 blockHash, bytes memory additionalData, bytes memory signature)
-        external;
+    function attest(
+        uint256 blockNumber,
+        bytes32 blockHash,
+        bytes memory additionalData,
+        bytes memory signature,
+        bytes32 graffiti
+    ) external;
 
     /// @notice Get the status of the window that contains the given block number
     /// @param targetBlockNumber The block number to check

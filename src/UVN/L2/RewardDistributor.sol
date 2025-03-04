@@ -76,9 +76,13 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     }
 
     /// @inheritdoc IRewardDistributor
-    function attest(uint256 blockNumber, bytes32 blockHash, bytes memory additionalData, bytes memory signature)
-        external
-    {
+    function attest(
+        uint256 blockNumber,
+        bytes32 blockHash,
+        bytes memory additionalData,
+        bytes memory signature,
+        bytes32 graffiti
+    ) external {
         if (blockNumber >= block.number) revert NoBlockHashAvailable();
         if (_windows[blockNumber].finalized) revert WindowAlreadyFinalized();
         if (!_acceptingAttestations(blockNumber)) revert AttestationPeriodPassed();
@@ -113,7 +117,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         // 3. process rewards for previously attested windows
         _processRewards(operator);
 
-        emit Attested(operator, blockNumber, votedHash);
+        emit Attested(operator, blockNumber, graffiti, votedHash);
     }
 
     /// @inheritdoc IRewardDistributor

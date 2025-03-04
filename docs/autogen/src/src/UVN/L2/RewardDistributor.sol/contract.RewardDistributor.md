@@ -1,5 +1,5 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/59d8d0f3dfaec834d237a9218ae7c1d8d99315b3/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/498cadde11a5816e09cd3d8fe92a8be9dfebfb66/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
@@ -72,7 +72,13 @@ Attest to a window of blocks
 
 
 ```solidity
-function attest(uint256 blockNumber, bytes32 blockHash, bytes memory additionalData, bytes memory signature) external;
+function attest(
+    uint256 blockNumber,
+    bytes32 blockHash,
+    bytes memory additionalData,
+    bytes memory signature,
+    bytes32 graffiti
+) external;
 ```
 **Parameters**
 
@@ -82,6 +88,7 @@ function attest(uint256 blockNumber, bytes32 blockHash, bytes memory additionalD
 |`blockHash`|`bytes32`|The block hash of the last block in the window|
 |`additionalData`|`bytes`|Additional data to include in the attestation, e.g., information whether priority ordering was maintained in the block or the root of the next stake table|
 |`signature`|`bytes`|The signature of the operator|
+|`graffiti`|`bytes32`|The graffiti allows operators to include information about their node in the attestation (e.g., version number)|
 
 
 ### status

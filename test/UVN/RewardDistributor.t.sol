@@ -24,10 +24,6 @@ abstract contract RewardDistributorTestBase is Test {
         mockVotesToken = new MockVotesToken();
         mockVotesToken.mint(operator.addr, 51 ether);
         mockVotesToken.mint(operator2.addr, 49 ether);
-        vm.prank(operator.addr);
-        mockVotesToken.delegate(operator.addr);
-        vm.prank(operator2.addr);
-        mockVotesToken.delegate(operator2.addr);
         vm.roll(DEFAULT_ATTESTATION_PERIOD);
         mockRewardPuller = new MockRewardPuller(1 ether);
         rd = new RewardDistributor(

@@ -32,3 +32,13 @@ contract MockRewardPuller is IRewardPuller {
         return interfaceId == type(IRewardPuller).interfaceId || interfaceId == type(IERC165).interfaceId;
     }
 }
+
+contract EmptyRewardPuller is IRewardPuller {
+    function pullRewards() external pure returns (uint256) {
+        return 0;
+    }
+
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+        return interfaceId == type(IRewardPuller).interfaceId || interfaceId == type(IERC165).interfaceId;
+    }
+}

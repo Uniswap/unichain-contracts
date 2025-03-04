@@ -9,6 +9,10 @@ contract MockVotesToken is ERC20Votes, IStakeTable {
     constructor() ERC20('MockVotesToken', 'MVT') EIP712('MockVotesToken', '1') {}
 
     function mint(address to, uint256 amount) external {
+        // self delegate by default
+        if (delegates(to) == address(0)) {
+            _delegate(to, to);
+        }
         _mint(to, amount);
     }
 

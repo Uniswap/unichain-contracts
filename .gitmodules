@@ -16,3 +16,6 @@
 [submodule "lib/forge-chronicles"]
 	path = lib/forge-chronicles
 	url = https://github.com/Uniswap/forge-chronicles
+[submodule "lib/unistaker"]
+	path = lib/unistaker
+	url = https://github.com/uniswapfoundation/unistaker

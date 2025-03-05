@@ -10,7 +10,8 @@ ffi = true
 evm_version = "cancun"
 fs_permissions = [
   { access = "read-write", path = ".forge-snapshots"},
-  { access = "read", path = "script/" }
+  { access = "read", path = "script/" },
+  { access = "read", path = "out/" }
 ]
 
 remappings = [

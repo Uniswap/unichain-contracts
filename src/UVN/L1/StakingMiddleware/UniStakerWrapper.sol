@@ -6,7 +6,7 @@ import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract UniStakerWrapper {
     IUniStaker internal immutable unistaker;
-    IERC20 private immutable stakeToken;
+    IERC20 internal immutable stakeToken;
     IERC20 internal immutable rewardToken;
 
     mapping(address delegator => uint256 depositId) private _depositIds;
@@ -21,7 +21,6 @@ contract UniStakerWrapper {
         depositId = _depositIds[msg.sender];
         if (amount != 0) {
             // @audit later conversion to uint96 is safe as the supply of the token is < 2^96
-            stakeToken.transferFrom(msg.sender, address(this), amount);
             stakeToken.approve(address(unistaker), amount);
         }
         if (depositId == 0) {
@@ -43,8 +42,7 @@ contract UniStakerWrapper {
         uint256 depositId = _depositIds[msg.sender];
         if (depositId != 0) {
             unistaker.withdraw(IUniStaker.DepositIdentifier.wrap(depositId), uint96(amount));
-            // @audit safe ERC20 transfers do not need to be used here, as the UNI token is safe to transfer
-            stakeToken.transfer(msg.sender, amount);
+            if (_stakedBalanceOf(msg.sender) == 0) _depositIds[msg.sender] = 0;
         }
     }
 
@@ -56,5 +54,9 @@ contract UniStakerWrapper {
 
     function _totalAmountStaked() internal view returns (uint256) {
         return unistaker.depositorTotalStaked(address(this));
+    }
+
+    function _isDepositedIntoUniStaker(address delegator) internal view returns (bool) {
+        return _depositIds[delegator] != 0;
     }
 }

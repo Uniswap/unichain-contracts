@@ -1,15 +1,15 @@
 # StakingMiddleware
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/5b98eecce12fe90fe24abd37da1a3642b02cfbd3/src/UVN/L1/StakingMiddleware.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c13e98e1c8d2865602c701181fc3bd205955774b/src/UVN/L1/StakingMiddleware.sol)
 
 **Inherits:**
 [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [StakingMiddlewareParams](/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md), [IStakingMiddleware](/src/interfaces/UVN/L1/IStakingMiddleware.sol/interface.IStakingMiddleware.md)
 
 
 ## State Variables
-### _selectedOperators
+### _depositorData
 
 ```solidity
-mapping(address delegator => address operator) internal _selectedOperators;
+mapping(address delegator => DepositorData data) internal _depositorData;
 ```
 
 
@@ -17,6 +17,13 @@ mapping(address delegator => address operator) internal _selectedOperators;
 
 ```solidity
 mapping(address operator => uint256 totalStake) internal _operatorTotalStake;
+```
+
+
+### totalStake
+
+```solidity
+uint256 public totalStake;
 ```
 
 
@@ -41,7 +48,28 @@ function updateGovernanceDelegatee(address newGovernanceDelegatee) external;
 
 
 ```solidity
-function deposit(uint256 amount, address governanceDelegatee) external;
+function deposit(uint256 amount) external;
+```
+
+### depositIntoUniStaker
+
+
+```solidity
+function depositIntoUniStaker(address governanceDelegatee) external;
+```
+
+### withdrawFromUniStaker
+
+
+```solidity
+function withdrawFromUniStaker() external;
+```
+
+### alterGovernanceDelegatee
+
+
+```solidity
+function alterGovernanceDelegatee(address newGovernanceDelegatee) external;
 ```
 
 ### withdraw

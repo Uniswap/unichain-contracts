@@ -23,6 +23,7 @@
         - [❱ StakingMiddleware](src/interfaces/UVN/L1/StakingMiddleware/README.md)
           - [IProtocolRewardDistributor](src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
           - [IStakingMiddlewareParams](src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md)
+        - [DepositorData](src/interfaces/UVN/L1/IStakingMiddleware.sol/struct.DepositorData.md)
         - [IStakingMiddleware](src/interfaces/UVN/L1/IStakingMiddleware.sol/interface.IStakingMiddleware.md)
         - [IUniStaker](src/interfaces/UVN/L1/IUniStaker.sol/interface.IUniStaker.md)
     - [❱ optimism](src/interfaces/optimism/README.md)

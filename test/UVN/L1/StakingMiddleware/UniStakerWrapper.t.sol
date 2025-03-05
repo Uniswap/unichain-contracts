@@ -14,11 +14,13 @@ contract UniStakerWrapperHarness is UniStakerWrapper {
         external
         returns (IUniStaker.DepositIdentifier depositId)
     {
+        stakeToken.transferFrom(msg.sender, address(this), amount);
         depositId = IUniStaker.DepositIdentifier.wrap(_depositIntoUniStaker(amount, delegatee));
     }
 
     function withdrawFromUniStaker(uint96 amount) external {
         _withdrawFromUniStaker(amount);
+        stakeToken.transfer(msg.sender, amount);
     }
 
     function stakedBalanceOf(address delegator) external view returns (uint256) {

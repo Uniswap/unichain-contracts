@@ -1,31 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {DepositorData, IStakingMiddleware} from '../../interfaces/UVN/L1/IStakingMiddleware.sol';
-
+import {IDelegationManager} from '../../interfaces/UVN/L1/IDelegationManager.sol';
+import {IStakingMiddleware} from '../../interfaces/UVN/L1/IStakingMiddleware.sol';
 import {IUniStaker} from '../../interfaces/UVN/L1/IUnistaker.sol';
-
+import {DepositorData, OperatorManager, StakingMiddlewareParams} from './StakingMiddleware/OperatorManager.sol';
 import {ProtocolRewardDistributor} from './StakingMiddleware/ProtocolRewardDistributor.sol';
-import {StakingMiddlewareParams} from './StakingMiddleware/StakingMiddlewareParams.sol';
 import {UniStakerWrapper} from './StakingMiddleware/UniStakerWrapper.sol';
 // TODO add multicall?
 
-contract StakingMiddleware is ProtocolRewardDistributor, StakingMiddlewareParams, IStakingMiddleware {
-    mapping(address delegator => DepositorData data) internal _depositorData;
-    mapping(address operator => uint256 totalStake) internal _operatorTotalStake;
+contract StakingMiddleware is ProtocolRewardDistributor, OperatorManager, IStakingMiddleware {
+    uint96 public totalStake;
 
-    uint256 public totalStake;
-
-    constructor(address initialAdmin, IUniStaker unistaker_, uint256 withdrawalDelay_)
-        UniStakerWrapper(unistaker_)
-        StakingMiddlewareParams(initialAdmin, withdrawalDelay_)
-    {}
+    constructor(
+        address initialAdmin,
+        IUniStaker unistaker_,
+        uint256 withdrawalDelay_,
+        IDelegationManager delegationManager_
+    ) UniStakerWrapper(unistaker_) StakingMiddlewareParams(initialAdmin, withdrawalDelay_, delegationManager_) {}
 
     function updateGovernanceDelegatee(address newGovernanceDelegatee) external {
         _depositIntoUniStaker(0, newGovernanceDelegatee);
     }
 
-    function deposit(uint256 amount) external {
+    function deposit(uint96 amount) external {
         // @audit safe ERC20 transfers do not need to be used here, as the UNI token is safe to transfer
         stakeToken.transferFrom(msg.sender, address(this), amount);
         DepositorData storage data = _depositorData[msg.sender];
@@ -37,7 +35,25 @@ contract StakingMiddleware is ProtocolRewardDistributor, StakingMiddlewareParams
         }
         if (data.selectedOperator != address(0)) {
             _operatorTotalStake[data.selectedOperator] += amount;
+            delegationManager().mint(msg.sender, amount);
         }
+    }
+
+    // TODO withdrawal delay
+    function withdraw(uint96 amount) external {
+        DepositorData storage data = _depositorData[msg.sender];
+        data.stake -= amount;
+        totalStake -= amount;
+        if (_isDepositedIntoUniStaker(msg.sender)) {
+            _updateRewardCheckpoint(msg.sender);
+            _withdrawFromUniStaker(amount);
+        }
+        if (data.selectedOperator != address(0)) {
+            _operatorTotalStake[data.selectedOperator] -= amount;
+            delegationManager().burn(msg.sender, amount);
+        }
+        // @audit safe ERC20 transfers do not need to be used here, as the UNI token is safe to transfer
+        stakeToken.transfer(msg.sender, amount);
     }
 
     function depositIntoUniStaker(address governanceDelegatee) external {
@@ -55,36 +71,5 @@ contract StakingMiddleware is ProtocolRewardDistributor, StakingMiddlewareParams
     function alterGovernanceDelegatee(address newGovernanceDelegatee) external {
         if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
         _depositIntoUniStaker(0, newGovernanceDelegatee);
-    }
-
-    // TODO withdrawal delay
-    function withdraw(uint256 amount) external {
-        DepositorData storage data = _depositorData[msg.sender];
-        data.stake -= amount;
-        totalStake -= amount;
-        if (_isDepositedIntoUniStaker(msg.sender)) {
-            _updateRewardCheckpoint(msg.sender);
-            _withdrawFromUniStaker(amount);
-        }
-        if (data.selectedOperator != address(0)) {
-            _operatorTotalStake[data.selectedOperator] -= amount;
-        }
-        // @audit safe ERC20 transfers do not need to be used here, as the UNI token is safe to transfer
-        stakeToken.transfer(msg.sender, amount);
-    }
-
-    function selectOperator(address operator) external {
-        DepositorData storage data = _depositorData[msg.sender];
-        if (data.selectedOperator != address(0)) revert OperatorAlreadySelected();
-        data.selectedOperator = operator;
-        _operatorTotalStake[operator] += _stakedBalanceOf(msg.sender);
-    }
-
-    // TODO withdrawal delay
-    function deselectOperator() external {
-        DepositorData storage data = _depositorData[msg.sender];
-        if (data.selectedOperator == address(0)) revert NoOperatorSelected();
-        _operatorTotalStake[data.selectedOperator] -= _stakedBalanceOf(msg.sender);
-        data.selectedOperator = address(0);
     }
 }

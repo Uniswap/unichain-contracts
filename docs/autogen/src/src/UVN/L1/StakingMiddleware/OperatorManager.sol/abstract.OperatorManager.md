@@ -1,5 +1,5 @@
 # OperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6b285bfe59012065422d5d75fc08ddb0d2404ce9/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/24150a287633bc355fa0bd43e8e420b312a5ca02/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
 
 **Inherits:**
 [StakingMiddlewareParams](/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md)
@@ -25,14 +25,35 @@ mapping(address operator => uint256 totalStake) internal _operatorTotalStake;
 
 
 ```solidity
-function selectOperator(address operator) external;
+function selectOperator(address operator) public virtual;
 ```
 
 ### deselectOperator
 
 
 ```solidity
-function deselectOperator() external;
+function deselectOperator() public virtual;
+```
+
+### totalOperatorStake
+
+
+```solidity
+function totalOperatorStake(address operator) public view returns (uint256);
+```
+
+### delegatorStake
+
+
+```solidity
+function delegatorStake(address delegator) public view virtual returns (uint96);
+```
+
+### _operator
+
+
+```solidity
+function _operator(address delegator) internal view returns (address);
 ```
 
 ## Errors

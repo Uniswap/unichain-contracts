@@ -4,12 +4,13 @@ pragma solidity 0.8.26;
 import {IDelegationManager} from '../../interfaces/UVN/L1/IDelegationManager.sol';
 import {IStakingMiddleware} from '../../interfaces/UVN/L1/IStakingMiddleware.sol';
 import {IUniStaker} from '../../interfaces/UVN/L1/IUnistaker.sol';
-import {DepositorData, OperatorManager, StakingMiddlewareParams} from './StakingMiddleware/OperatorManager.sol';
+import {DepositorData, StakingMiddlewareParams} from './StakingMiddleware/OperatorManager.sol';
 import {ProtocolRewardDistributor} from './StakingMiddleware/ProtocolRewardDistributor.sol';
+import {SlashingManager} from './StakingMiddleware/SlashingManager.sol';
 import {UniStakerWrapper} from './StakingMiddleware/UniStakerWrapper.sol';
 // TODO add multicall?
 
-contract StakingMiddleware is ProtocolRewardDistributor, OperatorManager, IStakingMiddleware {
+contract StakingMiddleware is ProtocolRewardDistributor, SlashingManager, IStakingMiddleware {
     uint96 public totalStake;
 
     constructor(

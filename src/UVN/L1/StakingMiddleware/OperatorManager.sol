@@ -15,7 +15,7 @@ abstract contract OperatorManager is StakingMiddlewareParams {
     mapping(address delegator => DepositorData data) internal _depositorData;
     mapping(address operator => uint256 totalStake) internal _operatorTotalStake;
 
-    function selectOperator(address operator) external {
+    function selectOperator(address operator) public virtual {
         DepositorData storage data = _depositorData[msg.sender];
         if (data.selectedOperator != address(0)) revert OperatorAlreadySelected();
         data.selectedOperator = operator;
@@ -25,12 +25,24 @@ abstract contract OperatorManager is StakingMiddlewareParams {
     }
 
     // TODO withdrawal delay
-    function deselectOperator() external {
+    function deselectOperator() public virtual {
         DepositorData storage data = _depositorData[msg.sender];
         if (data.selectedOperator == address(0)) revert NoOperatorSelected();
         _operatorTotalStake[data.selectedOperator] -= data.stake;
         data.selectedOperator = address(0);
         delegationManager().updateDelegatee(msg.sender, address(0));
         delegationManager().burn(msg.sender, data.stake);
+    }
+
+    function totalOperatorStake(address operator) public view returns (uint256) {
+        return _operatorTotalStake[operator];
+    }
+
+    function delegatorStake(address delegator) public view virtual returns (uint96) {
+        return _depositorData[delegator].stake;
+    }
+
+    function _operator(address delegator) internal view returns (address) {
+        return _depositorData[delegator].selectedOperator;
     }
 }

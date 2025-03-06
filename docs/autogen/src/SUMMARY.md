@@ -12,6 +12,7 @@
         - [DepositorData](src/UVN/L1/StakingMiddleware/OperatorManager.sol/struct.DepositorData.md)
         - [OperatorManager](src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md)
         - [ProtocolRewardDistributor](src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md)
+        - [SlashingManager](src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md)
         - [StakingMiddlewareParams](src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md)
         - [UniStakerWrapper](src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol/contract.UniStakerWrapper.md)
       - [DelegationManager](src/UVN/L1/DelegationManager.sol/contract.DelegationManager.md)

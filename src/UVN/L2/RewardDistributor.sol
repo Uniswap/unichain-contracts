@@ -47,6 +47,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     uint256[] private _windowBlockNumbers;
     mapping(uint256 blockNumber => Window window) private _windows;
     mapping(address operator => Attestations attestations) private _attestations;
+    uint256 private _lastRewardPayout;
 
     constructor(
         address admin,
@@ -93,7 +94,10 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
         // uh oh I hope you aren't double signing
         if (a.attestations[blockNumber].votedHash != bytes32(0)) revert BlockAlreadyAttested();
-        if (block.number > _currentWindow().nextWindow >> 128) rewardPuller().pullRewards();
+        if (block.number > _lastRewardPayout) {
+            _lastRewardPayout = block.number;
+            rewardPuller().pullRewards();
+        }
 
         // 1. store the attestation
         uint256 votes = L2_STAKE_MANAGER.getPastVotes(operator, blockNumber);

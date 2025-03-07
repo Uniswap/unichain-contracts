@@ -1,5 +1,5 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/498cadde11a5816e09cd3d8fe92a8be9dfebfb66/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/635f5115556ffbe1e8b47e86a946357af2b0b743/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
@@ -38,6 +38,13 @@ mapping(uint256 blockNumber => Window window) private _windows;
 
 ```solidity
 mapping(address operator => Attestations attestations) private _attestations;
+```
+
+
+### _lastRewardPayout
+
+```solidity
+uint256 private _lastRewardPayout;
 ```
 
 

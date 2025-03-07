@@ -27,3 +27,5 @@
     - [IL2CrossDomainMessenger](src/interfaces/IL2CrossDomainMessenger.sol/interface.IL2CrossDomainMessenger.md)
   - [❱ libraries](src/libraries/README.md)
     - [Search](src/libraries/Search.sol/library.Search.md)
+    - [NextWindow](src/libraries/WindowLibrary.sol/type.NextWindow.md)
+    - [WindowLibrary](src/libraries/WindowLibrary.sol/library.WindowLibrary.md)

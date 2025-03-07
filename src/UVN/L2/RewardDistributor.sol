@@ -7,6 +7,7 @@ import {IRewardDistributor} from '../../interfaces/UVN/L2/IRewardDistributor.sol
 import {IRewardPuller} from '../../interfaces/UVN/L2/IRewardPuller.sol';
 import {IStakeTable} from '../../interfaces/UVN/L2/IStakeTable.sol';
 import {Search} from '../../libraries/Search.sol';
+import {NextWindow, WindowLibrary} from '../../libraries/WindowLibrary.sol';
 import {RewardDistributorParams} from './RewardDistributorParams.sol';
 import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import {MessageHashUtils} from '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
@@ -26,7 +27,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         bytes32 mostVotedBlockHash;
         bytes32 mostVotedHash;
         uint256 mostVotedHashVotes;
-        uint256 nextWindow;
+        NextWindow nextWindow;
         uint256 index;
         mapping(bytes32 hash => uint256 votes) attestations;
     }
@@ -58,7 +59,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     ) RewardDistributorParams(admin, attestationWindowLength_, attestationPeriod_, rewardPuller_) {
         L2_STAKE_MANAGER = l2StakeManager;
         uint256 blockNumber = block.number - 1;
-        _windows[blockNumber].nextWindow = _encodeNextWindow(blockNumber + attestationWindowLength(), 0);
+        _windows[blockNumber].nextWindow = WindowLibrary.setNextBlockNumber(blockNumber + attestationWindowLength());
         _windows[blockNumber].blockHash = blockhash(blockNumber);
         _windowBlockNumbers.push(blockNumber);
         emit AttestationWindowScheduled(blockNumber, blockNumber + attestationWindowLength());
@@ -68,8 +69,8 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     /// @dev contract can receive rewards by either pulling from the rewardPuller or by being sent ETH directly to this contract
     receive() external payable {
         Window storage currentWindow = _currentWindow();
-        (uint256 nextWindow, uint256 reward) = _decodeNextWindow(currentWindow.nextWindow);
-        currentWindow.nextWindow = _encodeNextWindow(nextWindow, reward + msg.value);
+        (uint256 nextWindow, uint256 reward) = currentWindow.nextWindow.decode();
+        currentWindow.nextWindow = WindowLibrary.encode(nextWindow, reward + msg.value);
         emit RewardReceived(nextWindow, msg.value);
         if (block.number > nextWindow) {
             _scheduleNextWindow();
@@ -109,7 +110,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
         // 2. keep track of what most voted hash is (including and excluding additional data)
         Window storage window = _windows[blockNumber];
-        if (window.nextWindow == 0) revert WindowNotFound();
+        if (window.nextWindow.blockNumber() == 0) revert WindowNotFound();
         window.attestations[votedHash] += votes;
         uint256 votesForHash = window.attestations[votedHash];
         if (votesForHash > window.mostVotedHashVotes) {
@@ -153,7 +154,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         // @audit invariant: there is always at least one active window an operator can attest to
         uint256 currentWindowBlockNumber = _windowBlockNumbers[_windowBlockNumbers.length - 1];
         Window storage currentWindow = _windows[currentWindowBlockNumber];
-        (uint256 nextWindowEnd,) = _decodeNextWindow(currentWindow.nextWindow);
+        uint256 nextWindowEnd = currentWindow.nextWindow.blockNumber();
         // a window is scheduled, the latest active window is in storage
         if (block.number < nextWindowEnd) return currentWindowBlockNumber;
         // the window is pending, activate the scheduled window
@@ -165,14 +166,14 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     /// @dev The first attestation to the current window will schedule the next window. Windows are scheduled every `attestationWindowLength` blocks. If there are no attestations during the current window, the next window is not scheduled. In this case the current window will be extended until the next attestation occurs. After this, the next window will be scheduled automatically in the same interval again.
     function _scheduleNextWindow() private {
         Window storage currentWindow = _currentWindow();
-        (uint256 nextWindow, uint256 reward) = _decodeNextWindow(currentWindow.nextWindow);
+        (uint256 nextWindow, uint256 reward) = currentWindow.nextWindow.decode();
         uint256 attestationWindowLength_ = attestationWindowLength();
         if (_windowDelayed(nextWindow, attestationWindowLength_)) {
             // entire window has not received any attestations
             // extend the current window
             emit AttestationWindowExtended(nextWindow, block.number - 1);
             nextWindow = block.number - 1;
-            currentWindow.nextWindow = _encodeNextWindow(nextWindow, reward);
+            currentWindow.nextWindow = WindowLibrary.encode(nextWindow, reward);
         }
 
         _windows[nextWindow].reward = reward;
@@ -180,7 +181,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         // @audit safe guard, returns 0 for older than 256 blocks, should not happen because of the check when setting the attestation window length
         assert(blockHash != bytes32(0));
         _windows[nextWindow].blockHash = blockHash;
-        _windows[nextWindow].nextWindow = _encodeNextWindow(nextWindow + attestationWindowLength_, 0);
+        _windows[nextWindow].nextWindow = WindowLibrary.setNextBlockNumber(nextWindow + attestationWindowLength_);
         _windows[nextWindow].totalSupply = L2_STAKE_MANAGER.getPastTotalSupply(nextWindow);
         _windowBlockNumbers.push(nextWindow);
         _windows[nextWindow].index = _windowBlockNumbers.length - 1;
@@ -240,7 +241,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
             return Status.Active;
         }
         Window storage currentWindow = _currentWindow();
-        (uint256 scheduledWindowEnd,) = _decodeNextWindow(currentWindow.nextWindow);
+        uint256 scheduledWindowEnd = currentWindow.nextWindow.blockNumber();
         uint256 attestationWindowLength_ = attestationWindowLength();
         if (block.number > scheduledWindowEnd + attestationWindowLength_) {
             // no attestations during the pending window were made, thus the next window could not be scheduled. Extend the current window until the next attestation occurs.
@@ -257,16 +258,6 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         if (targetBlockNumber <= scheduledWindowEnd + attestationWindowLength_) return Status.Pending;
         // windows after the pending window do not exist yet
         return Status.NonExistent;
-    }
-
-    function _encodeNextWindow(uint256 blockNumber, uint256 reward) private pure returns (uint256) {
-        assert(blockNumber < type(uint128).max);
-        assert(reward < type(uint128).max);
-        return blockNumber << 128 | reward;
-    }
-
-    function _decodeNextWindow(uint256 nextWindow) private pure returns (uint256 blockNumber, uint256 reward) {
-        return (nextWindow >> 128, nextWindow & type(uint128).max);
     }
 
     function _acceptingAttestations(uint256 blockNumber) private view returns (bool) {

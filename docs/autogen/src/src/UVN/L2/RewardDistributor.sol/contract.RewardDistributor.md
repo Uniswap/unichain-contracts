@@ -1,5 +1,5 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/635f5115556ffbe1e8b47e86a946357af2b0b743/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/2bea5dafc15ba815c8ba14ba9e39556e6fd5e819/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
@@ -192,20 +192,6 @@ function _currentWindow() private view returns (Window storage window);
 function _status(uint256 targetBlockNumber, uint256 windowIndex) private view returns (Status);
 ```
 
-### _encodeNextWindow
-
-
-```solidity
-function _encodeNextWindow(uint256 blockNumber, uint256 reward) private pure returns (uint256);
-```
-
-### _decodeNextWindow
-
-
-```solidity
-function _decodeNextWindow(uint256 nextWindow) private pure returns (uint256 blockNumber, uint256 reward);
-```
-
 ### _acceptingAttestations
 
 
@@ -241,7 +227,7 @@ struct Window {
     bytes32 mostVotedBlockHash;
     bytes32 mostVotedHash;
     uint256 mostVotedHashVotes;
-    uint256 nextWindow;
+    NextWindow nextWindow;
     uint256 index;
     mapping(bytes32 hash => uint256 votes) attestations;
 }

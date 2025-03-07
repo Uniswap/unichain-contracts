@@ -22,8 +22,8 @@ abstract contract RewardDistributorTestBase is Test {
 
     function setUp() public {
         mockVotesToken = new MockVotesToken();
-        mockVotesToken.mint(operator.addr, 51 ether);
-        mockVotesToken.mint(operator2.addr, 49 ether);
+        mockVotesToken.mint(operator.addr, 67 ether);
+        mockVotesToken.mint(operator2.addr, 33 ether);
         vm.roll(DEFAULT_ATTESTATION_PERIOD);
         mockRewardPuller = new MockRewardPuller(1 ether);
         rd = new RewardDistributor(
@@ -295,14 +295,14 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         // second window now accumulates rewards, on finalization the rewards not claimable by non voting operators are allocated towards future windows
         vm.expectEmit();
         emit IRewardDistributor.RewardReceived(
-            block.number - 1 + DEFAULT_ATTESTATION_WINDOW_LENGTH, baseRewardPerWindow * 49 / 100
+            block.number - 1 + DEFAULT_ATTESTATION_WINDOW_LENGTH, baseRewardPerWindow * 33 / 100
         );
         vm.expectEmit();
         emit IRewardDistributor.WindowFinalized(
             block.number - DEFAULT_ATTESTATION_WINDOW_LENGTH - 1,
             IRewardDistributor.AttestationResult.Valid,
-            51e16,
-            baseRewardPerWindow * 51 / 100
+            67e16,
+            baseRewardPerWindow * 67 / 100
         );
         attest(operator);
     }
@@ -324,14 +324,14 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         // second window now accumulates rewards, on finalization the rewards not claimable by non voting operators are allocated towards future windows
         vm.expectEmit();
         emit IRewardDistributor.RewardReceived(
-            block.number - 1 + DEFAULT_ATTESTATION_WINDOW_LENGTH, baseRewardPerWindow * 51 / 100
+            block.number - 1 + DEFAULT_ATTESTATION_WINDOW_LENGTH, baseRewardPerWindow * 67 / 100
         );
         vm.expectEmit();
         emit IRewardDistributor.WindowFinalized(
             block.number - DEFAULT_ATTESTATION_WINDOW_LENGTH - 1,
             IRewardDistributor.AttestationResult.InsufficientVotes,
-            49e16,
-            baseRewardPerWindow * 49 / 100
+            33e16,
+            baseRewardPerWindow * 33 / 100
         );
         attest(operator2);
     }
@@ -353,14 +353,14 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         // second window now accumulates rewards, on finalization the rewards not claimable by non voting operators are allocated towards future windows
         vm.expectEmit();
         emit IRewardDistributor.RewardReceived(
-            block.number - 1 + DEFAULT_ATTESTATION_WINDOW_LENGTH, baseRewardPerWindow * 49 / 100
+            block.number - 1 + DEFAULT_ATTESTATION_WINDOW_LENGTH, baseRewardPerWindow * 33 / 100
         );
         vm.expectEmit();
         emit IRewardDistributor.WindowFinalized(
             block.number - DEFAULT_ATTESTATION_WINDOW_LENGTH - 1,
             IRewardDistributor.AttestationResult.Invalid,
-            51e16,
-            baseRewardPerWindow * 51 / 100
+            67e16,
+            baseRewardPerWindow * 67 / 100
         );
         attest(operator);
     }

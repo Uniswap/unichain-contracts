@@ -17,8 +17,6 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     using MessageHashUtils for bytes32;
     using Search for uint256[];
 
-    IStakeTable private immutable L2_STAKE_MANAGER;
-
     struct Window {
         bool finalized;
         uint256 reward;
@@ -43,6 +41,10 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         uint256 tail;
         mapping(uint256 blockNumber => Attestation) attestations;
     }
+
+    // @dev 2/3rd of the total supply need to attest to a block for it to be finalized
+    uint256 private constant ATTESTATION_THRESHOLD = 666_666_666_666_666_667;
+    IStakeTable private immutable L2_STAKE_MANAGER;
 
     uint256 private _windowFinalizationPointer;
     uint256[] private _windowBlockNumbers;
@@ -221,7 +223,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         (bool success,) = address(this).call{value: unclaimedRewards}('');
         assert(success);
         AttestationResult result;
-        if (0.5e18 > attestationRatio) result = AttestationResult.InsufficientVotes;
+        if (ATTESTATION_THRESHOLD > attestationRatio) result = AttestationResult.InsufficientVotes;
         else result = w.mostVotedBlockHash == w.blockHash ? AttestationResult.Valid : AttestationResult.Invalid;
         emit WindowFinalized(window, result, attestationRatio, rewardsToDistribute);
     }

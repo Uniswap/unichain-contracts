@@ -1,11 +1,18 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/2bea5dafc15ba815c8ba14ba9e39556e6fd5e819/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c2da9cd472a221eee52ddc363d5c9610854afd36/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
 
 
 ## State Variables
+### ATTESTATION_THRESHOLD
+
+```solidity
+uint256 private constant ATTESTATION_THRESHOLD = 666_666_666_666_666_667;
+```
+
+
 ### L2_STAKE_MANAGER
 
 ```solidity

@@ -9,16 +9,27 @@ contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
     bytes32 public constant PARAMS_SETTER_ROLE = keccak256('PARAMS_SETTER_ROLE');
 
     uint256 private _withdrawalDelay;
-    IDelegationManager private _delegationManager;
+    address private _slashingBeneficiary;
+    IDelegationManager private immutable _delegationManager;
 
-    constructor(address initialAdmin, uint256 withdrawalDelay_, IDelegationManager delegationManager_) {
+    constructor(
+        address initialAdmin,
+        uint256 withdrawalDelay_,
+        address slashingBeneficiary_,
+        IDelegationManager delegationManager_
+    ) {
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
         _setWithdrawalDelay(withdrawalDelay_);
+        _setSlashingBeneficiary(slashingBeneficiary_);
         _delegationManager = delegationManager_;
     }
 
     function withdrawalDelay() public view returns (uint256) {
         return _withdrawalDelay;
+    }
+
+    function slashingBeneficiary() public view returns (address) {
+        return _slashingBeneficiary;
     }
 
     function delegationManager() public view returns (IDelegationManager) {
@@ -29,8 +40,8 @@ contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
         _setWithdrawalDelay(withdrawalDelay_);
     }
 
-    function updateDelegationManager(IDelegationManager delegationManager_) external onlyRole(PARAMS_SETTER_ROLE) {
-        _delegationManager = delegationManager_;
+    function updateSlashingBeneficiary(address slashingBeneficiary_) external onlyRole(PARAMS_SETTER_ROLE) {
+        _slashingBeneficiary = slashingBeneficiary_;
     }
 
     function _setWithdrawalDelay(uint256 withdrawalDelay_) internal {
@@ -39,8 +50,9 @@ contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
         emit WithdrawalDelayUpdated(oldWithdrawalDelay, withdrawalDelay_);
     }
 
-    function _updateDelegationManager(IDelegationManager delegationManager_) internal {
-        _delegationManager = delegationManager_;
-        // TODO emit event, add to interface
+    function _setSlashingBeneficiary(address slashingBeneficiary_) internal {
+        address oldSlashingBeneficiary = _slashingBeneficiary;
+        _slashingBeneficiary = slashingBeneficiary_;
+        emit SlashingBeneficiaryUpdated(oldSlashingBeneficiary, slashingBeneficiary_);
     }
 }

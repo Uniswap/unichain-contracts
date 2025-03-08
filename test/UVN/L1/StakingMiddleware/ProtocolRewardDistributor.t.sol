@@ -14,8 +14,8 @@ import 'forge-std/Test.sol';
 contract ProtocolRewardDistributorHarness is ProtocolRewardDistributor, UniStakerWrapperHarness {
     constructor(IUniStaker unistaker_) UniStakerWrapperHarness(unistaker_) {}
 
-    function updateRewardIndex() external {
-        _updateRewardIndex();
+    function updateGlobalRewardCheckpoint() external {
+        _updateGlobalRewardCheckpoint();
     }
 }
 
@@ -84,7 +84,7 @@ contract UniStakerWrapperTest is Test {
         expectERC20Transfer(address(unistaker), address(protocolRewardDistributor), rewardAmount);
         vm.expectEmit();
         emit IProtocolRewardDistributor.RewardsAdded(rewardAmount);
-        protocolRewardDistributor.updateRewardIndex();
+        protocolRewardDistributor.updateGlobalRewardCheckpoint();
         for (uint256 i = 0; i < numDepositors; i++) {
             uint256 reward = protocolRewardDistributor.rewardsOf(depositors[i]);
             assertEq(reward, rewardAmount * amounts[i] / totalAmount);

@@ -1,5 +1,5 @@
 # IStakingMiddlewareParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/5b98eecce12fe90fe24abd37da1a3642b02cfbd3/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol)
 
 
 ## Functions
@@ -18,6 +18,21 @@ function updateWithdrawalDelay(uint256 withdrawalDelay) external;
 |`withdrawalDelay`|`uint256`|The new withdrawal delay in seconds|
 
 
+### updateSlashingBeneficiary
+
+Updates the slashing beneficiary that receives slashed stake and rewards
+
+
+```solidity
+function updateSlashingBeneficiary(address slashingBeneficiary) external;
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`slashingBeneficiary`|`address`|The new slashing beneficiary|
+
+
 ### withdrawalDelay
 
 The delay before a user can withdraw their stake or change their operator
@@ -31,6 +46,21 @@ function withdrawalDelay() external view returns (uint256);
 |Name|Type|Description|
 |----|----|-----------|
 |`<none>`|`uint256`|The withdrawal delay in seconds|
+
+
+### slashingBeneficiary
+
+The slashing beneficiary that receives slashed stake and rewards
+
+
+```solidity
+function slashingBeneficiary() external view returns (address);
+```
+**Returns**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`<none>`|`address`|The slashing beneficiary|
 
 
 ### PARAMS_SETTER_ROLE
@@ -47,5 +77,11 @@ function PARAMS_SETTER_ROLE() external view returns (bytes32);
 
 ```solidity
 event WithdrawalDelayUpdated(uint256 oldWithdrawalDelay, uint256 newWithdrawalDelay);
+```
+
+### SlashingBeneficiaryUpdated
+
+```solidity
+event SlashingBeneficiaryUpdated(address oldSlashingBeneficiary, address newSlashingBeneficiary);
 ```
 

@@ -1,8 +1,8 @@
 # StakingMiddleware
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/24150a287633bc355fa0bd43e8e420b312a5ca02/src/UVN/L1/StakingMiddleware.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/UVN/L1/StakingMiddleware.sol)
 
 **Inherits:**
-[ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [SlashingManager](/src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md), [IStakingMiddleware](/src/interfaces/UVN/L1/IStakingMiddleware.sol/interface.IStakingMiddleware.md)
+[SlashingManager](/src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md), [IStakingMiddleware](/src/interfaces/UVN/L1/IStakingMiddleware.sol/interface.IStakingMiddleware.md)
 
 
 ## State Variables
@@ -22,8 +22,11 @@ constructor(
     address initialAdmin,
     IUniStaker unistaker_,
     uint256 withdrawalDelay_,
+    address slashingBeneficiary_,
     IDelegationManager delegationManager_
-) UniStakerWrapper(unistaker_) StakingMiddlewareParams(initialAdmin, withdrawalDelay_, delegationManager_);
+)
+    UniStakerWrapper(unistaker_)
+    StakingMiddlewareParams(initialAdmin, withdrawalDelay_, slashingBeneficiary_, delegationManager_);
 ```
 
 ### updateGovernanceDelegatee
@@ -66,5 +69,12 @@ function withdrawFromUniStaker() external;
 
 ```solidity
 function alterGovernanceDelegatee(address newGovernanceDelegatee) external;
+```
+
+### deselectOperator
+
+
+```solidity
+function deselectOperator() public override;
 ```
 

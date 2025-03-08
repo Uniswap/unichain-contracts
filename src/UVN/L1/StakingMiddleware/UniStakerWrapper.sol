@@ -39,10 +39,14 @@ contract UniStakerWrapper {
     }
 
     function _withdrawFromUniStaker(uint96 amount) internal {
-        uint256 depositId = _depositIds[msg.sender];
+        _withdrawFromUniStaker(msg.sender, amount);
+    }
+
+    function _withdrawFromUniStaker(address delegator, uint96 amount) internal {
+        uint256 depositId = _depositIds[delegator];
         if (depositId != 0) {
             unistaker.withdraw(IUniStaker.DepositIdentifier.wrap(depositId), amount);
-            if (_stakedBalanceOf(msg.sender) == 0) _depositIds[msg.sender] = 0;
+            if (_stakedBalanceOf(delegator) == 0) _depositIds[delegator] = 0;
         }
     }
 
@@ -52,8 +56,9 @@ contract UniStakerWrapper {
         return unistaker.deposits(IUniStaker.DepositIdentifier.wrap(depositId)).balance;
     }
 
-    function _totalAmountStaked() internal view returns (uint256) {
-        return unistaker.depositorTotalStaked(address(this));
+    function _totalAmountStaked() internal view returns (uint96) {
+        // @audit no need for safe cast as UNI supply is < 2^96
+        return uint96(unistaker.depositorTotalStaked(address(this)));
     }
 
     function _isDepositedIntoUniStaker(address delegator) internal view returns (bool) {

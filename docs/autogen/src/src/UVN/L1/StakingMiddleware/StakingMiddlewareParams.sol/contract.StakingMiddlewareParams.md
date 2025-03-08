@@ -1,5 +1,5 @@
 # StakingMiddlewareParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6b285bfe59012065422d5d75fc08ddb0d2404ce9/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol)
 
 **Inherits:**
 [IStakingMiddlewareParams](/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md), AccessControl
@@ -20,10 +20,17 @@ uint256 private _withdrawalDelay;
 ```
 
 
+### _slashingBeneficiary
+
+```solidity
+address private _slashingBeneficiary;
+```
+
+
 ### _delegationManager
 
 ```solidity
-IDelegationManager private _delegationManager;
+IDelegationManager private immutable _delegationManager;
 ```
 
 
@@ -32,7 +39,12 @@ IDelegationManager private _delegationManager;
 
 
 ```solidity
-constructor(address initialAdmin, uint256 withdrawalDelay_, IDelegationManager delegationManager_);
+constructor(
+    address initialAdmin,
+    uint256 withdrawalDelay_,
+    address slashingBeneficiary_,
+    IDelegationManager delegationManager_
+);
 ```
 
 ### withdrawalDelay
@@ -40,6 +52,13 @@ constructor(address initialAdmin, uint256 withdrawalDelay_, IDelegationManager d
 
 ```solidity
 function withdrawalDelay() public view returns (uint256);
+```
+
+### slashingBeneficiary
+
+
+```solidity
+function slashingBeneficiary() public view returns (address);
 ```
 
 ### delegationManager
@@ -56,11 +75,11 @@ function delegationManager() public view returns (IDelegationManager);
 function updateWithdrawalDelay(uint256 withdrawalDelay_) external onlyRole(PARAMS_SETTER_ROLE);
 ```
 
-### updateDelegationManager
+### updateSlashingBeneficiary
 
 
 ```solidity
-function updateDelegationManager(IDelegationManager delegationManager_) external onlyRole(PARAMS_SETTER_ROLE);
+function updateSlashingBeneficiary(address slashingBeneficiary_) external onlyRole(PARAMS_SETTER_ROLE);
 ```
 
 ### _setWithdrawalDelay
@@ -70,10 +89,10 @@ function updateDelegationManager(IDelegationManager delegationManager_) external
 function _setWithdrawalDelay(uint256 withdrawalDelay_) internal;
 ```
 
-### _updateDelegationManager
+### _setSlashingBeneficiary
 
 
 ```solidity
-function _updateDelegationManager(IDelegationManager delegationManager_) internal;
+function _setSlashingBeneficiary(address slashingBeneficiary_) internal;
 ```
 

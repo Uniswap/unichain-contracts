@@ -1,5 +1,5 @@
 # UniStakerWrapper
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6b285bfe59012065422d5d75fc08ddb0d2404ce9/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
 
 
 ## State Variables
@@ -53,6 +53,13 @@ function _depositIntoUniStaker(uint96 amount, address delegatee) internal return
 function _withdrawFromUniStaker(uint96 amount) internal;
 ```
 
+### _withdrawFromUniStaker
+
+
+```solidity
+function _withdrawFromUniStaker(address delegator, uint96 amount) internal;
+```
+
 ### _stakedBalanceOf
 
 
@@ -64,7 +71,7 @@ function _stakedBalanceOf(address delegator) internal view returns (uint96);
 
 
 ```solidity
-function _totalAmountStaked() internal view returns (uint256);
+function _totalAmountStaked() internal view returns (uint96);
 ```
 
 ### _isDepositedIntoUniStaker

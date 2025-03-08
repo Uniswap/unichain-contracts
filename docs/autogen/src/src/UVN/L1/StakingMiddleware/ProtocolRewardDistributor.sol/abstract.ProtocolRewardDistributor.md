@@ -1,5 +1,5 @@
 # ProtocolRewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/dbd11eeb90f59abe0099dfbb1022b6093132bf21/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
 
 **Inherits:**
 [UniStakerWrapper](/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol/contract.UniStakerWrapper.md), [IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
@@ -16,21 +16,21 @@ uint256 private constant PRECISION = 1e27;
 ### _globalRewardCheckpoint
 
 ```solidity
-uint256 private _globalRewardCheckpoint;
+uint256 internal _globalRewardCheckpoint;
 ```
 
 
 ### _rewardCheckpointOf
 
 ```solidity
-mapping(address account => uint256 checkpoint) private _rewardCheckpointOf;
+mapping(address account => uint256 checkpoint) internal _rewardCheckpointOf;
 ```
 
 
 ### _earnedRewardsOf
 
 ```solidity
-mapping(address account => uint256 earnedRewards) private _earnedRewardsOf;
+mapping(address account => uint256 earnedRewards) internal _earnedRewardsOf;
 ```
 
 
@@ -39,21 +39,21 @@ mapping(address account => uint256 earnedRewards) private _earnedRewardsOf;
 
 
 ```solidity
-function withdrawRewards(address to) external returns (uint256 reward);
+function withdrawRewards(address to) public virtual returns (uint256 reward);
 ```
 
 ### rewardsOf
 
 
 ```solidity
-function rewardsOf(address account) public view returns (uint256);
+function rewardsOf(address account) public view virtual returns (uint256);
 ```
 
-### _updateRewardIndex
+### _updateGlobalRewardCheckpoint
 
 
 ```solidity
-function _updateRewardIndex() internal;
+function _updateGlobalRewardCheckpoint() internal returns (uint256 newGlobalRewardCheckpoint);
 ```
 
 ### _updateRewardCheckpoint
@@ -63,10 +63,24 @@ function _updateRewardIndex() internal;
 function _updateRewardCheckpoint(address account) internal;
 ```
 
-### _calculateRewardSinceLastCheckpoint
+### _getNewGlobalRewardCheckpoint
 
 
 ```solidity
-function _calculateRewardSinceLastCheckpoint(address account) internal view returns (uint256);
+function _getNewGlobalRewardCheckpoint(uint256 reward) internal view returns (uint256);
+```
+
+### _calculateRewardUntil
+
+
+```solidity
+function _calculateRewardUntil(address account, uint256 checkpoint) internal view returns (uint256);
+```
+
+### _calculateRewardFromTo
+
+
+```solidity
+function _calculateRewardFromTo(uint256 balance, uint256 from, uint256 to) internal pure returns (uint256);
 ```
 

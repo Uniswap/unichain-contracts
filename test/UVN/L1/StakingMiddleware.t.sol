@@ -20,7 +20,8 @@ contract StakingMiddlewareTest is Test {
         rewardToken = new MockVotesToken();
         unistaker = UniStakerDeployer.deploy(address(rewardToken), address(stakeToken), address(this));
         delegationManager = new DelegationManager(address(this));
-        stakingMiddleware = new StakingMiddleware(address(this), unistaker, 0, delegationManager);
+        stakingMiddleware =
+            new StakingMiddleware(address(this), unistaker, 0, makeAddr('slashing beneficiary'), delegationManager);
         delegationManager.transferOwnership(address(stakingMiddleware));
     }
 

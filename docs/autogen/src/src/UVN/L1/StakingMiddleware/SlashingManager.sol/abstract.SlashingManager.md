@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/8410d8a26ef6768cace9d9639c7335103ec75181/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md)
@@ -13,17 +13,17 @@ uint96 private constant PERCENTAGE_DENOMINATOR = 1e18;
 ```
 
 
-### _slashingData
+### _slashingInstances
 
 ```solidity
-mapping(address operator => SlashingData data) internal _slashingData;
+mapping(address operator => SlashingInstance[] instances) internal _slashingInstances;
 ```
 
 
-### _delegatorSlashingHead
+### _delegatorInstanceLengths
 
 ```solidity
-mapping(address delegator => bytes32 operatorTail) internal _delegatorSlashingHead;
+mapping(address delegator => uint256 instanceLength) internal _delegatorInstanceLengths;
 ```
 
 
@@ -109,14 +109,20 @@ function _slash(address operator, uint96 remainingPercentage) internal;
 function _calculateSlashing(address delegator, uint256 n, uint256 globalCheckpoint)
     internal
     view
-    returns (uint96 newStake, bytes32 delegatorHead, uint256 newRewards, uint256 slashedRewards, uint256 newCheckpoint);
+    returns (
+        uint96 newStake,
+        uint256 delegatorLength,
+        uint256 newRewards,
+        uint256 slashedRewards,
+        uint256 newCheckpoint
+    );
 ```
 
 ### _isDelegatorSlashed
 
 
 ```solidity
-function _isDelegatorSlashed(bytes32 operatorTail, bytes32 delegatorHead) internal pure returns (bool);
+function _isDelegatorSlashed(uint256 delegatorInstanceLength, uint256 operatorLength) internal pure returns (bool);
 ```
 
 ### SLASHER_ROLE
@@ -132,19 +138,7 @@ function SLASHER_ROLE() public view returns (bytes32);
 ```solidity
 struct SlashingInstance {
     uint96 remainingPercentage;
-    uint40 timestamp;
     uint256 rewardCheckpoint;
-    bytes32 next;
-}
-```
-
-### SlashingData
-
-```solidity
-struct SlashingData {
-    bytes32 head;
-    bytes32 tail;
-    mapping(bytes32 instanceHash => SlashingInstance instance) instances;
 }
 ```
 

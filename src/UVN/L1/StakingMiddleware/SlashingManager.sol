@@ -9,28 +9,20 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
 
     struct SlashingInstance {
         uint96 remainingPercentage;
-        uint40 timestamp;
         uint256 rewardCheckpoint;
-        bytes32 next;
     }
 
-    struct SlashingData {
-        bytes32 head;
-        bytes32 tail;
-        mapping(bytes32 instanceHash => SlashingInstance instance) instances;
-    }
-
-    mapping(address operator => SlashingData data) internal _slashingData;
-    mapping(address delegator => bytes32 operatorTail) internal _delegatorSlashingHead;
+    mapping(address operator => SlashingInstance[] instances) internal _slashingInstances;
+    mapping(address delegator => uint256 instanceLength) internal _delegatorInstanceLengths;
 
     function selectOperator(address operator) public override {
         super.selectOperator(operator);
-        _delegatorSlashingHead[msg.sender] = _slashingData[operator].tail;
+        _delegatorInstanceLengths[msg.sender] = _slashingInstances[operator].length;
     }
 
     function deselectOperator() public virtual override {
         super.deselectOperator();
-        _delegatorSlashingHead[msg.sender] = bytes32(0);
+        _delegatorInstanceLengths[msg.sender] = 0;
     }
 
     function withdrawRewards(address to) public override returns (uint256 reward) {
@@ -55,9 +47,14 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
 
     function applySlashing(address delegator, uint256 n) public {
         uint256 globalRewardCheckpoint = _updateGlobalRewardCheckpoint();
-        (uint96 newStake, bytes32 delegatorHead, uint256 newRewards, uint256 slashedRewards, uint256 newCheckpoint) =
-            _calculateSlashing(delegator, n, globalRewardCheckpoint);
-        _delegatorSlashingHead[delegator] = delegatorHead;
+        (
+            uint96 newStake,
+            uint256 delegatorInstanceLength,
+            uint256 newRewards,
+            uint256 slashedRewards,
+            uint256 newCheckpoint
+        ) = _calculateSlashing(delegator, n, globalRewardCheckpoint);
+        _delegatorInstanceLengths[delegator] = delegatorInstanceLength;
         uint96 slashedStake = _depositorData[delegator].stake - newStake;
         _depositorData[delegator].stake = newStake;
         if (newRewards != 0) {
@@ -76,9 +73,9 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
     function isDelegatorSlashed(address delegator) external view returns (bool) {
         address operator = _operator(delegator);
         if (operator == address(0)) return false;
-        bytes32 delegatorHead = _delegatorSlashingHead[delegator];
-        bytes32 operatorTail = _slashingData[operator].tail;
-        return _isDelegatorSlashed(operatorTail, delegatorHead);
+        uint256 delegatorInstanceLength = _delegatorInstanceLengths[delegator];
+        uint256 operatorLength = _slashingInstances[operator].length;
+        return _isDelegatorSlashed(delegatorInstanceLength, operatorLength);
     }
 
     function delegatorStake(address delegator) public view override returns (uint96) {
@@ -97,16 +94,9 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
 
     function _slash(address operator, uint96 remainingPercentage) internal {
         uint256 globalRewardCheckpoint = _updateGlobalRewardCheckpoint();
-        SlashingInstance memory instance = SlashingInstance({
-            remainingPercentage: remainingPercentage,
-            timestamp: uint40(block.timestamp),
-            rewardCheckpoint: globalRewardCheckpoint,
-            next: bytes32(0)
-        });
-        bytes32 instanceHash = keccak256(abi.encode(instance));
-        _slashingData[operator].instances[instanceHash] = instance;
-        _slashingData[operator].instances[_slashingData[operator].tail].next = instanceHash;
-        _slashingData[operator].tail = instanceHash;
+        SlashingInstance memory instance =
+            SlashingInstance({remainingPercentage: remainingPercentage, rewardCheckpoint: globalRewardCheckpoint});
+        _slashingInstances[operator].push(instance);
         // TODO notify delegation manager about slashing event
     }
 
@@ -117,7 +107,7 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
         view
         returns (
             uint96 newStake,
-            bytes32 delegatorHead,
+            uint256 delegatorLength,
             uint256 newRewards,
             uint256 slashedRewards,
             uint256 newCheckpoint
@@ -127,26 +117,25 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
         newStake = super.delegatorStake(delegator);
         newCheckpoint = _rewardCheckpointOf[delegator];
         // user not delegated to an operator
-        if (operator == address(0)) return (newStake, bytes32(0), 0, 0, newCheckpoint);
-        delegatorHead = _delegatorSlashingHead[delegator];
-        SlashingData storage data = _slashingData[operator];
-        bytes32 operatorTail = data.tail;
-        if (!_isDelegatorSlashed(operatorTail, delegatorHead)) return (newStake, delegatorHead, 0, 0, newCheckpoint);
+        if (operator == address(0)) return (newStake, 0, 0, 0, newCheckpoint);
+        delegatorLength = _delegatorInstanceLengths[delegator];
+        uint256 operatorLength = _slashingInstances[operator].length;
+        if (!_isDelegatorSlashed(delegatorLength, operatorLength)) {
+            return (newStake, delegatorLength, 0, 0, newCheckpoint);
+        }
         bool isDeposited = _isDepositedIntoUniStaker(delegator);
         if (isDeposited) {
             slashedRewards = _calculateRewardFromTo(newStake, newCheckpoint, globalCheckpoint);
         }
         uint256 i = 0;
-        delegatorHead = data.instances[delegatorHead].next;
         while (i < n) {
-            SlashingInstance memory instance = data.instances[delegatorHead];
+            SlashingInstance memory instance = _slashingInstances[operator][delegatorLength];
             if (isDeposited) {
                 newRewards += _calculateRewardFromTo(newStake, newCheckpoint, instance.rewardCheckpoint);
                 newCheckpoint = instance.rewardCheckpoint;
             }
             newStake = (newStake * instance.remainingPercentage) / PERCENTAGE_DENOMINATOR;
-            if (_isDelegatorSlashed(operatorTail, instance.next)) break;
-            delegatorHead = instance.next;
+            if (!_isDelegatorSlashed(++delegatorLength, operatorLength)) break;
             i++;
         }
         if (isDeposited) {
@@ -157,8 +146,12 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
         }
     }
 
-    function _isDelegatorSlashed(bytes32 operatorTail, bytes32 delegatorHead) internal pure returns (bool) {
-        return operatorTail != delegatorHead;
+    function _isDelegatorSlashed(uint256 delegatorInstanceLength, uint256 operatorLength)
+        internal
+        pure
+        returns (bool)
+    {
+        return delegatorInstanceLength < operatorLength;
     }
 
     function SLASHER_ROLE() public view returns (bytes32) {

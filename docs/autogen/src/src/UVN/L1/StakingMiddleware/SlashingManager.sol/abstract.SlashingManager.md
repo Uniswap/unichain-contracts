@@ -1,8 +1,8 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/8410d8a26ef6768cace9d9639c7335103ec75181/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
-[ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md)
+[OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
 
 
 ## State Variables
@@ -28,28 +28,72 @@ mapping(address delegator => uint256 instanceLength) internal _delegatorInstance
 
 
 ## Functions
-### selectOperator
+### _afterOperatorSelection
 
 
 ```solidity
-function selectOperator(address operator) public override;
+function _afterOperatorSelection(address delegator, address operator) internal virtual override;
 ```
 
-### deselectOperator
+### _afterOperatorDeselection
 
 
 ```solidity
-function deselectOperator() public virtual override;
+function _afterOperatorDeselection(address delegator) internal virtual override;
 ```
 
-### withdrawRewards
+### _beforeDeposit
 
 
 ```solidity
-function withdrawRewards(address to) public override returns (uint256 reward);
+function _beforeDeposit(address delegator, uint96 amount) internal override;
+```
+
+### _beforeWithdrawal
+
+
+```solidity
+function _beforeWithdrawal(address delegator, uint96 amount) internal override;
+```
+
+### _beforeUniStakerDeposit
+
+
+```solidity
+function _beforeUniStakerDeposit(address delegator, uint96 amount) internal override;
+```
+
+### _beforeUniStakerWithdrawal
+
+
+```solidity
+function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal override;
+```
+
+### _beforeUniStakerDelegateChange
+
+
+```solidity
+function _beforeUniStakerDelegateChange(address delegator, address newGovernanceDelegatee) internal override;
+```
+
+### _beforeRewardsWithdrawal
+
+
+```solidity
+function _beforeRewardsWithdrawal(address delegator) internal override;
+```
+
+### _beforeOperatorDeselection
+
+
+```solidity
+function _beforeOperatorDeselection(address delegator) internal override;
 ```
 
 ### slashAmount
+
+Slashes a delegator's stake by a specific amount
 
 
 ```solidity
@@ -58,6 +102,8 @@ function slashAmount(address operator, uint96 amount) external onlyRole(SLASHER_
 
 ### slashPercentage
 
+Slashes a delegator's stake by a percentage of the total stake
+
 
 ```solidity
 function slashPercentage(address operator, uint96 percentage) external onlyRole(SLASHER_ROLE());
@@ -65,30 +111,31 @@ function slashPercentage(address operator, uint96 percentage) external onlyRole(
 
 ### applySlashing
 
+Applies pending slashing to a delegator's stake
+
 
 ```solidity
 function applySlashing(address delegator, uint256 n) public;
 ```
 
-### isDelegatorSlashed
+### slashingPendingForDelegator
+
+Returns whether a delegator's stake is slashed and is pending for finalization
 
 
 ```solidity
-function isDelegatorSlashed(address delegator) external view returns (bool);
-```
-
-### delegatorStake
-
-
-```solidity
-function delegatorStake(address delegator) public view override returns (uint96);
+function slashingPendingForDelegator(address delegator) external view returns (bool);
 ```
 
 ### rewardsOf
 
 
 ```solidity
-function rewardsOf(address delegator) public view override returns (uint256);
+function rewardsOf(address delegator)
+    public
+    view
+    override(ProtocolRewardDistributor, IProtocolRewardDistributor)
+    returns (uint256);
 ```
 
 ### _slash
@@ -96,6 +143,13 @@ function rewardsOf(address delegator) public view override returns (uint256);
 
 ```solidity
 function _slash(address operator, uint96 remainingPercentage) internal;
+```
+
+### _delegatorStake
+
+
+```solidity
+function _delegatorStake(address delegator) internal view override returns (uint96);
 ```
 
 ### _calculateSlashing
@@ -127,9 +181,11 @@ function _isDelegatorSlashed(uint256 delegatorInstanceLength, uint256 operatorLe
 
 ### SLASHER_ROLE
 
+TODO invalidation of group of slashers?
+
 
 ```solidity
-function SLASHER_ROLE() public view returns (bytes32);
+function SLASHER_ROLE() public pure returns (bytes32);
 ```
 
 ## Structs

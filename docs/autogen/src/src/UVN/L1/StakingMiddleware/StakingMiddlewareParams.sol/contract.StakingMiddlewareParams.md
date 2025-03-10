@@ -1,5 +1,5 @@
 # StakingMiddlewareParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol)
 
 **Inherits:**
 [IStakingMiddlewareParams](/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md), AccessControl
@@ -27,24 +27,12 @@ address private _slashingBeneficiary;
 ```
 
 
-### _delegationManager
-
-```solidity
-IDelegationManager private immutable _delegationManager;
-```
-
-
 ## Functions
 ### constructor
 
 
 ```solidity
-constructor(
-    address initialAdmin,
-    uint256 withdrawalDelay_,
-    address slashingBeneficiary_,
-    IDelegationManager delegationManager_
-);
+constructor(address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_);
 ```
 
 ### withdrawalDelay
@@ -59,13 +47,6 @@ function withdrawalDelay() public view returns (uint256);
 
 ```solidity
 function slashingBeneficiary() public view returns (address);
-```
-
-### delegationManager
-
-
-```solidity
-function delegationManager() public view returns (IDelegationManager);
 ```
 
 ### updateWithdrawalDelay

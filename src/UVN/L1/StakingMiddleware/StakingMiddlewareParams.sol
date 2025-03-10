@@ -10,18 +10,11 @@ contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
 
     uint256 private _withdrawalDelay;
     address private _slashingBeneficiary;
-    IDelegationManager private immutable _delegationManager;
 
-    constructor(
-        address initialAdmin,
-        uint256 withdrawalDelay_,
-        address slashingBeneficiary_,
-        IDelegationManager delegationManager_
-    ) {
+    constructor(address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_) {
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
         _setWithdrawalDelay(withdrawalDelay_);
         _setSlashingBeneficiary(slashingBeneficiary_);
-        _delegationManager = delegationManager_;
     }
 
     function withdrawalDelay() public view returns (uint256) {
@@ -30,10 +23,6 @@ contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
 
     function slashingBeneficiary() public view returns (address) {
         return _slashingBeneficiary;
-    }
-
-    function delegationManager() public view returns (IDelegationManager) {
-        return _delegationManager;
     }
 
     function updateWithdrawalDelay(uint256 withdrawalDelay_) external onlyRole(PARAMS_SETTER_ROLE) {

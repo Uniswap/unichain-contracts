@@ -1,48 +1,61 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {StakingMiddlewareParams} from './StakingMiddlewareParams.sol';
+import {IOperatorManager} from '../../../interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol';
+import {ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
+import {Nonces, Votes} from './libraries/Votes.sol';
+import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 
-struct DepositorData {
-    address selectedOperator;
-    uint96 stake;
-}
+abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperatorManager {
+    constructor() EIP712('UVN-StakingMiddleware', '1') {}
 
-abstract contract OperatorManager is StakingMiddlewareParams {
-    error OperatorAlreadySelected();
-    error NoOperatorSelected();
+    function _afterDeposit(address delegator, uint96 amount) internal virtual override {
+        super._afterDeposit(delegator, amount);
+        address operator = delegates(delegator);
+        if (operator != address(0)) {
+            _transferVotingUnits(address(0), operator, amount);
+        }
+    }
 
-    mapping(address delegator => DepositorData data) internal _depositorData;
-    mapping(address operator => uint256 totalStake) internal _operatorTotalStake;
+    function _afterWithdrawal(address delegator, uint96 amount) internal virtual override {
+        super._afterWithdrawal(delegator, amount);
+        address operator = delegates(delegator);
+        if (operator != address(0)) {
+            _transferVotingUnits(operator, address(0), amount);
+        }
+    }
 
-    function selectOperator(address operator) public virtual {
-        DepositorData storage data = _depositorData[msg.sender];
-        if (data.selectedOperator != address(0)) revert OperatorAlreadySelected();
-        data.selectedOperator = operator;
-        _operatorTotalStake[operator] += data.stake;
-        delegationManager().mint(msg.sender, data.stake);
-        delegationManager().updateDelegatee(msg.sender, operator);
+    function _delegate(address delegator, address operator) internal override {
+        if (operator == address(0)) {
+            _deselectOperator(delegator);
+        } else {
+            _selectOperator(delegator, operator);
+        }
+        super._delegate(delegator, operator);
+    }
+
+    function _selectOperator(address delegator, address operator) internal {
+        _beforeOperatorSelection(delegator, operator);
+        if (delegates(delegator) != address(0)) revert IOperatorManager.OperatorAlreadySelected();
+        _afterOperatorSelection(delegator, operator);
     }
 
     // TODO withdrawal delay
-    function deselectOperator() public virtual {
-        DepositorData storage data = _depositorData[msg.sender];
-        if (data.selectedOperator == address(0)) revert NoOperatorSelected();
-        _operatorTotalStake[data.selectedOperator] -= data.stake;
-        data.selectedOperator = address(0);
-        delegationManager().updateDelegatee(msg.sender, address(0));
-        delegationManager().burn(msg.sender, data.stake);
+    function _deselectOperator(address delegator) internal {
+        _beforeOperatorDeselection(delegator);
+        if (delegates(delegator) == address(0)) revert IOperatorManager.NoOperatorSelected();
+        _afterOperatorDeselection(delegator);
     }
 
-    function totalOperatorStake(address operator) public view returns (uint256) {
-        return _operatorTotalStake[operator];
+    function _getVotingUnits(address delegator) internal view virtual override returns (uint256) {
+        return _delegatorStake(delegator);
     }
 
-    function delegatorStake(address delegator) public view virtual returns (uint96) {
-        return _depositorData[delegator].stake;
-    }
+    function _beforeOperatorSelection(address delegator, address operator) internal virtual {}
 
-    function _operator(address delegator) internal view returns (address) {
-        return _depositorData[delegator].selectedOperator;
-    }
+    function _afterOperatorSelection(address delegator, address operator) internal virtual {}
+
+    function _beforeOperatorDeselection(address delegator) internal virtual {}
+
+    function _afterOperatorDeselection(address delegator) internal virtual {}
 }

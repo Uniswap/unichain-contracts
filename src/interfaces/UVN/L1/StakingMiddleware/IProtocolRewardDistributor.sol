@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-interface IProtocolRewardDistributor {
+import {IUniStakerWrapper} from './IUniStakerWrapper.sol';
+
+interface IProtocolRewardDistributor is IUniStakerWrapper {
     /// @notice Emitted when protocol rewards are added from the UniStaker contract
     event RewardsAdded(uint256 amount);
+    /// @notice Emitted when a user's rewards are distributed
+    event RewardDistributed(address indexed account, uint256 amount);
     /// @notice Emitted when a user withdraws their rewards
     event RewardsWithdrawn(address indexed account, address indexed to, uint256 amount);
 

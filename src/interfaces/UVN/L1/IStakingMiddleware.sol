@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {IProtocolRewardDistributor} from './StakingMiddleware/IProtocolRewardDistributor.sol';
-import {IStakingMiddlewareParams} from './StakingMiddleware/IStakingMiddlewareParams.sol';
+import {ISlashingManager} from './StakingMiddleware/ISlashingManager.sol';
 
-interface IStakingMiddleware is IProtocolRewardDistributor, IStakingMiddlewareParams {
-    error AlreadyDepositedIntoUniStaker();
-    error NotDepositedIntoUniStaker();
+interface IStakingMiddleware is ISlashingManager {
+    /// @notice Returns the nonces used for delegation by signature
+    function nonces(address owner) external view returns (uint256);
 }

@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import {ISlashingManager} from '../../../interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol';
 import {OperatorManager} from './OperatorManager.sol';
-import {ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
+import {IProtocolRewardDistributor, ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
+import {StakeManager} from './StakeManager.sol';
 
-abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager {
+abstract contract SlashingManager is OperatorManager, ISlashingManager {
+    // TODO scale to 1e27 to minimize precision loss
     uint96 private constant PERCENTAGE_DENOMINATOR = 1e18;
 
     struct SlashingInstance {
@@ -15,36 +18,73 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
     mapping(address operator => SlashingInstance[] instances) internal _slashingInstances;
     mapping(address delegator => uint256 instanceLength) internal _delegatorInstanceLengths;
 
-    function selectOperator(address operator) public override {
-        super.selectOperator(operator);
-        _delegatorInstanceLengths[msg.sender] = _slashingInstances[operator].length;
+    function _afterOperatorSelection(address delegator, address operator) internal virtual override {
+        super._afterOperatorSelection(delegator, operator);
+        _delegatorInstanceLengths[delegator] = _slashingInstances[operator].length;
     }
 
-    function deselectOperator() public virtual override {
-        super.deselectOperator();
-        _delegatorInstanceLengths[msg.sender] = 0;
+    function _afterOperatorDeselection(address delegator) internal virtual override {
+        super._afterOperatorDeselection(delegator);
+        _delegatorInstanceLengths[delegator] = 0;
     }
 
-    function withdrawRewards(address to) public override returns (uint256 reward) {
-        applySlashing(msg.sender, type(uint256).max);
-        return super.withdrawRewards(to);
+    function _beforeDeposit(address delegator, uint96 amount) internal override {
+        applySlashing(delegator, type(uint256).max);
+        super._beforeDeposit(delegator, amount);
     }
 
+    function _beforeWithdrawal(address delegator, uint96 amount) internal override {
+        applySlashing(delegator, type(uint256).max);
+        super._beforeWithdrawal(delegator, amount);
+    }
+
+    function _beforeUniStakerDeposit(address delegator, uint96 amount) internal override {
+        applySlashing(delegator, type(uint256).max);
+        super._beforeUniStakerDeposit(delegator, amount);
+    }
+
+    function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal override {
+        applySlashing(delegator, type(uint256).max);
+        super._beforeUniStakerWithdrawal(delegator, amount);
+    }
+
+    function _beforeUniStakerDelegateChange(address delegator, address newGovernanceDelegatee) internal override {
+        applySlashing(delegator, type(uint256).max);
+        super._beforeUniStakerDelegateChange(delegator, newGovernanceDelegatee);
+    }
+
+    function _beforeRewardsWithdrawal(address delegator) internal override {
+        applySlashing(delegator, type(uint256).max);
+        super._beforeRewardsWithdrawal(delegator);
+    }
+
+    function _beforeOperatorDeselection(address delegator) internal override {
+        applySlashing(delegator, type(uint256).max);
+        super._beforeOperatorDeselection(delegator);
+    }
+
+    /// @inheritdoc ISlashingManager
     function slashAmount(address operator, uint96 amount) external onlyRole(SLASHER_ROLE()) {
-        require(amount != 0);
-        uint96 stakeBefore = uint96(_operatorTotalStake[operator]);
-        _operatorTotalStake[operator] -= amount;
+        if (amount == 0) revert SlashingAmountZero();
+        // TODO that amount does not exceed the total operator stake
+        uint96 stakeBefore = uint96(getVotes(operator));
+        _slashOperatorVotes(operator, amount);
         uint96 remainingPercentage = ((stakeBefore - amount) * PERCENTAGE_DENOMINATOR) / stakeBefore;
         _slash(operator, remainingPercentage);
     }
 
+    /// @inheritdoc ISlashingManager
     function slashPercentage(address operator, uint96 percentage) external onlyRole(SLASHER_ROLE()) {
-        require(percentage != 0);
-        require(percentage <= PERCENTAGE_DENOMINATOR);
-        _operatorTotalStake[operator] -= (_operatorTotalStake[operator] * percentage) / PERCENTAGE_DENOMINATOR;
+        if (percentage == 0) revert SlashingAmountZero();
+        if (percentage > PERCENTAGE_DENOMINATOR) revert SlashingPercentageTooHigh();
+        uint96 stakeBefore = uint96(getVotes(operator));
+        uint256 amount = (stakeBefore * percentage) / PERCENTAGE_DENOMINATOR;
+        // TODO that sum of delegator stake NEVER exceeds the total operator stake
+        _slashOperatorVotes(operator, amount);
         _slash(operator, PERCENTAGE_DENOMINATOR - percentage);
     }
 
+    /// @inheritdoc ISlashingManager
     function applySlashing(address delegator, uint256 n) public {
         uint256 globalRewardCheckpoint = _updateGlobalRewardCheckpoint();
         (
@@ -55,36 +95,35 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
             uint256 newCheckpoint
         ) = _calculateSlashing(delegator, n, globalRewardCheckpoint);
         _delegatorInstanceLengths[delegator] = delegatorInstanceLength;
-        uint96 slashedStake = _depositorData[delegator].stake - newStake;
-        _depositorData[delegator].stake = newStake;
+        uint96 slashedStake = StakeManager._delegatorStake(delegator) - newStake;
         if (newRewards != 0) {
-            _earnedRewardsOf[delegator] += newRewards;
-            _rewardCheckpointOf[delegator] = newCheckpoint;
+            _distributeRewards(delegator, newRewards, newCheckpoint);
         }
         if (slashedRewards != 0) {
-            rewardToken.transfer(slashingBeneficiary(), slashedRewards);
+            REWARD_TOKEN.transfer(slashingBeneficiary(), slashedRewards);
         }
         if (_isDepositedIntoUniStaker(delegator)) {
             _withdrawFromUniStaker(delegator, slashedStake);
         }
-        stakeToken.transfer(slashingBeneficiary(), slashedStake);
+        _slashDelegatorStake(delegator, slashedStake);
     }
 
-    function isDelegatorSlashed(address delegator) external view returns (bool) {
-        address operator = _operator(delegator);
+    /// @inheritdoc ISlashingManager
+    function slashingPendingForDelegator(address delegator) external view returns (bool) {
+        address operator = delegates(delegator);
         if (operator == address(0)) return false;
         uint256 delegatorInstanceLength = _delegatorInstanceLengths[delegator];
         uint256 operatorLength = _slashingInstances[operator].length;
         return _isDelegatorSlashed(delegatorInstanceLength, operatorLength);
     }
 
-    function delegatorStake(address delegator) public view override returns (uint96) {
-        (uint96 newStake,,,,) = _calculateSlashing(delegator, type(uint256).max, _globalRewardCheckpoint);
-        return newStake;
-    }
-
-    function rewardsOf(address delegator) public view override returns (uint256) {
-        uint256 unclaimedGlobalReward = unistaker.unclaimedReward(address(this));
+    function rewardsOf(address delegator)
+        public
+        view
+        override(ProtocolRewardDistributor, IProtocolRewardDistributor)
+        returns (uint256)
+    {
+        uint256 unclaimedGlobalReward = UNISTAKER.unclaimedReward(address(this));
         uint256 globalCheckpoint = _getNewGlobalRewardCheckpoint(unclaimedGlobalReward);
         (uint256 newStake,, uint256 newRewards,, uint256 newCheckpoint) =
             _calculateSlashing(delegator, type(uint256).max, globalCheckpoint);
@@ -92,12 +131,18 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
             _earnedRewardsOf[delegator] + newRewards + _calculateRewardFromTo(newStake, newCheckpoint, globalCheckpoint);
     }
 
+    // @audit can introduce minor inconsistencies between the sum of all remaining balances and the the recorded total stake due to rounding errors
     function _slash(address operator, uint96 remainingPercentage) internal {
         uint256 globalRewardCheckpoint = _updateGlobalRewardCheckpoint();
         SlashingInstance memory instance =
             SlashingInstance({remainingPercentage: remainingPercentage, rewardCheckpoint: globalRewardCheckpoint});
         _slashingInstances[operator].push(instance);
         // TODO notify delegation manager about slashing event
+    }
+
+    function _delegatorStake(address delegator) internal view override returns (uint96) {
+        (uint96 newStake,,,,) = _calculateSlashing(delegator, type(uint256).max, _globalRewardCheckpoint);
+        return newStake;
     }
 
     /// @dev iterates over slashing occurrences by the operator a delegator has selected. For every slashing instance, it calculates the new stake based on the total percentage of the total delegated stake slashed.
@@ -113,8 +158,8 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
             uint256 newCheckpoint
         )
     {
-        address operator = _operator(delegator);
-        newStake = super.delegatorStake(delegator);
+        address operator = delegates(delegator);
+        newStake = StakeManager._delegatorStake(delegator);
         newCheckpoint = _rewardCheckpointOf[delegator];
         // user not delegated to an operator
         if (operator == address(0)) return (newStake, 0, 0, 0, newCheckpoint);
@@ -154,7 +199,8 @@ abstract contract SlashingManager is ProtocolRewardDistributor, OperatorManager 
         return delegatorInstanceLength < operatorLength;
     }
 
-    function SLASHER_ROLE() public view returns (bytes32) {
-        return keccak256(abi.encodePacked('SLASHER_ROLE', delegationManager()));
+    /// TODO invalidation of group of slashers?
+    function SLASHER_ROLE() public pure returns (bytes32) {
+        return keccak256('SLASHER_ROLE');
     }
 }

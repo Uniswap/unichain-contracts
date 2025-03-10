@@ -1,71 +1,85 @@
 # OperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/24150a287633bc355fa0bd43e8e420b312a5ca02/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
 
 **Inherits:**
-[StakingMiddlewareParams](/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md)
-
-
-## State Variables
-### _depositorData
-
-```solidity
-mapping(address delegator => DepositorData data) internal _depositorData;
-```
-
-
-### _operatorTotalStake
-
-```solidity
-mapping(address operator => uint256 totalStake) internal _operatorTotalStake;
-```
+[Votes](/src/UVN/L1/StakingMiddleware/libraries/Votes.sol/abstract.Votes.md), [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [IOperatorManager](/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
 
 
 ## Functions
-### selectOperator
+### constructor
 
 
 ```solidity
-function selectOperator(address operator) public virtual;
+constructor() EIP712('UVN-StakingMiddleware', '1');
 ```
 
-### deselectOperator
+### _afterDeposit
 
 
 ```solidity
-function deselectOperator() public virtual;
+function _afterDeposit(address delegator, uint96 amount) internal virtual override;
 ```
 
-### totalOperatorStake
+### _afterWithdrawal
 
 
 ```solidity
-function totalOperatorStake(address operator) public view returns (uint256);
+function _afterWithdrawal(address delegator, uint96 amount) internal virtual override;
 ```
 
-### delegatorStake
+### _delegate
 
 
 ```solidity
-function delegatorStake(address delegator) public view virtual returns (uint96);
+function _delegate(address delegator, address operator) internal override;
 ```
 
-### _operator
+### _selectOperator
 
 
 ```solidity
-function _operator(address delegator) internal view returns (address);
+function _selectOperator(address delegator, address operator) internal;
 ```
 
-## Errors
-### OperatorAlreadySelected
+### _deselectOperator
+
 
 ```solidity
-error OperatorAlreadySelected();
+function _deselectOperator(address delegator) internal;
 ```
 
-### NoOperatorSelected
+### _getVotingUnits
+
 
 ```solidity
-error NoOperatorSelected();
+function _getVotingUnits(address delegator) internal view virtual override returns (uint256);
+```
+
+### _beforeOperatorSelection
+
+
+```solidity
+function _beforeOperatorSelection(address delegator, address operator) internal virtual;
+```
+
+### _afterOperatorSelection
+
+
+```solidity
+function _afterOperatorSelection(address delegator, address operator) internal virtual;
+```
+
+### _beforeOperatorDeselection
+
+
+```solidity
+function _beforeOperatorDeselection(address delegator) internal virtual;
+```
+
+### _afterOperatorDeselection
+
+
+```solidity
+function _afterOperatorDeselection(address delegator) internal virtual;
 ```
 

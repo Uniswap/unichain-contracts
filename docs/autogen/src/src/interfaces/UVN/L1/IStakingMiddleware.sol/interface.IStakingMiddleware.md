@@ -1,20 +1,17 @@
 # IStakingMiddleware
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6b285bfe59012065422d5d75fc08ddb0d2404ce9/src/interfaces/UVN/L1/IStakingMiddleware.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/interfaces/UVN/L1/IStakingMiddleware.sol)
 
 **Inherits:**
-[IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md), [IStakingMiddlewareParams](/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md)
+[ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
 
 
-## Errors
-### AlreadyDepositedIntoUniStaker
+## Functions
+### nonces
+
+Returns the nonces used for delegation by signature
+
 
 ```solidity
-error AlreadyDepositedIntoUniStaker();
-```
-
-### NotDepositedIntoUniStaker
-
-```solidity
-error NotDepositedIntoUniStaker();
+function nonces(address owner) external view returns (uint256);
 ```
 

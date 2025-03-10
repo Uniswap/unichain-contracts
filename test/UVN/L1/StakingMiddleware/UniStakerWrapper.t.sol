@@ -8,20 +8,7 @@ import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {Test} from 'forge-std/Test.sol';
 
 contract UniStakerWrapperHarness is UniStakerWrapper {
-    constructor(IUniStaker unistaker_) UniStakerWrapper(unistaker_) {}
-
-    function depositIntoUniStaker(uint96 amount, address delegatee)
-        external
-        returns (IUniStaker.DepositIdentifier depositId)
-    {
-        stakeToken.transferFrom(msg.sender, address(this), amount);
-        depositId = IUniStaker.DepositIdentifier.wrap(_depositIntoUniStaker(amount, delegatee));
-    }
-
-    function withdrawFromUniStaker(uint96 amount) external {
-        _withdrawFromUniStaker(amount);
-        stakeToken.transfer(msg.sender, amount);
-    }
+    constructor(IUniStaker unistaker_) UniStakerWrapper(unistaker_, msg.sender, 0, address(1)) {}
 
     function stakedBalanceOf(address delegator) external view returns (uint256) {
         return _stakedBalanceOf(delegator);
@@ -29,6 +16,17 @@ contract UniStakerWrapperHarness is UniStakerWrapper {
 
     function totalAmountStaked() external view returns (uint256) {
         return _totalAmountStaked();
+    }
+
+    function depositIntoUniStakerHarness(uint96 amount, address governanceDelegatee)
+        external
+        returns (uint256 depositId)
+    {
+        depositId = _depositIntoUniStaker(amount, governanceDelegatee);
+    }
+
+    function withdrawFromUniStakerHarness(uint96 amount) external {
+        _withdrawFromUniStaker(amount);
     }
 }
 
@@ -50,6 +48,10 @@ contract UniStakerWrapperTest is Test {
         unistaker.stake(0, delegatee);
     }
 
+    function toId(uint256 i) internal pure returns (IUniStaker.DepositIdentifier) {
+        return IUniStaker.DepositIdentifier.wrap(i);
+    }
+
     function assertEq(IUniStaker.DepositIdentifier a, IUniStaker.DepositIdentifier b) internal pure {
         assertEq(IUniStaker.DepositIdentifier.unwrap(a), IUniStaker.DepositIdentifier.unwrap(b));
     }
@@ -66,66 +68,51 @@ contract UniStakerWrapperTest is Test {
     function test_depositIntoUniStakerInitially() public {
         IUniStaker.DepositIdentifier nextDepositId = IUniStaker.DepositIdentifier.wrap(1);
         expectERC20Transfer(address(this), address(unistakerWrapper), 1000);
+        unistakerWrapper.deposit(1000);
         vm.expectEmit();
         emit IUniStaker.StakeDeposited(address(unistakerWrapper), nextDepositId, 1000, 1000);
         vm.expectEmit();
         emit IUniStaker.BeneficiaryAltered(nextDepositId, address(0), address(unistakerWrapper));
         vm.expectEmit();
         emit IUniStaker.DelegateeAltered(nextDepositId, address(0), delegatee);
-        unistakerWrapper.depositIntoUniStaker(1000, delegatee);
+        unistakerWrapper.depositIntoUniStaker(delegatee);
         assertBalance(address(this), 1000);
         assertEq(unistakerWrapper.totalAmountStaked(), 1000);
     }
 
     function test_delegateChangeAfterDeposit() public {
-        IUniStaker.DepositIdentifier depositId = unistakerWrapper.depositIntoUniStaker(1000, delegatee);
+        unistakerWrapper.deposit(1000);
+        uint256 depositId = unistakerWrapper.depositIntoUniStaker(delegatee);
         address newDelegatee = makeAddr('newDelegatee');
         vm.expectEmit();
-        emit IUniStaker.DelegateeAltered(depositId, delegatee, newDelegatee);
-        IUniStaker.DepositIdentifier newDepositId = unistakerWrapper.depositIntoUniStaker(0, newDelegatee);
+        emit IUniStaker.DelegateeAltered(toId(depositId), delegatee, newDelegatee);
+        uint256 newDepositId = unistakerWrapper.depositIntoUniStakerHarness(0, newDelegatee);
         assertEq(newDepositId, depositId);
     }
 
     function test_stakeMore() public {
-        uint256 initialBalance = 100;
-        IUniStaker.DepositIdentifier depositId =
-            unistakerWrapper.depositIntoUniStaker(uint96(initialBalance), delegatee);
-        uint256 subsequentDeposit = 200;
+        uint96 initialBalance = 100;
+        unistakerWrapper.deposit(initialBalance);
+        uint256 depositId = unistakerWrapper.depositIntoUniStaker(delegatee);
+        uint96 subsequentDeposit = 200;
         expectERC20Transfer(address(this), address(unistakerWrapper), subsequentDeposit);
         vm.expectEmit();
         emit IUniStaker.StakeDeposited(
-            address(unistakerWrapper), depositId, subsequentDeposit, initialBalance + subsequentDeposit
+            address(unistakerWrapper), toId(depositId), subsequentDeposit, initialBalance + subsequentDeposit
         );
-        unistakerWrapper.depositIntoUniStaker(uint96(subsequentDeposit), address(0));
-        assertBalance(address(this), initialBalance + subsequentDeposit);
-        assertEq(unistakerWrapper.totalAmountStaked(), initialBalance + subsequentDeposit);
-    }
-
-    function test_stakeMorewithDelegateeChange() public {
-        uint256 initialBalance = 100;
-        IUniStaker.DepositIdentifier depositId =
-            unistakerWrapper.depositIntoUniStaker(uint96(initialBalance), delegatee);
-        address newDelegatee = makeAddr('newDelegatee');
-        uint256 subsequentDeposit = 200;
-        expectERC20Transfer(address(this), address(unistakerWrapper), subsequentDeposit);
-        vm.expectEmit();
-        emit IUniStaker.StakeDeposited(
-            address(unistakerWrapper), depositId, uint96(subsequentDeposit), uint96(initialBalance + subsequentDeposit)
-        );
-        vm.expectEmit();
-        emit IUniStaker.DelegateeAltered(depositId, delegatee, newDelegatee);
-        unistakerWrapper.depositIntoUniStaker(uint96(subsequentDeposit), newDelegatee);
+        unistakerWrapper.deposit(subsequentDeposit);
         assertBalance(address(this), initialBalance + subsequentDeposit);
         assertEq(unistakerWrapper.totalAmountStaked(), initialBalance + subsequentDeposit);
     }
 
     function test_withdrawal() public {
-        IUniStaker.DepositIdentifier depositId = unistakerWrapper.depositIntoUniStaker(1000, delegatee);
-        uint256 withdrawalAmount = 100;
+        unistakerWrapper.deposit(1000);
+        uint256 depositId = unistakerWrapper.depositIntoUniStaker(delegatee);
+        uint96 withdrawalAmount = 100;
         vm.expectEmit();
-        emit IUniStaker.StakeWithdrawn(depositId, withdrawalAmount, 900);
+        emit IUniStaker.StakeWithdrawn(toId(depositId), withdrawalAmount, 900);
         expectERC20Transfer(address(unistakerWrapper), address(this), withdrawalAmount);
-        unistakerWrapper.withdrawFromUniStaker(uint96(withdrawalAmount));
+        unistakerWrapper.withdraw(withdrawalAmount);
         assertBalance(address(this), 900);
         assertEq(unistakerWrapper.totalAmountStaked(), 900);
     }

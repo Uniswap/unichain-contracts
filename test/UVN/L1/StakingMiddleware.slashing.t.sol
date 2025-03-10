@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {DelegationManager} from '../../../src/UVN/L1/DelegationManager.sol';
 import {StakingMiddleware} from '../../../src/UVN/L1/StakingMiddleware.sol';
 import {IUniStaker, UniStakerDeployer} from '../../deployers/UniStakerDeployer.sol';
 import {MockVotesToken} from '../../mock/MockVotesToken.sol';
@@ -14,7 +13,6 @@ contract StakingMiddlewareSlashingTest is Test {
     IUniStaker unistaker;
     MockVotesToken stakeToken;
     MockVotesToken rewardToken;
-    DelegationManager delegationManager;
     StakingMiddleware stakingMiddleware;
     address operator = makeAddr('operator');
     address slasher = makeAddr('slasher');
@@ -24,9 +22,7 @@ contract StakingMiddlewareSlashingTest is Test {
         stakeToken = new MockVotesToken();
         rewardToken = new MockVotesToken();
         unistaker = UniStakerDeployer.deploy(address(rewardToken), address(stakeToken), address(this));
-        delegationManager = new DelegationManager(address(this));
-        stakingMiddleware = new StakingMiddleware(address(this), unistaker, 0, slashingBeneficiary, delegationManager);
-        delegationManager.transferOwnership(address(stakingMiddleware));
+        stakingMiddleware = new StakingMiddleware(unistaker, address(this), 0, slashingBeneficiary);
         stakingMiddleware.grantRole(stakingMiddleware.SLASHER_ROLE(), slasher);
         unistaker.setRewardNotifier(address(this), true);
         unistaker.stake(0, operator);
@@ -51,9 +47,9 @@ contract StakingMiddlewareSlashingTest is Test {
     function test_slash() public {
         deposit(address(this), 1000);
         stakingMiddleware.depositIntoUniStaker(address(this));
-        stakingMiddleware.selectOperator(operator);
+        stakingMiddleware.delegate(operator);
         assertEq(stakingMiddleware.delegatorStake(address(this)), 1000, 'delegator stake does not match');
-        assertEq(stakingMiddleware.totalOperatorStake(operator), 1000, 'total operator stake does not match');
+        assertEq(stakingMiddleware.getVotes(operator), 1000, 'total operator stake does not match');
         uint256 reward = depositRewardsIntoUnistaker(DEFAULT_REWARD);
         uint256 totalRewardWithoutSlashing = reward;
         uint256 totalReward = totalRewardWithoutSlashing;
@@ -63,7 +59,7 @@ contract StakingMiddlewareSlashingTest is Test {
         uint256 nextReward = depositRewardsIntoUnistaker(DEFAULT_REWARD);
         totalRewardWithoutSlashing += nextReward;
         totalReward += nextReward * 900 / 1000;
-        assertEq(stakingMiddleware.totalOperatorStake(operator), 900);
+        assertEq(stakingMiddleware.getVotes(operator), 900);
         assertEq(stakingMiddleware.delegatorStake(address(this)), 900);
         assertEq(stakingMiddleware.rewardsOf(address(this)), totalReward, 'rewards do not match after slashing');
         vm.prank(slasher);
@@ -71,7 +67,7 @@ contract StakingMiddlewareSlashingTest is Test {
         nextReward = depositRewardsIntoUnistaker(DEFAULT_REWARD);
         totalRewardWithoutSlashing += nextReward;
         totalReward += nextReward * 450 / 1000;
-        assertEq(stakingMiddleware.totalOperatorStake(operator), 450);
+        assertEq(stakingMiddleware.getVotes(operator), 450);
         assertEq(stakingMiddleware.delegatorStake(address(this)), 450);
         assertEq(stakingMiddleware.rewardsOf(address(this)), totalReward, 'rewards do not match after second slashing');
         stakingMiddleware.applySlashing(address(this), 2);

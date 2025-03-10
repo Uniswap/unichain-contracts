@@ -1,39 +1,84 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {IUniStaker} from '../../../interfaces/UVN/L1/IUnistaker.sol';
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {
+    IERC20, IUniStaker, IUniStakerWrapper
+} from '../../../interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol';
+import {StakeManager} from './StakeManager.sol';
 
-contract UniStakerWrapper {
-    IUniStaker internal immutable unistaker;
-    IERC20 internal immutable stakeToken;
-    IERC20 internal immutable rewardToken;
+contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
+    /// @inheritdoc IUniStakerWrapper
+    IUniStaker public immutable UNISTAKER;
+    /// @inheritdoc IUniStakerWrapper
+    IERC20 public immutable REWARD_TOKEN;
 
     mapping(address delegator => uint256 depositId) private _depositIds;
 
-    constructor(IUniStaker unistaker_) {
-        unistaker = unistaker_;
-        stakeToken = IERC20(address(unistaker.STAKE_TOKEN()));
-        rewardToken = IERC20(address(unistaker.REWARD_TOKEN()));
+    constructor(IUniStaker unistaker, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
+        StakeManager(address(unistaker.STAKE_TOKEN()), initialAdmin, withdrawalDelay_, slashingBeneficiary_)
+    {
+        UNISTAKER = unistaker;
+        REWARD_TOKEN = IERC20(address(unistaker.REWARD_TOKEN()));
+    }
+
+    function depositIntoUniStaker(address governanceDelegatee) external returns (uint256 depositId) {
+        if (_isDepositedIntoUniStaker(msg.sender)) revert AlreadyDepositedIntoUniStaker();
+        uint96 stake = _delegatorStake(msg.sender);
+        _beforeUniStakerDeposit(msg.sender, stake);
+        depositId = _depositIntoUniStaker(stake, governanceDelegatee);
+    }
+
+    function withdrawFromUniStaker() external {
+        if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
+        uint96 stake = _delegatorStake(msg.sender);
+        _beforeUniStakerWithdrawal(msg.sender, stake);
+        _withdrawFromUniStaker(stake);
+    }
+
+    function alterGovernanceDelegatee(address newGovernanceDelegatee) external {
+        if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
+        _beforeUniStakerDelegateChange(msg.sender, newGovernanceDelegatee);
+        _depositIntoUniStaker(0, newGovernanceDelegatee);
+    }
+
+    function updateGovernanceDelegatee(address newGovernanceDelegatee) external {
+        _depositIntoUniStaker(0, newGovernanceDelegatee);
+    }
+
+    function _afterDeposit(address delegator, uint96 amount) internal virtual override {
+        if (_isDepositedIntoUniStaker(delegator)) {
+            _depositIntoUniStaker(amount, address(0));
+        }
+        super._afterDeposit(delegator, amount);
+    }
+
+    function _beforeWithdrawal(address delegator, uint96 amount) internal virtual override {
+        if (_isDepositedIntoUniStaker(delegator)) {
+            _withdrawFromUniStaker(delegator, amount);
+        }
+        super._beforeWithdrawal(delegator, amount);
     }
 
     function _depositIntoUniStaker(uint96 amount, address delegatee) internal returns (uint256 depositId) {
         depositId = _depositIds[msg.sender];
         if (amount != 0) {
             // @audit later conversion to uint96 is safe as the supply of the token is < 2^96
-            stakeToken.approve(address(unistaker), amount);
+            STAKE_TOKEN.approve(address(UNISTAKER), amount);
         }
         if (depositId == 0) {
-            depositId = IUniStaker.DepositIdentifier.unwrap(unistaker.stake(amount, delegatee));
+            depositId = IUniStaker.DepositIdentifier.unwrap(UNISTAKER.stake(amount, delegatee));
             // @audit technically depositId 0 is a valid depositId in Unistaker but it will probably be used by the time this contract is deployed
             assert(depositId != 0);
             _depositIds[msg.sender] = depositId;
+            emit UniStakerDeposited(msg.sender, depositId, amount);
         } else {
             if (amount != 0) {
-                unistaker.stakeMore(IUniStaker.DepositIdentifier.wrap(depositId), amount);
+                UNISTAKER.stakeMore(IUniStaker.DepositIdentifier.wrap(depositId), amount);
+                emit UniStakerDeposited(msg.sender, depositId, amount);
             }
             if (delegatee != address(0)) {
-                unistaker.alterDelegatee(IUniStaker.DepositIdentifier.wrap(depositId), delegatee);
+                UNISTAKER.alterDelegatee(IUniStaker.DepositIdentifier.wrap(depositId), delegatee);
+                emit GovernanceDelegateeAltered(msg.sender, delegatee);
             }
         }
     }
@@ -45,7 +90,8 @@ contract UniStakerWrapper {
     function _withdrawFromUniStaker(address delegator, uint96 amount) internal {
         uint256 depositId = _depositIds[delegator];
         if (depositId != 0) {
-            unistaker.withdraw(IUniStaker.DepositIdentifier.wrap(depositId), amount);
+            UNISTAKER.withdraw(IUniStaker.DepositIdentifier.wrap(depositId), amount);
+            emit UniStakerWithdrawn(delegator, depositId, amount);
             if (_stakedBalanceOf(delegator) == 0) _depositIds[delegator] = 0;
         }
     }
@@ -53,15 +99,21 @@ contract UniStakerWrapper {
     function _stakedBalanceOf(address delegator) internal view returns (uint96) {
         uint256 depositId = _depositIds[delegator];
         if (depositId == 0) return 0;
-        return unistaker.deposits(IUniStaker.DepositIdentifier.wrap(depositId)).balance;
+        return UNISTAKER.deposits(IUniStaker.DepositIdentifier.wrap(depositId)).balance;
     }
 
     function _totalAmountStaked() internal view returns (uint96) {
         // @audit no need for safe cast as UNI supply is < 2^96
-        return uint96(unistaker.depositorTotalStaked(address(this)));
+        return uint96(UNISTAKER.depositorTotalStaked(address(this)));
     }
 
     function _isDepositedIntoUniStaker(address delegator) internal view returns (bool) {
         return _depositIds[delegator] != 0;
     }
+
+    function _beforeUniStakerDeposit(address delegator, uint96 amount) internal virtual {}
+
+    function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal virtual {}
+
+    function _beforeUniStakerDelegateChange(address delegator, address newGovernanceDelegatee) internal virtual {}
 }

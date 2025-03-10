@@ -1,5 +1,8 @@
 # IProtocolRewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/dbd11eeb90f59abe0099dfbb1022b6093132bf21/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol)
+
+**Inherits:**
+[IUniStakerWrapper](/src/interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol/interface.IUniStakerWrapper.md)
 
 
 ## Functions
@@ -52,6 +55,14 @@ Emitted when protocol rewards are added from the UniStaker contract
 
 ```solidity
 event RewardsAdded(uint256 amount);
+```
+
+### RewardDistributed
+Emitted when a user's rewards are distributed
+
+
+```solidity
+event RewardDistributed(address indexed account, uint256 amount);
 ```
 
 ### RewardsWithdrawn

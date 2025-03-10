@@ -1,5 +1,5 @@
 # ProtocolRewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
 
 **Inherits:**
 [UniStakerWrapper](/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol/contract.UniStakerWrapper.md), [IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
@@ -35,6 +35,34 @@ mapping(address account => uint256 earnedRewards) internal _earnedRewardsOf;
 
 
 ## Functions
+### _beforeDeposit
+
+
+```solidity
+function _beforeDeposit(address delegator, uint96 amount) internal virtual override;
+```
+
+### _beforeWithdrawal
+
+
+```solidity
+function _beforeWithdrawal(address delegator, uint96 amount) internal virtual override;
+```
+
+### _beforeUniStakerDeposit
+
+
+```solidity
+function _beforeUniStakerDeposit(address delegator, uint96 amount) internal virtual override;
+```
+
+### _beforeUniStakerWithdrawal
+
+
+```solidity
+function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal virtual override;
+```
+
 ### withdrawRewards
 
 
@@ -63,6 +91,13 @@ function _updateGlobalRewardCheckpoint() internal returns (uint256 newGlobalRewa
 function _updateRewardCheckpoint(address account) internal;
 ```
 
+### _distributeRewards
+
+
+```solidity
+function _distributeRewards(address account, uint256 reward, uint256 newCheckpoint) internal;
+```
+
 ### _getNewGlobalRewardCheckpoint
 
 
@@ -82,5 +117,12 @@ function _calculateRewardUntil(address account, uint256 checkpoint) internal vie
 
 ```solidity
 function _calculateRewardFromTo(uint256 balance, uint256 from, uint256 to) internal pure returns (uint256);
+```
+
+### _beforeRewardsWithdrawal
+
+
+```solidity
+function _beforeRewardsWithdrawal(address delegator) internal virtual;
 ```
 

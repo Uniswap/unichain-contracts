@@ -10,6 +10,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
     constructor() EIP712('UVN-StakingMiddleware', '1') {}
 
     mapping(address operator => uint256 amount) private _slashableStake;
+    mapping(address delegator => uint256 undelegationTimestamp) private _undelegationTimestamp;
 
     function _afterStake(address delegator, uint96 amount) internal virtual override {
         super._afterStake(delegator, amount);
@@ -33,6 +34,19 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         _slashableStake[delegates(delegator)] -= amount;
     }
 
+    /// @inheritdoc IOperatorManager
+    function announceOperatorUndelegation() external {
+        address operator = delegates(msg.sender);
+        if (operator == address(0)) revert NoOperatorSelected();
+        _beforeOperatorUndelegationAnnouncement(msg.sender);
+        uint256 undelegateAt = block.timestamp + withdrawalDelay();
+        _undelegationTimestamp[msg.sender] = undelegateAt;
+        super._delegate(msg.sender, address(0));
+        emit OperatorUndelegationAnnounced(msg.sender, operator, undelegateAt);
+        _afterOperatorUndelegationAnnouncement(msg.sender);
+    }
+
+    /// @inheritdoc IOperatorManager
     function slashableOperatorStake(address operator) public view returns (uint96) {
         return uint96(_slashableStake[operator]);
     }
@@ -42,22 +56,30 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
             _deselectOperator(delegator);
         } else {
             _selectOperator(delegator, operator);
+            super._delegate(delegator, operator);
         }
-        super._delegate(delegator, operator);
     }
 
     function _selectOperator(address delegator, address operator) internal {
         _beforeOperatorSelection(delegator, operator);
-        if (delegates(delegator) != address(0)) revert IOperatorManager.OperatorAlreadySelected();
+        if (delegates(delegator) != address(0)) revert OperatorAlreadySelected();
+        uint256 undelegateAt = _undelegationTimestamp[delegator];
+        if (undelegateAt > block.timestamp) {
+            revert UndelegationNotFinalized(undelegateAt);
+        }
         _slashableStake[operator] += slashableStake(delegator);
         _afterOperatorSelection(delegator, operator);
     }
 
-    // TODO withdrawal delay
     function _deselectOperator(address delegator) internal {
         _beforeOperatorDeselection(delegator);
-        if (delegates(delegator) == address(0)) revert IOperatorManager.NoOperatorSelected();
-        _slashableStake[delegates(delegator)] -= slashableStake(delegator);
+        address operator = delegates(delegator);
+        if (operator == address(0)) revert NoOperatorSelected();
+        uint256 undelegateAt = _undelegationTimestamp[delegator];
+        if (undelegateAt > block.timestamp) {
+            revert UndelegationNotFinalized(undelegateAt);
+        }
+        _slashableStake[operator] -= slashableStake(delegator);
         _afterOperatorDeselection(delegator);
     }
 
@@ -73,6 +95,10 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
     function _beforeOperatorSelection(address delegator, address operator) internal virtual {}
 
     function _afterOperatorSelection(address delegator, address operator) internal virtual {}
+
+    function _beforeOperatorUndelegationAnnouncement(address delegator) internal virtual {}
+
+    function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual {}
 
     function _beforeOperatorDeselection(address delegator) internal virtual {}
 

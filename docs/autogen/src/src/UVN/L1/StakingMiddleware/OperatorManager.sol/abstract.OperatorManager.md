@@ -1,5 +1,5 @@
 # OperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6d1250e6e2f4daafd93fa5827aed4385164029bb/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/5add0d5c45e74462978e784c9ba783c7840cb2d6/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
 
 **Inherits:**
 [Votes](/src/UVN/L1/StakingMiddleware/libraries/Votes.sol/abstract.Votes.md), [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [IOperatorManager](/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
@@ -10,6 +10,13 @@
 
 ```solidity
 mapping(address operator => uint256 amount) private _slashableStake;
+```
+
+
+### _undelegationTimestamp
+
+```solidity
+mapping(address delegator => uint256 undelegationTimestamp) private _undelegationTimestamp;
 ```
 
 
@@ -42,7 +49,20 @@ function _afterUnstake(address delegator, uint96 amount) internal virtual overri
 function _afterWithdraw(address delegator, uint96 amount) internal virtual override;
 ```
 
+### announceOperatorUndelegation
+
+Announces the intention to undelegate from the current operator
+
+*The user can finalize their undelegation after the undelegation delay has passed by calling `delegate` with `address(0)` as the argument*
+
+
+```solidity
+function announceOperatorUndelegation() external;
+```
+
 ### slashableOperatorStake
+
+Returns the slashable stake of an operator (the sum of all delegator stakes that are delegated to it and their pending withdrawals)
 
 
 ```solidity
@@ -96,6 +116,20 @@ function _beforeOperatorSelection(address delegator, address operator) internal 
 
 ```solidity
 function _afterOperatorSelection(address delegator, address operator) internal virtual;
+```
+
+### _beforeOperatorUndelegationAnnouncement
+
+
+```solidity
+function _beforeOperatorUndelegationAnnouncement(address delegator) internal virtual;
+```
+
+### _afterOperatorUndelegationAnnouncement
+
+
+```solidity
+function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual;
 ```
 
 ### _beforeOperatorDeselection

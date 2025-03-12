@@ -60,6 +60,11 @@ abstract contract SlashingManager is OperatorManager, ISlashingManager {
         super._beforeRewardsWithdrawal(delegator);
     }
 
+    function _beforeOperatorUndelegationAnnouncement(address delegator) internal override {
+        applySlashing(delegator, type(uint256).max);
+        super._beforeOperatorUndelegationAnnouncement(delegator);
+    }
+
     function _beforeOperatorDeselection(address delegator) internal override {
         applySlashing(delegator, type(uint256).max);
         super._beforeOperatorDeselection(delegator);

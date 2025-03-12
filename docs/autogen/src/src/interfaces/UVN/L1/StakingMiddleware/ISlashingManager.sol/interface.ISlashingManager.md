@@ -1,5 +1,8 @@
 # ISlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/07d4bd0c93642e180d59fb2de755cf59c8c044e6/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol)
+
+**Inherits:**
+[IDelegatorAccessControl](/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md)
 
 
 ## Functions

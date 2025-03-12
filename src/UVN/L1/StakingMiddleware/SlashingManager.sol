@@ -2,11 +2,11 @@
 pragma solidity 0.8.26;
 
 import {ISlashingManager} from '../../../interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol';
-import {OperatorManager} from './OperatorManager.sol';
+import {DelegatorAccessControl} from './DelegatorAccessControl.sol';
 import {IProtocolRewardDistributor, ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
 import {StakeManager} from './StakeManager.sol';
 
-abstract contract SlashingManager is OperatorManager, ISlashingManager {
+abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     struct SlashingInstance {
         uint96 remainingPercentage;
         uint256 rewardCheckpoint;

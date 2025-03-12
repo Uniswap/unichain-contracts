@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {IOperatorManager} from './IOperatorManager.sol';
+import {IDelegatorAccessControl} from './IDelegatorAccessControl.sol';
 
-interface ISlashingManager {
+interface ISlashingManager is IDelegatorAccessControl {
     error SlashingAmountZero();
     error SlashingPercentageTooHigh();
 

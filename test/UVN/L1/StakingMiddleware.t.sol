@@ -24,6 +24,8 @@ contract StakingMiddlewareTest is Test {
         stakeToken.mint(address(this), 1000);
         stakeToken.approve(address(stakingMiddleware), 1000);
         stakingMiddleware.stake(1000);
+        vm.prank(operator);
+        stakingMiddleware.setDelegationStatus(true);
         stakingMiddleware.delegate(operator);
         assertEq(stakingMiddleware.delegatorStake(address(this)), 1000);
         assertEq(stakingMiddleware.getVotes(operator), 1000);

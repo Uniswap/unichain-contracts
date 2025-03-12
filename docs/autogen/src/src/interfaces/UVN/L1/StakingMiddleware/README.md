@@ -1,6 +1,8 @@
 
 
 # Contents
+- [IDelegatorAccessControl](IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md)
+- [IDelegatorVerifier](IDelegatorVerifier.sol/interface.IDelegatorVerifier.md)
 - [IOperatorManager](IOperatorManager.sol/interface.IOperatorManager.md)
 - [IProtocolRewardDistributor](IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
 - [ISlashingManager](ISlashingManager.sol/interface.ISlashingManager.md)

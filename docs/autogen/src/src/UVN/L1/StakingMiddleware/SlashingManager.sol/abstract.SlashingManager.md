@@ -1,8 +1,8 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/5add0d5c45e74462978e784c9ba783c7840cb2d6/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/07d4bd0c93642e180d59fb2de755cf59c8c044e6/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
-[OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
+[DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
 
 
 ## State Variables

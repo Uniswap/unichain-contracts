@@ -1,5 +1,5 @@
 # ProtocolRewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6d1250e6e2f4daafd93fa5827aed4385164029bb/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
 
 **Inherits:**
 [UniStakerWrapper](/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol/contract.UniStakerWrapper.md), [IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
@@ -35,18 +35,18 @@ mapping(address account => uint256 earnedRewards) internal _earnedRewardsOf;
 
 
 ## Functions
-### _beforeDeposit
+### _beforeStake
 
 
 ```solidity
-function _beforeDeposit(address delegator, uint96 amount) internal virtual override;
+function _beforeStake(address delegator, uint96 amount) internal virtual override;
 ```
 
-### _beforeWithdrawal
+### _beforeWithdraw
 
 
 ```solidity
-function _beforeWithdrawal(address delegator, uint96 amount) internal virtual override;
+function _beforeWithdraw(address delegator, uint96 amount) internal virtual override;
 ```
 
 ### _beforeUniStakerDeposit

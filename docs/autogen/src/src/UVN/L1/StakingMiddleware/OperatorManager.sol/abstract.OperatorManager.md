@@ -1,8 +1,16 @@
 # OperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6d1250e6e2f4daafd93fa5827aed4385164029bb/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
 
 **Inherits:**
 [Votes](/src/UVN/L1/StakingMiddleware/libraries/Votes.sol/abstract.Votes.md), [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [IOperatorManager](/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
+
+
+## State Variables
+### _slashableStake
+
+```solidity
+mapping(address operator => uint256 amount) private _slashableStake;
+```
 
 
 ## Functions
@@ -13,18 +21,32 @@
 constructor() EIP712('UVN-StakingMiddleware', '1');
 ```
 
-### _afterDeposit
+### _afterStake
 
 
 ```solidity
-function _afterDeposit(address delegator, uint96 amount) internal virtual override;
+function _afterStake(address delegator, uint96 amount) internal virtual override;
 ```
 
-### _afterWithdrawal
+### _afterUnstake
 
 
 ```solidity
-function _afterWithdrawal(address delegator, uint96 amount) internal virtual override;
+function _afterUnstake(address delegator, uint96 amount) internal virtual override;
+```
+
+### _afterWithdraw
+
+
+```solidity
+function _afterWithdraw(address delegator, uint96 amount) internal virtual override;
+```
+
+### slashableOperatorStake
+
+
+```solidity
+function slashableOperatorStake(address operator) public view returns (uint96);
 ```
 
 ### _delegate
@@ -46,6 +68,13 @@ function _selectOperator(address delegator, address operator) internal;
 
 ```solidity
 function _deselectOperator(address delegator) internal;
+```
+
+### _slashOperatorVotes
+
+
+```solidity
+function _slashOperatorVotes(address operator, uint256 amount) internal override;
 ```
 
 ### _getVotingUnits

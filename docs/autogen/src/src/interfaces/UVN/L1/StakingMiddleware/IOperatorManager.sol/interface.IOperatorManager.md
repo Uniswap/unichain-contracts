@@ -1,9 +1,19 @@
 # IOperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6d1250e6e2f4daafd93fa5827aed4385164029bb/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol)
 
 **Inherits:**
 [IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
 
+
+## Functions
+### slashableOperatorStake
+
+Returns the slashable stake of an operator (the sum of all delegator stakes that are delegated to it and their pending withdrawals)
+
+
+```solidity
+function slashableOperatorStake(address operator) external view returns (uint96);
+```
 
 ## Errors
 ### OperatorAlreadySelected

@@ -21,42 +21,52 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
         REWARD_TOKEN = IERC20(address(unistaker.REWARD_TOKEN()));
     }
 
+    /// @inheritdoc IUniStakerWrapper
     function depositIntoUniStaker(address governanceDelegatee) external returns (uint256 depositId) {
         if (_isDepositedIntoUniStaker(msg.sender)) revert AlreadyDepositedIntoUniStaker();
-        uint96 stake = _delegatorStake(msg.sender);
-        _beforeUniStakerDeposit(msg.sender, stake);
-        depositId = _depositIntoUniStaker(stake, governanceDelegatee);
+        uint96 amount = _delegatorStake(msg.sender);
+        _beforeUniStakerDeposit(msg.sender, amount);
+        depositId = _depositIntoUniStaker(amount, governanceDelegatee);
     }
 
+    /// @inheritdoc IUniStakerWrapper
     function withdrawFromUniStaker() external {
         if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
-        uint96 stake = _delegatorStake(msg.sender);
-        _beforeUniStakerWithdrawal(msg.sender, stake);
-        _withdrawFromUniStaker(stake);
+        uint96 amount = _delegatorStake(msg.sender);
+        _beforeUniStakerWithdrawal(msg.sender, amount);
+        _withdrawFromUniStaker(amount);
     }
 
+    /// @inheritdoc IUniStakerWrapper
     function alterGovernanceDelegatee(address newGovernanceDelegatee) external {
         if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
         _beforeUniStakerDelegateChange(msg.sender, newGovernanceDelegatee);
         _depositIntoUniStaker(0, newGovernanceDelegatee);
     }
 
-    function updateGovernanceDelegatee(address newGovernanceDelegatee) external {
-        _depositIntoUniStaker(0, newGovernanceDelegatee);
-    }
-
-    function _afterDeposit(address delegator, uint96 amount) internal virtual override {
+    function _afterStake(address delegator, uint96 amount) internal virtual override {
         if (_isDepositedIntoUniStaker(delegator)) {
             _depositIntoUniStaker(amount, address(0));
         }
-        super._afterDeposit(delegator, amount);
+        super._afterStake(delegator, amount);
     }
 
-    function _beforeWithdrawal(address delegator, uint96 amount) internal virtual override {
+    function _beforeWithdraw(address delegator, uint96 amount) internal virtual override {
         if (_isDepositedIntoUniStaker(delegator)) {
             _withdrawFromUniStaker(delegator, amount);
         }
-        super._beforeWithdrawal(delegator, amount);
+        super._beforeWithdraw(delegator, amount);
+    }
+
+    function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+        internal
+        virtual
+        override
+    {
+        if (_isDepositedIntoUniStaker(delegator)) {
+            _withdrawFromUniStaker(delegator, amount);
+        }
+        super._beforeSlash(delegator, amount, newStake, newPendingWithdrawalAmount);
     }
 
     function _depositIntoUniStaker(uint96 amount, address delegatee) internal returns (uint256 depositId) {
@@ -89,6 +99,7 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
 
     function _withdrawFromUniStaker(address delegator, uint96 amount) internal {
         uint256 depositId = _depositIds[delegator];
+        // TODO revert if not deposited and amount is not 0
         if (depositId != 0) {
             UNISTAKER.withdraw(IUniStaker.DepositIdentifier.wrap(depositId), amount);
             emit UniStakerWithdrawn(delegator, depositId, amount);
@@ -96,13 +107,14 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
         }
     }
 
+    // @audit INVARIANT: _stakedBalanceOf >= _slashableStake when accounting for rounding errors when slashing
     function _stakedBalanceOf(address delegator) internal view returns (uint96) {
         uint256 depositId = _depositIds[delegator];
         if (depositId == 0) return 0;
         return UNISTAKER.deposits(IUniStaker.DepositIdentifier.wrap(depositId)).balance;
     }
 
-    function _totalAmountStaked() internal view returns (uint96) {
+    function _totalAmountDepositedIntoUniStaker() internal view returns (uint96) {
         // @audit no need for safe cast as UNI supply is < 2^96
         return uint96(UNISTAKER.depositorTotalStaked(address(this)));
     }

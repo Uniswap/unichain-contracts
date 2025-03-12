@@ -1,15 +1,22 @@
 # StakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/StakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6d1250e6e2f4daafd93fa5827aed4385164029bb/src/UVN/L1/StakingMiddleware/StakeManager.sol)
 
 **Inherits:**
 [StakingMiddlewareParams](/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md), [IStakeManager](/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol/interface.IStakeManager.md)
 
 
 ## State Variables
+### PERCENTAGE_DENOMINATOR
+
+```solidity
+uint96 internal constant PERCENTAGE_DENOMINATOR = 1e18;
+```
+
+
 ### _depositorStake
 
 ```solidity
-mapping(address delegator => uint96 stake) private _depositorStake;
+mapping(address delegator => Stake stake) private _depositorStake;
 ```
 
 
@@ -29,6 +36,59 @@ constructor(address stakeToken, address initialAdmin, uint256 withdrawalDelay_, 
     StakingMiddlewareParams(initialAdmin, withdrawalDelay_, slashingBeneficiary_);
 ```
 
+### stake
+
+Deposits a stake in the StakingMiddleware contract
+
+
+```solidity
+function stake(uint96 amount) external;
+```
+
+### stakeFor
+
+Deposits a stake in the StakingMiddleware contract on behalf of a delegator
+
+
+```solidity
+function stakeFor(address delegator, uint96 amount) public;
+```
+
+### unstake
+
+Unstakes a stake from the StakingMiddleware contract and queues it for withdrawal
+
+*All pending withdrawals are still slashable if delegated to an operator even if the withdrawals are already unlocked!*
+
+
+```solidity
+function unstake(uint96 amount) external returns (uint256 withdrawalId);
+```
+
+### withdraw
+
+Withdraws unstaked stakes that are pending to be withdrawn from the StakingMiddleware contract
+
+*If `n` is greater than the number of unlocked pending withdrawals, the function will return early.*
+
+
+```solidity
+function withdraw(address to, uint64 n) external returns (uint96 amount);
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`to`|`address`|The address to send the unstaked stakes to|
+|`n`|`uint64`|The number of pending withdrawals to complete|
+
+**Returns**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`amount`|`uint96`|The total amount of unstaked stakes withdrawn|
+
+
 ### delegatorStake
 
 Returns the stake of a delegator deposited in the StakingMiddleware contract
@@ -38,25 +98,43 @@ Returns the stake of a delegator deposited in the StakingMiddleware contract
 function delegatorStake(address delegator) external view returns (uint96);
 ```
 
-### deposit
+### slashableStake
 
-Deposits a stake in the StakingMiddleware contract
+Returns the slashable stake of a delegator
+
+*The slashable stake is the `delegatorStake` + the total pending withdrawals*
 
 
 ```solidity
-function deposit(uint96 amount) external;
+function slashableStake(address delegator) public view returns (uint96);
 ```
 
-### withdraw
+### pendingWithdrawalAmount
 
-Withdraws a stake from the StakingMiddleware contract
+Returns the amount of pending withdrawals for a delegator
 
 
 ```solidity
-function withdraw(uint96 amount) external;
+function pendingWithdrawalAmount(address delegator) external view returns (uint96);
+```
+
+### withdrawal
+
+Returns a withdrawal for a delegator
+
+
+```solidity
+function withdrawal(address delegator, uint256 withdrawalId)
+    external
+    view
+    returns (IStakeManager.PendingWithdrawal memory);
 ```
 
 ### _slashDelegatorStake
+
+*to ensure accurate accounting of total delegated stake to operators, pending withdrawals and slashable stake are slashed equally*
+
+*When pending withdrawals are slashed, cancel all pending withdrawals and create a new one with the remainder*
 
 
 ```solidity
@@ -70,31 +148,75 @@ function _slashDelegatorStake(address delegator, uint96 amount) internal;
 function _delegatorStake(address delegator) internal view virtual returns (uint96);
 ```
 
-### _beforeDeposit
+### _beforeStake
 
 
 ```solidity
-function _beforeDeposit(address delegator, uint96 amount) internal virtual;
+function _beforeStake(address delegator, uint96 amount) internal virtual;
 ```
 
-### _afterDeposit
+### _afterStake
 
 
 ```solidity
-function _afterDeposit(address delegator, uint96 amount) internal virtual;
+function _afterStake(address delegator, uint96 amount) internal virtual;
 ```
 
-### _beforeWithdrawal
+### _beforeUnstake
 
 
 ```solidity
-function _beforeWithdrawal(address delegator, uint96 amount) internal virtual;
+function _beforeUnstake(address delegator, uint96 amount) internal virtual;
 ```
 
-### _afterWithdrawal
+### _afterUnstake
 
 
 ```solidity
-function _afterWithdrawal(address delegator, uint96 amount) internal virtual;
+function _afterUnstake(address delegator, uint96 amount) internal virtual;
+```
+
+### _beforeWithdraw
+
+
+```solidity
+function _beforeWithdraw(address delegator, uint96 amount) internal virtual;
+```
+
+### _afterWithdraw
+
+
+```solidity
+function _afterWithdraw(address delegator, uint96 amount) internal virtual;
+```
+
+### _beforeSlash
+
+
+```solidity
+function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+    internal
+    virtual;
+```
+
+### _afterSlash
+
+
+```solidity
+function _afterSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+    internal
+    virtual;
+```
+
+## Structs
+### Stake
+
+```solidity
+struct Stake {
+    uint96 stake;
+    uint96 totalPendingWithdrawal;
+    uint64 head;
+    IStakeManager.PendingWithdrawal[] pendingWithdrawals;
+}
 ```
 

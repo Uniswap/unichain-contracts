@@ -9,4 +9,7 @@ interface IOperatorManager is IProtocolRewardDistributor {
 
     /// @notice Thrown when a delegator attempts to undelegate from an operator while not delegating to one
     error NoOperatorSelected();
+
+    /// @notice Returns the slashable stake of an operator (the sum of all delegator stakes that are delegated to it and their pending withdrawals)
+    function slashableOperatorStake(address operator) external view returns (uint96);
 }

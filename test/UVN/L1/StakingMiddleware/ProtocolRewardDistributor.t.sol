@@ -22,7 +22,7 @@ contract ProtocolRewardDistributorHarness is ProtocolRewardDistributor {
     }
 
     function totalAmountStaked() external view returns (uint96) {
-        return _totalAmountStaked();
+        return _totalAmountDepositedIntoUniStaker();
     }
 }
 
@@ -77,7 +77,7 @@ contract UniStakerWrapperTest is Test {
             vm.prank(depositors[i]);
             stakeToken.approve(address(protocolRewardDistributor), amounts[i]);
             vm.prank(depositors[i]);
-            protocolRewardDistributor.deposit(amounts[i]);
+            protocolRewardDistributor.stake(amounts[i]);
             vm.prank(depositors[i]);
             protocolRewardDistributor.depositIntoUniStaker(delegatee);
             totalAmount += amounts[i];

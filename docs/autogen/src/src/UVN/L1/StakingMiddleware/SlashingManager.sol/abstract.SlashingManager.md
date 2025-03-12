@@ -1,18 +1,11 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6d1250e6e2f4daafd93fa5827aed4385164029bb/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
 
 
 ## State Variables
-### PERCENTAGE_DENOMINATOR
-
-```solidity
-uint96 private constant PERCENTAGE_DENOMINATOR = 1e18;
-```
-
-
 ### _slashingInstances
 
 ```solidity
@@ -42,18 +35,25 @@ function _afterOperatorSelection(address delegator, address operator) internal v
 function _afterOperatorDeselection(address delegator) internal virtual override;
 ```
 
-### _beforeDeposit
+### _beforeStake
 
 
 ```solidity
-function _beforeDeposit(address delegator, uint96 amount) internal override;
+function _beforeStake(address delegator, uint96 amount) internal override;
 ```
 
-### _beforeWithdrawal
+### _beforeUnstake
 
 
 ```solidity
-function _beforeWithdrawal(address delegator, uint96 amount) internal override;
+function _beforeUnstake(address delegator, uint96 amount) internal override;
+```
+
+### _beforeWithdraw
+
+
+```solidity
+function _beforeWithdraw(address delegator, uint96 amount) internal override;
 ```
 
 ### _beforeUniStakerDeposit
@@ -164,6 +164,7 @@ function _calculateSlashing(address delegator, uint256 n, uint256 globalCheckpoi
     internal
     view
     returns (
+        bool slashed,
         uint96 newStake,
         uint256 delegatorLength,
         uint256 newRewards,

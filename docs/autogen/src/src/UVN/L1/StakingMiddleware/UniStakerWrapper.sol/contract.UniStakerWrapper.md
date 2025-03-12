@@ -1,5 +1,5 @@
 # UniStakerWrapper
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6d1250e6e2f4daafd93fa5827aed4385164029bb/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
 
 **Inherits:**
 [StakeManager](/src/UVN/L1/StakingMiddleware/StakeManager.sol/contract.StakeManager.md), [IUniStakerWrapper](/src/interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol/interface.IUniStakerWrapper.md)
@@ -42,12 +42,30 @@ constructor(IUniStaker unistaker, address initialAdmin, uint256 withdrawalDelay_
 
 ### depositIntoUniStaker
 
+Deposits the user's underlying stake into the UniStaker contract
+
+*Any subsequent deposits will also be deposited into the UniStaker contract*
+
 
 ```solidity
 function depositIntoUniStaker(address governanceDelegatee) external returns (uint256 depositId);
 ```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`governanceDelegatee`|`address`|The address of the governance delegatee to set|
+
+**Returns**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`depositId`|`uint256`|The depositId of the deposit identifying the deposit in the UniStaker contract|
+
 
 ### withdrawFromUniStaker
+
+Withdraws all of the user's underlying stake from the UniStaker contract
 
 
 ```solidity
@@ -56,30 +74,35 @@ function withdrawFromUniStaker() external;
 
 ### alterGovernanceDelegatee
 
+Alters the governance delegatee of the user's underlying stake in the UniStaker contract
+
 
 ```solidity
 function alterGovernanceDelegatee(address newGovernanceDelegatee) external;
 ```
 
-### updateGovernanceDelegatee
+### _afterStake
 
 
 ```solidity
-function updateGovernanceDelegatee(address newGovernanceDelegatee) external;
+function _afterStake(address delegator, uint96 amount) internal virtual override;
 ```
 
-### _afterDeposit
+### _beforeWithdraw
 
 
 ```solidity
-function _afterDeposit(address delegator, uint96 amount) internal virtual override;
+function _beforeWithdraw(address delegator, uint96 amount) internal virtual override;
 ```
 
-### _beforeWithdrawal
+### _beforeSlash
 
 
 ```solidity
-function _beforeWithdrawal(address delegator, uint96 amount) internal virtual override;
+function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+    internal
+    virtual
+    override;
 ```
 
 ### _depositIntoUniStaker
@@ -110,11 +133,11 @@ function _withdrawFromUniStaker(address delegator, uint96 amount) internal;
 function _stakedBalanceOf(address delegator) internal view returns (uint96);
 ```
 
-### _totalAmountStaked
+### _totalAmountDepositedIntoUniStaker
 
 
 ```solidity
-function _totalAmountStaked() internal view returns (uint96);
+function _totalAmountDepositedIntoUniStaker() internal view returns (uint96);
 ```
 
 ### _isDepositedIntoUniStaker

@@ -10,14 +10,14 @@ abstract contract ProtocolRewardDistributor is UniStakerWrapper, IProtocolReward
     mapping(address account => uint256 checkpoint) internal _rewardCheckpointOf;
     mapping(address account => uint256 earnedRewards) internal _earnedRewardsOf;
 
-    function _beforeDeposit(address delegator, uint96 amount) internal virtual override {
+    function _beforeStake(address delegator, uint96 amount) internal virtual override {
         _updateRewardCheckpoint(delegator);
-        super._beforeDeposit(delegator, amount);
+        super._beforeStake(delegator, amount);
     }
 
-    function _beforeWithdrawal(address delegator, uint96 amount) internal virtual override {
+    function _beforeWithdraw(address delegator, uint96 amount) internal virtual override {
         _updateRewardCheckpoint(delegator);
-        super._beforeWithdrawal(delegator, amount);
+        super._beforeWithdraw(delegator, amount);
     }
 
     function _beforeUniStakerDeposit(address delegator, uint96 amount) internal virtual override {
@@ -71,7 +71,7 @@ abstract contract ProtocolRewardDistributor is UniStakerWrapper, IProtocolReward
     }
 
     function _getNewGlobalRewardCheckpoint(uint256 reward) internal view returns (uint256) {
-        return _globalRewardCheckpoint + (reward * PRECISION) / _totalAmountStaked();
+        return _globalRewardCheckpoint + (reward * PRECISION) / _totalAmountDepositedIntoUniStaker();
     }
 
     function _calculateRewardUntil(address account, uint256 checkpoint) internal view returns (uint256) {

@@ -41,7 +41,7 @@ contract StakingMiddlewareSlashingTest is Test {
         vm.prank(user);
         stakeToken.approve(address(stakingMiddleware), amount);
         vm.prank(user);
-        stakingMiddleware.deposit(amount);
+        stakingMiddleware.stake(amount);
     }
 
     function test_slash() public {

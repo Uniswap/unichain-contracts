@@ -1,8 +1,12 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/d9df4316403fca3b5f27d3e66d0e0bee90626660/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b7383382c1ce8df5f5120f02338dfd44fd340bf2/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
+
+Distributes rewards to operators based on their attestations. Operators attest to a group of blocks (windows). Whenever a window is finalized, the reward is distributed to the operators that voted together with the majority of the votes.
+
+*To guarantee the correct allocation of rewards to windows, should no attestations be made to a window, the scheduled window is extended to the previous block before it activates.*
 
 
 ## State Variables
@@ -26,27 +30,6 @@ uint256 private constant PERCENTAGE_DENOMINATOR = 1e18;
 
 ```solidity
 IStakeTable private immutable L2_STAKE_MANAGER;
-```
-
-
-### _windowFinalizationPointer
-
-```solidity
-uint256 private _windowFinalizationPointer;
-```
-
-
-### _windowBlockNumbers
-
-```solidity
-uint256[] private _windowBlockNumbers;
-```
-
-
-### _windows
-
-```solidity
-mapping(uint256 blockNumber => Window window) private _windows;
 ```
 
 
@@ -171,13 +154,13 @@ function latestActiveWindow() external view returns (uint256);
 |`<none>`|`uint256`|blockNumber The block number of the last block in the latest active window|
 
 
-### _scheduleNextWindow
+### _activateScheduledWindow
 
-*The first attestation to the current window will schedule the next window. Windows are scheduled every `attestationWindowLength` blocks. If there are no attestations during the current window, the next window is not scheduled. In this case the current window will be extended until the next attestation occurs. After this, the next window will be scheduled automatically in the same interval again.*
+*The first attestation after the scheduled window has passed will activate the scheduled window. If there are no attestations to this window after `attestationLength` blocks, the window will start extending until this function is called on the first attestation or reward distribution.*
 
 
 ```solidity
-function _scheduleNextWindow() private;
+function _activateScheduledWindow() private;
 ```
 
 ### _processRewards
@@ -194,18 +177,11 @@ function _processRewards(address operator) private;
 function _finalizeWindow(uint256 blockNumber) private;
 ```
 
-### _currentWindow
-
-
-```solidity
-function _currentWindow() private view returns (Window storage window);
-```
-
 ### _status
 
 
 ```solidity
-function _status(uint256 targetBlockNumber, uint256 windowIndex) private view returns (Status);
+function _status(uint256 targetBlockNumber, uint256 windowBlockNumber, bool exists) private view returns (Status);
 ```
 
 ### _acceptingAttestations
@@ -213,39 +189,5 @@ function _status(uint256 targetBlockNumber, uint256 windowIndex) private view re
 
 ```solidity
 function _acceptingAttestations(uint256 blockNumber) private view returns (bool);
-```
-
-### _windowDelayed
-
-
-```solidity
-function _windowDelayed(uint256 windowEnd, uint256 windowLength) private view returns (bool);
-```
-
-### _findWindowIndex
-
-*perform an exponential search first to find a range that contains the block number and reduces the search space for recent block numbers*
-
-
-```solidity
-function _findWindowIndex(uint256 blockNumber) private view returns (uint256);
-```
-
-## Structs
-### Window
-
-```solidity
-struct Window {
-    bool finalized;
-    uint256 rewardETH;
-    uint256 votingTotalSupply;
-    bytes32 blockHash;
-    bytes32 mostVotedBlockHash;
-    bytes32 mostVotedHash;
-    uint256 mostVotedHashVotes;
-    NextWindow nextWindow;
-    uint256 index;
-    mapping(bytes32 votedHash => uint256 votes) attestations;
-}
 ```
 

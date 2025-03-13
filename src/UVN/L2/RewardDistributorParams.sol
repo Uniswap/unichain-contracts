@@ -3,14 +3,15 @@ pragma solidity 0.8.26;
 
 import {IRewardDistributorParams} from '../../interfaces/UVN/L2/IRewardDistributorParams.sol';
 import {IRewardPuller} from '../../interfaces/UVN/L2/IRewardPuller.sol';
+import {Window, Windows} from './libraries/WindowLib.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 
 contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
     bytes32 public constant PARAM_SETTER_ROLE = keccak256('PARAM_SETTER_ROLE');
 
-    uint256 private _attestationWindowLength;
     uint256 private _attestationPeriod;
     IRewardPuller private _rewardPuller;
+    Windows internal _windows;
 
     constructor(
         address admin,
@@ -41,7 +42,7 @@ contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
 
     /// @inheritdoc IRewardDistributorParams
     function attestationWindowLength() public view returns (uint256) {
-        return _attestationWindowLength;
+        return _windows.currentWindowLength();
     }
 
     /// @inheritdoc IRewardDistributorParams
@@ -58,8 +59,8 @@ contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
         if (newAttestationWindowLength == 0) revert AmountZero();
         if (newAttestationWindowLength > 256) revert AttestationWindowLengthTooLarge();
         if (attestationPeriod() < newAttestationWindowLength) revert AttestationPeriodTooShort();
-        uint256 oldAttestationWindowLength = _attestationWindowLength;
-        _attestationWindowLength = newAttestationWindowLength;
+        uint256 oldAttestationWindowLength = _windows.currentWindowLength();
+        _windows.setWindowLength(newAttestationWindowLength);
         emit AttestationWindowLengthUpdated(oldAttestationWindowLength, newAttestationWindowLength);
     }
 
@@ -76,5 +77,9 @@ contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
         IRewardPuller oldRewardPuller = _rewardPuller;
         _rewardPuller = newRewardPuller;
         emit RewardPullerUpdated(address(oldRewardPuller), address(newRewardPuller));
+    }
+
+    function _window(uint256 blockNumber) internal view returns (Window storage) {
+        return _windows.windows[blockNumber];
     }
 }

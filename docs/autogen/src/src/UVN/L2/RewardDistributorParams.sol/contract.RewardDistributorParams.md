@@ -1,5 +1,5 @@
 # RewardDistributorParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/f7ee30d3904bcf7f9e6eea33683d2c2c6ac756df/src/UVN/L2/RewardDistributorParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b7383382c1ce8df5f5120f02338dfd44fd340bf2/src/UVN/L2/RewardDistributorParams.sol)
 
 **Inherits:**
 AccessControl, [IRewardDistributorParams](/src/interfaces/UVN/L2/IRewardDistributorParams.sol/interface.IRewardDistributorParams.md)
@@ -10,13 +10,6 @@ AccessControl, [IRewardDistributorParams](/src/interfaces/UVN/L2/IRewardDistribu
 
 ```solidity
 bytes32 public constant PARAM_SETTER_ROLE = keccak256('PARAM_SETTER_ROLE');
-```
-
-
-### _attestationWindowLength
-
-```solidity
-uint256 private _attestationWindowLength;
 ```
 
 
@@ -31,6 +24,13 @@ uint256 private _attestationPeriod;
 
 ```solidity
 IRewardPuller private _rewardPuller;
+```
+
+
+### _windows
+
+```solidity
+Windows internal _windows;
 ```
 
 
@@ -119,5 +119,12 @@ function _setAttestationPeriod(uint256 newAttestationPeriod) internal;
 
 ```solidity
 function _setRewardPuller(IRewardPuller newRewardPuller) internal;
+```
+
+### _window
+
+
+```solidity
+function _window(uint256 blockNumber) internal view returns (Window storage);
 ```
 

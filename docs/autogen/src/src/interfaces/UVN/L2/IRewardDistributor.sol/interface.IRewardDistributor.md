@@ -1,5 +1,5 @@
 # IRewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/498cadde11a5816e09cd3d8fe92a8be9dfebfb66/src/interfaces/UVN/L2/IRewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b7383382c1ce8df5f5120f02338dfd44fd340bf2/src/interfaces/UVN/L2/IRewardDistributor.sol)
 
 **Inherits:**
 [IRewardDistributorParams](/src/interfaces/UVN/L2/IRewardDistributorParams.sol/interface.IRewardDistributorParams.md)
@@ -93,20 +93,20 @@ function latestActiveWindow() external view returns (uint256 blockNumber);
 
 
 ## Events
-### AttestationWindowScheduled
-Emitted when a window is scheduled
-
-
-```solidity
-event AttestationWindowScheduled(uint256 indexed currentWindowEnd, uint256 indexed scheduledNextWindowEnd);
-```
-
 ### AttestationWindowExtended
 Emitted when a window is extended due to a delay
 
 
 ```solidity
-event AttestationWindowExtended(uint256 indexed originalWindowEnd, uint256 indexed newWindowEnd);
+event AttestationWindowExtended(uint256 originalWindowEnd, uint256 newWindowEnd);
+```
+
+### AttestationWindowActivated
+Emitted when a scheduled window is activated and a new pending window is scheduled
+
+
+```solidity
+event AttestationWindowActivated(uint256 activeWindow, uint256 nextScheduledWindow);
 ```
 
 ### Attested

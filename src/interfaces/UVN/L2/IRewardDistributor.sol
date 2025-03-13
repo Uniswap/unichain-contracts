@@ -32,11 +32,11 @@ interface IRewardDistributor is IRewardDistributorParams {
         Valid
     }
 
-    /// @notice Emitted when a window is scheduled
-    event AttestationWindowScheduled(uint256 indexed currentWindowEnd, uint256 indexed scheduledNextWindowEnd);
-
     /// @notice Emitted when a window is extended due to a delay
-    event AttestationWindowExtended(uint256 indexed originalWindowEnd, uint256 indexed newWindowEnd);
+    event AttestationWindowExtended(uint256 originalWindowEnd, uint256 newWindowEnd);
+
+    /// @notice Emitted when a scheduled window is activated and a new pending window is scheduled
+    event AttestationWindowActivated(uint256 activeWindow, uint256 nextScheduledWindow);
 
     /// @notice Emitted when an attestation is submitted
     event Attested(address indexed operator, uint256 indexed blockNumber, bytes32 indexed graffiti, bytes32 votedHash);

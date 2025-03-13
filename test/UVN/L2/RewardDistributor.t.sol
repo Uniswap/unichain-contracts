@@ -197,7 +197,7 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         vm.expectEmit();
         emit IRewardDistributor.AttestationWindowExtended(originalAttestationBlockNumber, attestationBlockNumber);
         vm.expectEmit();
-        emit IRewardDistributor.AttestationWindowScheduled(
+        emit IRewardDistributor.AttestationWindowActivated(
             attestationBlockNumber, attestationBlockNumber + attestationWindowLength
         );
         attest(attestationBlockNumber);
@@ -366,7 +366,8 @@ contract RewardDistributorTest is RewardDistributorTestBase {
     }
 
     function test_shouldReturnCorrectAttestationResult() public {
-        rd.setAttestationPeriod(DEFAULT_ATTESTATION_WINDOW_LENGTH);
+        uint256 periodLength = DEFAULT_ATTESTATION_PERIOD;
+        rd.setAttestationPeriod(periodLength);
         uint256 blockNumber = block.number - 1;
         assertAttestationResult(
             blockNumber + DEFAULT_ATTESTATION_PERIOD * 10,
@@ -377,7 +378,7 @@ contract RewardDistributorTest is RewardDistributorTestBase {
             blockNumber, IRewardDistributor.AttestationResult.Pending, 'Current window should be pending'
         );
         attest(operator2);
-        vm.roll(block.number + DEFAULT_ATTESTATION_WINDOW_LENGTH);
+        vm.roll(block.number + periodLength);
         assertAttestationResult(
             blockNumber,
             IRewardDistributor.AttestationResult.InsufficientVotes,

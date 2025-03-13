@@ -1,15 +1,15 @@
 # OperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/5add0d5c45e74462978e784c9ba783c7840cb2d6/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/10fd24e97f437a5e7731628f80c2a61f2eb81fe3/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
 
 **Inherits:**
 [Votes](/src/UVN/L1/StakingMiddleware/libraries/Votes.sol/abstract.Votes.md), [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [IOperatorManager](/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
 
 
 ## State Variables
-### _slashableStake
+### _slashableStakes
 
 ```solidity
-mapping(address operator => uint256 amount) private _slashableStake;
+mapping(address operator => uint256 amount) private _slashableStakes;
 ```
 
 
@@ -94,7 +94,7 @@ function _deselectOperator(address delegator) internal;
 
 
 ```solidity
-function _slashOperatorVotes(address operator, uint256 amount) internal override;
+function _slashOperatorVotes(address operator, uint256 remainingPercentage) internal virtual;
 ```
 
 ### _getVotingUnits

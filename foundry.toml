@@ -21,6 +21,16 @@ remappings = [
   "@eth-optimism-bedrock=lib/optimism/packages/contracts-bedrock"
 ]
 
+additional_compiler_profiles = [
+  { name = "fee-splitter", optimizer_runs = 999999, via_ir = false, evm_version = "cancun" },
+  { name = "uvn-l1", optimizer_runs = 999999, via_ir = true, evm_version = "cancun" }
+]
+
+compilation_restrictions = [
+  { paths = "src/FeeSplitter/**", via_ir = false, version = "=0.8.26" },
+  { paths = "src/UVN/L1/**", via_ir = true, version = "=0.8.26" }
+]
+
 [profile.default.fuzz]
 runs = 1000
 

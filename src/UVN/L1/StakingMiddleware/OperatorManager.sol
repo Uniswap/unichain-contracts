@@ -9,14 +9,14 @@ import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperatorManager {
     constructor() EIP712('UVN-StakingMiddleware', '1') {}
 
-    mapping(address operator => uint256 amount) private _slashableStake;
+    mapping(address operator => uint256 amount) private _slashableStakes;
     mapping(address delegator => uint256 undelegationTimestamp) private _undelegationTimestamp;
 
     function _afterStake(address delegator, uint96 amount) internal virtual override {
         super._afterStake(delegator, amount);
         address operator = delegates(delegator);
         if (operator != address(0)) {
-            _slashableStake[operator] += amount;
+            _slashableStakes[operator] += amount;
             _transferVotingUnits(address(0), operator, amount);
         }
     }
@@ -31,7 +31,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
 
     function _afterWithdraw(address delegator, uint96 amount) internal virtual override {
         super._afterWithdraw(delegator, amount);
-        _slashableStake[delegates(delegator)] -= amount;
+        _slashableStakes[delegates(delegator)] -= amount;
     }
 
     /// @inheritdoc IOperatorManager
@@ -48,7 +48,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
 
     /// @inheritdoc IOperatorManager
     function slashableOperatorStake(address operator) public view returns (uint96) {
-        return uint96(_slashableStake[operator]);
+        return uint96(_slashableStakes[operator]);
     }
 
     function _delegate(address delegator, address operator) internal override {
@@ -67,7 +67,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         if (undelegateAt > block.timestamp) {
             revert UndelegationNotFinalized(undelegateAt);
         }
-        _slashableStake[operator] += slashableStake(delegator);
+        _slashableStakes[operator] += _slashableStake(delegator);
         _afterOperatorSelection(delegator, operator);
     }
 
@@ -79,13 +79,14 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         if (undelegateAt > block.timestamp) {
             revert UndelegationNotFinalized(undelegateAt);
         }
-        _slashableStake[operator] -= slashableStake(delegator);
+        _slashableStakes[operator] -= _slashableStake(delegator);
         _afterOperatorDeselection(delegator);
     }
 
-    function _slashOperatorVotes(address operator, uint256 amount) internal override {
-        _slashableStake[operator] -= amount;
-        Votes._slashOperatorVotes(operator, amount);
+    function _slashOperatorVotes(address operator, uint256 remainingPercentage) internal virtual {
+        _slashableStakes[operator] = _slashableStakes[operator] * remainingPercentage / PERCENTAGE_DENOMINATOR;
+        uint256 newVotes = getVotes(operator) * remainingPercentage / PERCENTAGE_DENOMINATOR;
+        Votes._updateOperatorVotesAfterSlashing(operator, uint96(newVotes));
     }
 
     function _getVotingUnits(address delegator) internal view virtual override returns (uint256) {

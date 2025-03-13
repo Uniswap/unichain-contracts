@@ -5,8 +5,7 @@ import {IERC20, IStakeManager} from '../../../interfaces/UVN/L1/StakingMiddlewar
 import {StakingMiddlewareParams} from './StakingMiddlewareParams.sol';
 
 contract StakeManager is StakingMiddlewareParams, IStakeManager {
-    // TODO scale to 1e27 to minimize precision loss
-    uint96 internal constant PERCENTAGE_DENOMINATOR = 1e18;
+    uint256 internal constant PERCENTAGE_DENOMINATOR = 1e18;
 
     struct Stake {
         uint96 stake;
@@ -92,8 +91,8 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
     }
 
     /// @inheritdoc IStakeManager
-    function slashableStake(address delegator) public view returns (uint96) {
-        return _delegatorStake(delegator) + _depositorStake[delegator].totalPendingWithdrawal;
+    function slashableStake(address delegator) external view returns (uint96) {
+        return _slashableStake(delegator);
     }
 
     /// @inheritdoc IStakeManager
@@ -113,18 +112,18 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
     /// @dev to ensure accurate accounting of total delegated stake to operators, pending withdrawals and slashable stake are slashed equally
     /// @dev When pending withdrawals are slashed, cancel all pending withdrawals and create a new one with the remainder
     // @audit INVARIANT: The remaining slashed stake is always less or equal to the stake before the slashing minus the amount slashed to ensure the contract always has enough stake to cover the withdrawal of the entire stake
-    function _slashDelegatorStake(address delegator, uint96 amount) internal {
+    function _slashDelegatorStake(address delegator, uint256 remainingPercentage) internal {
         Stake storage stake_ = _depositorStake[delegator];
-        uint96 newStake = stake_.stake;
-        uint96 newPendingWithdrawalAmount = stake_.totalPendingWithdrawal;
-        uint96 totalSlashableStake = newStake + newPendingWithdrawalAmount;
-        uint96 remainingPercentage = (totalSlashableStake - amount) * PERCENTAGE_DENOMINATOR / totalSlashableStake;
-        if (newPendingWithdrawalAmount != 0) {
+        uint256 currentStake = stake_.stake;
+        uint256 currentPendingWithdrawalAmount = stake_.totalPendingWithdrawal;
+        uint96 newStake = uint96(currentStake * remainingPercentage / PERCENTAGE_DENOMINATOR);
+        uint96 newPendingWithdrawalAmount =
+            uint96(currentPendingWithdrawalAmount * remainingPercentage / PERCENTAGE_DENOMINATOR);
+        if (currentPendingWithdrawalAmount != 0) {
             uint64 currentHead = stake_.head;
             uint64 currentLength = uint64(stake_.pendingWithdrawals.length);
             // cancel all pending withdrawals and schedule a new one with the remainder
             stake_.head = currentLength;
-            newPendingWithdrawalAmount = remainingPercentage * newPendingWithdrawalAmount / PERCENTAGE_DENOMINATOR;
             stake_.totalPendingWithdrawal = newPendingWithdrawalAmount;
             uint40 unlocksAt = uint40(block.timestamp + withdrawalDelay());
             stake_.pendingWithdrawals.push(
@@ -138,18 +137,23 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
                 delegator, currentHead, currentLength - 1, newPendingWithdrawalAmount, unlocksAt
             );
         }
-        if (newStake != 0) {
-            newStake = remainingPercentage * newStake / PERCENTAGE_DENOMINATOR;
-            _depositorStake[delegator].stake = newStake;
+        if (currentStake != 0) {
+            _depositorStake[delegator].stake = uint96(newStake);
         }
-        _beforeSlash(delegator, amount, newStake, newPendingWithdrawalAmount);
-        STAKE_TOKEN.transfer(slashingBeneficiary(), amount);
-        emit Slashed(delegator, amount, newStake);
-        _afterSlash(delegator, amount, newStake, newPendingWithdrawalAmount);
+        uint96 slashedAmount =
+            uint96(currentStake + currentPendingWithdrawalAmount - newStake - newPendingWithdrawalAmount);
+        _beforeSlash(delegator, slashedAmount, newStake, newPendingWithdrawalAmount);
+        STAKE_TOKEN.transfer(slashingBeneficiary(), slashedAmount);
+        emit Slashed(delegator, slashedAmount, newStake);
+        _afterSlash(delegator, slashedAmount, newStake, newPendingWithdrawalAmount);
     }
 
     function _delegatorStake(address delegator) internal view virtual returns (uint96) {
         return _depositorStake[delegator].stake;
+    }
+
+    function _slashableStake(address delegator) internal view virtual returns (uint96) {
+        return _depositorStake[delegator].stake + _depositorStake[delegator].totalPendingWithdrawal;
     }
 
     function _beforeStake(address delegator, uint96 amount) internal virtual {}

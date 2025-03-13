@@ -1,5 +1,5 @@
 # Votes
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/729690360d7657f2429fb20679c49eb2f8d71770/src/UVN/L1/StakingMiddleware/libraries/Votes.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/10fd24e97f437a5e7731628f80c2a61f2eb81fe3/src/UVN/L1/StakingMiddleware/libraries/Votes.sol)
 
 **Inherits:**
 Context, EIP712, Nonces, IERC5805
@@ -7,7 +7,7 @@ Context, EIP712, Nonces, IERC5805
 *copied from @openzeppelin/contracts/governance/utils/Votes.sol
 modifications:
 _delegate: when a delegator delegates to an operator the total supply of votes increases by the total stake of the delegator and vice versa for undelegating
-_slashOperatorVotes: added function to slash the operator votes (delegated votes of multiple delegators simultaneously)*
+_updateOperatorVotesAfterSlashing: added function to slash the operator votes (delegated votes of multiple delegators simultaneously), accepts the new amount of votes after slashing*
 
 *This is a base abstract contract that tracks voting units, which are a measure of voting power that can be
 transferred, and provides a system of vote delegation, where an account can delegate its voting units to a sort of
@@ -157,11 +157,11 @@ Emits events [IVotes-DelegateChanged](/lib/unistaker/lib/openzeppelin-contracts/
 function _delegate(address account, address delegatee) internal virtual;
 ```
 
-### _slashOperatorVotes
+### _updateOperatorVotesAfterSlashing
 
 
 ```solidity
-function _slashOperatorVotes(address operator, uint256 amount) internal virtual;
+function _updateOperatorVotesAfterSlashing(address operator, uint96 newVotes) internal virtual;
 ```
 
 ### _transferVotingUnits

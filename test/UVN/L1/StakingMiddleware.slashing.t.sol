@@ -72,7 +72,8 @@ contract StakingMiddlewareSlashingTest is Test {
         assertEq(stakingMiddleware.getVotes(operator), 450);
         assertEq(stakingMiddleware.delegatorStake(address(this)), 450);
         assertEq(stakingMiddleware.rewardsOf(address(this)), totalReward, 'rewards do not match after second slashing');
-        stakingMiddleware.applySlashing(address(this), 2);
+        stakingMiddleware.applySlashing(address(this), 1);
+        stakingMiddleware.applySlashing(address(this), 1);
         assertEq(stakeToken.balanceOf(slashingBeneficiary), 550, 'slashing beneficiary stake does not match');
         assertEq(
             rewardToken.balanceOf(slashingBeneficiary),

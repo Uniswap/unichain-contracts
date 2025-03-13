@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/07d4bd0c93642e180d59fb2de755cf59c8c044e6/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/10fd24e97f437a5e7731628f80c2a61f2eb81fe3/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -13,10 +13,10 @@ mapping(address operator => SlashingInstance[] instances) internal _slashingInst
 ```
 
 
-### _delegatorInstanceLengths
+### _delegatorSlashingData
 
 ```solidity
-mapping(address delegator => uint256 instanceLength) internal _delegatorInstanceLengths;
+mapping(address delegator => DelegatorSlashingData data) internal _delegatorSlashingData;
 ```
 
 
@@ -145,11 +145,11 @@ function rewardsOf(address delegator)
     returns (uint256);
 ```
 
-### _slash
+### _slashOperatorVotes
 
 
 ```solidity
-function _slash(address operator, uint96 remainingPercentage) internal;
+function _slashOperatorVotes(address operator, uint256 remainingPercentage) internal override;
 ```
 
 ### _delegatorStake
@@ -157,6 +157,13 @@ function _slash(address operator, uint96 remainingPercentage) internal;
 
 ```solidity
 function _delegatorStake(address delegator) internal view override returns (uint96);
+```
+
+### _slashableStake
+
+
+```solidity
+function _slashableStake(address delegator) internal view override returns (uint96);
 ```
 
 ### _calculateSlashing
@@ -171,9 +178,9 @@ function _calculateSlashing(address delegator, uint256 n, uint256 globalCheckpoi
     internal
     view
     returns (
-        bool slashed,
-        uint96 newStake,
-        uint256 delegatorLength,
+        SlashingType slashingType,
+        uint256 remainingPercentage,
+        uint160 delegatorLength,
         uint256 newRewards,
         uint256 slashedRewards,
         uint256 newCheckpoint
@@ -185,6 +192,13 @@ function _calculateSlashing(address delegator, uint256 n, uint256 globalCheckpoi
 
 ```solidity
 function _isDelegatorSlashed(uint256 delegatorInstanceLength, uint256 operatorLength) internal pure returns (bool);
+```
+
+### _remainingStake
+
+
+```solidity
+function _remainingStake(uint96 stake_, uint256 remainingPercentage) internal pure returns (uint96);
 ```
 
 ### SLASHER_ROLE
@@ -203,6 +217,26 @@ function SLASHER_ROLE() public pure returns (bytes32);
 struct SlashingInstance {
     uint96 remainingPercentage;
     uint256 rewardCheckpoint;
+}
+```
+
+### DelegatorSlashingData
+
+```solidity
+struct DelegatorSlashingData {
+    uint160 length;
+    uint96 stakeBeforePartialSlashing;
+}
+```
+
+## Enums
+### SlashingType
+
+```solidity
+enum SlashingType {
+    NOT_SLASHED,
+    PARTIAL_SLASH,
+    FULL_SLASH
 }
 ```
 

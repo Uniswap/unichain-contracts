@@ -4,7 +4,7 @@
 /// @dev copied from @openzeppelin/contracts/governance/utils/Votes.sol
 /// modifications:
 /// _delegate: when a delegator delegates to an operator the total supply of votes increases by the total stake of the delegator and vice versa for undelegating
-/// _slashOperatorVotes: added function to slash the operator votes (delegated votes of multiple delegators simultaneously)
+/// _updateOperatorVotesAfterSlashing: added function to slash the operator votes (delegated votes of multiple delegators simultaneously), accepts the new amount of votes after slashing
 
 pragma solidity ^0.8.20;
 
@@ -179,9 +179,11 @@ abstract contract Votes is Context, EIP712, Nonces, IERC5805 {
         _moveDelegateVotes(oldDelegate, delegatee, _getVotingUnits(account));
     }
 
-    function _slashOperatorVotes(address operator, uint256 amount) internal virtual {
-        _push(_totalCheckpoints, _subtract, SafeCast.toUint208(amount));
-        _moveDelegateVotes(operator, address(0), amount);
+    function _updateOperatorVotesAfterSlashing(address operator, uint96 newVotes) internal virtual {
+        uint256 oldVotes = _delegateCheckpoints[operator].latest();
+        uint256 diff = oldVotes - newVotes;
+        _push(_totalCheckpoints, _subtract, SafeCast.toUint208(diff));
+        _moveDelegateVotes(operator, address(0), diff);
     }
 
     /**

@@ -1,5 +1,5 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/bece653582013257b1cba426b8fac1b9c2654bbb/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/d9df4316403fca3b5f27d3e66d0e0bee90626660/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
@@ -246,26 +246,6 @@ struct Window {
     NextWindow nextWindow;
     uint256 index;
     mapping(bytes32 votedHash => uint256 votes) attestations;
-}
-```
-
-### Attestation
-
-```solidity
-struct Attestation {
-    bytes32 votedHash;
-    uint256 votes;
-    uint256 next;
-}
-```
-
-### Attestations
-
-```solidity
-struct Attestations {
-    uint256 head;
-    uint256 tail;
-    mapping(uint256 blockNumber => Attestation) attestations;
 }
 ```
 

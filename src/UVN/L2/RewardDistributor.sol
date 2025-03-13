@@ -7,6 +7,7 @@ import {IRewardDistributor} from '../../interfaces/UVN/L2/IRewardDistributor.sol
 import {IRewardPuller} from '../../interfaces/UVN/L2/IRewardPuller.sol';
 import {IStakeTable} from '../../interfaces/UVN/L2/IStakeTable.sol';
 import {RewardDistributorParams} from './RewardDistributorParams.sol';
+import {AttestationLib, Attestations} from './libraries/AttestationLib.sol';
 import {Search} from './libraries/Search.sol';
 import {NextWindow, WindowLib} from './libraries/WindowLib.sol';
 import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
@@ -28,18 +29,6 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         NextWindow nextWindow;
         uint256 index;
         mapping(bytes32 votedHash => uint256 votes) attestations;
-    }
-
-    struct Attestation {
-        bytes32 votedHash;
-        uint256 votes;
-        uint256 next;
-    }
-
-    struct Attestations {
-        uint256 head;
-        uint256 tail;
-        mapping(uint256 blockNumber => Attestation) attestations;
     }
 
     /// @dev 2/3rd of the total supply need to attest to a block for it to be finalized
@@ -96,8 +85,6 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
         Attestations storage attestations = _attestations[operator];
 
-        // uh oh I hope you aren't double signing
-        if (attestations.attestations[blockNumber].votedHash != bytes32(0)) revert BlockAlreadyAttested();
         if (block.number > _lastRewardPayout) {
             _lastRewardPayout = block.number;
             rewardPuller().pullRewards();
@@ -106,10 +93,8 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         // 1. store the attestation
         uint256 votes = L2_STAKE_MANAGER.getPastVotes(operator, blockNumber);
         if (votes == 0) revert ZeroVotes();
-        attestations.attestations[blockNumber] = Attestation({votedHash: votedHash, votes: votes, next: 0});
 
-        attestations.attestations[attestations.tail].next = blockNumber;
-        attestations.tail = blockNumber;
+        attestations.push(blockNumber, votedHash, votes);
 
         // 2. keep track of what most voted hash is (including and excluding additional data)
         Window storage window = _windows[blockNumber];
@@ -197,19 +182,16 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
     function _processRewards(address operator) private {
         Attestations storage attestations = _attestations[operator];
-        uint256 head = attestations.head;
-        if (head == 0) {
-            attestations.head = attestations.tail;
-            return;
-        }
-        _finalizeWindow(head);
-        Window storage window = _windows[head];
+        uint256 blockNumber = attestations.nextBlockNumber();
+        assert(blockNumber != 0);
+        _finalizeWindow(blockNumber);
+        Window storage window = _windows[blockNumber];
         if (!window.finalized) return;
-        Attestation storage attestation = attestations.attestations[head];
-        attestations.head = attestation.next;
-        if (attestation.votedHash == window.mostVotedHash) {
+        (uint256 votes, bytes32 votedHash) = attestations.getVotes(blockNumber);
+        attestations.finalize(blockNumber);
+        if (votedHash == window.mostVotedHash) {
             address beneficiary = L2_STAKE_MANAGER.beneficiary(operator);
-            uint256 rewards = window.rewardETH * attestation.votes / window.mostVotedHashVotes;
+            uint256 rewards = window.rewardETH * votes / window.mostVotedHashVotes;
             (bool success,) = beneficiary.call{value: rewards}('');
             if (!success) revert RewardDistributionFailed();
         }

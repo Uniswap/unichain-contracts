@@ -1,15 +1,24 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c2da9cd472a221eee52ddc363d5c9610854afd36/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/bece653582013257b1cba426b8fac1b9c2654bbb/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
 
 
 ## State Variables
-### ATTESTATION_THRESHOLD
+### SUCCESSFUL_ATTESTATION_PERCENTAGE
+*2/3rd of the total supply need to attest to a block for it to be finalized*
+
 
 ```solidity
-uint256 private constant ATTESTATION_THRESHOLD = 666_666_666_666_666_667;
+uint256 private constant SUCCESSFUL_ATTESTATION_PERCENTAGE = 666_666_666_666_666_667;
+```
+
+
+### PERCENTAGE_DENOMINATOR
+
+```solidity
+uint256 private constant PERCENTAGE_DENOMINATOR = 1e18;
 ```
 
 
@@ -182,7 +191,7 @@ function _processRewards(address operator) private;
 
 
 ```solidity
-function _finalizeWindow(uint256 window) private;
+function _finalizeWindow(uint256 blockNumber) private;
 ```
 
 ### _currentWindow
@@ -228,15 +237,15 @@ function _findWindowIndex(uint256 blockNumber) private view returns (uint256);
 ```solidity
 struct Window {
     bool finalized;
-    uint256 reward;
-    uint256 totalSupply;
+    uint256 rewardETH;
+    uint256 votingTotalSupply;
     bytes32 blockHash;
     bytes32 mostVotedBlockHash;
     bytes32 mostVotedHash;
     uint256 mostVotedHashVotes;
     NextWindow nextWindow;
     uint256 index;
-    mapping(bytes32 hash => uint256 votes) attestations;
+    mapping(bytes32 votedHash => uint256 votes) attestations;
 }
 ```
 

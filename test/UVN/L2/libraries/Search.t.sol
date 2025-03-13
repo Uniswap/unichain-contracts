@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import {Test} from 'forge-std/Test.sol';
 
-import {Search} from 'src/libraries/Search.sol';
+import {Search} from '../../../../src/UVN/L2/libraries/Search.sol';
 
 contract SearchTest is Test {
     uint256[] array;

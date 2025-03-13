@@ -3,9 +3,9 @@ pragma solidity 0.8.26;
 
 type NextWindow is uint256;
 
-using WindowLibrary for NextWindow global;
+using WindowLib for NextWindow global;
 
-library WindowLibrary {
+library WindowLib {
     function encode(uint256 blockNumber_, uint256 reward) internal pure returns (NextWindow) {
         return NextWindow.wrap(blockNumber_ << 128 | reward);
     }

@@ -6,9 +6,9 @@ import {INetFeeSplitter} from '../../interfaces/FeeSplitter/INetFeeSplitter.sol'
 import {IRewardDistributor} from '../../interfaces/UVN/L2/IRewardDistributor.sol';
 import {IRewardPuller} from '../../interfaces/UVN/L2/IRewardPuller.sol';
 import {IStakeTable} from '../../interfaces/UVN/L2/IStakeTable.sol';
-import {Search} from '../../libraries/Search.sol';
-import {NextWindow, WindowLibrary} from '../../libraries/WindowLibrary.sol';
 import {RewardDistributorParams} from './RewardDistributorParams.sol';
+import {Search} from './libraries/Search.sol';
+import {NextWindow, WindowLib} from './libraries/WindowLib.sol';
 import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import {MessageHashUtils} from '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 
@@ -19,15 +19,15 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
     struct Window {
         bool finalized;
-        uint256 reward;
-        uint256 totalSupply;
+        uint256 rewardETH;
+        uint256 votingTotalSupply;
         bytes32 blockHash;
         bytes32 mostVotedBlockHash;
         bytes32 mostVotedHash;
         uint256 mostVotedHashVotes;
         NextWindow nextWindow;
         uint256 index;
-        mapping(bytes32 hash => uint256 votes) attestations;
+        mapping(bytes32 votedHash => uint256 votes) attestations;
     }
 
     struct Attestation {
@@ -42,8 +42,9 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         mapping(uint256 blockNumber => Attestation) attestations;
     }
 
-    // @dev 2/3rd of the total supply need to attest to a block for it to be finalized
-    uint256 private constant ATTESTATION_THRESHOLD = 666_666_666_666_666_667;
+    /// @dev 2/3rd of the total supply need to attest to a block for it to be finalized
+    uint256 private constant SUCCESSFUL_ATTESTATION_PERCENTAGE = 666_666_666_666_666_667;
+    uint256 private constant PERCENTAGE_DENOMINATOR = 1e18;
     IStakeTable private immutable L2_STAKE_MANAGER;
 
     uint256 private _windowFinalizationPointer;
@@ -61,18 +62,18 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     ) RewardDistributorParams(admin, attestationWindowLength_, attestationPeriod_, rewardPuller_) {
         L2_STAKE_MANAGER = l2StakeManager;
         uint256 blockNumber = block.number - 1;
-        _windows[blockNumber].nextWindow = WindowLibrary.setNextBlockNumber(blockNumber + attestationWindowLength());
+        _windows[blockNumber].nextWindow = WindowLib.setNextBlockNumber(blockNumber + attestationWindowLength());
         _windows[blockNumber].blockHash = blockhash(blockNumber);
         _windowBlockNumbers.push(blockNumber);
         emit AttestationWindowScheduled(blockNumber, blockNumber + attestationWindowLength());
-        _windows[blockNumber].totalSupply = L2_STAKE_MANAGER.getPastTotalSupply(blockNumber);
+        _windows[blockNumber].votingTotalSupply = L2_STAKE_MANAGER.getPastTotalSupply(blockNumber);
     }
 
     /// @dev contract can receive rewards by either pulling from the rewardPuller or by being sent ETH directly to this contract
     receive() external payable {
         Window storage currentWindow = _currentWindow();
         (uint256 nextWindow, uint256 reward) = currentWindow.nextWindow.decode();
-        currentWindow.nextWindow = WindowLibrary.encode(nextWindow, reward + msg.value);
+        currentWindow.nextWindow = WindowLib.encode(nextWindow, reward + msg.value);
         emit RewardReceived(nextWindow, msg.value);
         if (block.number > nextWindow) {
             _scheduleNextWindow();
@@ -93,10 +94,10 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         bytes32 votedHash = keccak256(abi.encode(blockNumber, blockHash, additionalData)).toEthSignedMessageHash();
         address operator = votedHash.recover(signature);
 
-        Attestations storage a = _attestations[operator];
+        Attestations storage attestations = _attestations[operator];
 
         // uh oh I hope you aren't double signing
-        if (a.attestations[blockNumber].votedHash != bytes32(0)) revert BlockAlreadyAttested();
+        if (attestations.attestations[blockNumber].votedHash != bytes32(0)) revert BlockAlreadyAttested();
         if (block.number > _lastRewardPayout) {
             _lastRewardPayout = block.number;
             rewardPuller().pullRewards();
@@ -105,10 +106,10 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         // 1. store the attestation
         uint256 votes = L2_STAKE_MANAGER.getPastVotes(operator, blockNumber);
         if (votes == 0) revert ZeroVotes();
-        a.attestations[blockNumber] = Attestation({votedHash: votedHash, votes: votes, next: 0});
+        attestations.attestations[blockNumber] = Attestation({votedHash: votedHash, votes: votes, next: 0});
 
-        a.attestations[a.tail].next = blockNumber;
-        a.tail = blockNumber;
+        attestations.attestations[attestations.tail].next = blockNumber;
+        attestations.tail = blockNumber;
 
         // 2. keep track of what most voted hash is (including and excluding additional data)
         Window storage window = _windows[blockNumber];
@@ -141,10 +142,14 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
             // window is active with no attestations
             if (windowIndex == type(uint256).max) return AttestationResult.Pending;
             uint256 windowEnd = _windowBlockNumbers[windowIndex];
-            Window storage w = _windows[windowEnd];
+            Window storage window = _windows[windowEnd];
             // window is active with sufficient attestations
-            if (w.mostVotedHashVotes > w.totalSupply / 2) {
-                return w.mostVotedBlockHash == w.blockHash ? AttestationResult.Valid : AttestationResult.Invalid;
+            if (
+                window.mostVotedHashVotes
+                    > window.votingTotalSupply * SUCCESSFUL_ATTESTATION_PERCENTAGE / PERCENTAGE_DENOMINATOR
+            ) {
+                return
+                    window.mostVotedBlockHash == window.blockHash ? AttestationResult.Valid : AttestationResult.Invalid;
             }
             return _acceptingAttestations(windowEnd) ? AttestationResult.Pending : AttestationResult.InsufficientVotes;
         }
@@ -175,57 +180,61 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
             // extend the current window
             emit AttestationWindowExtended(nextWindow, block.number - 1);
             nextWindow = block.number - 1;
-            currentWindow.nextWindow = WindowLibrary.encode(nextWindow, reward);
+            currentWindow.nextWindow = WindowLib.encode(nextWindow, reward);
         }
 
-        _windows[nextWindow].reward = reward;
+        _windows[nextWindow].rewardETH = reward;
         bytes32 blockHash = blockhash(nextWindow);
         // @audit safe guard, returns 0 for older than 256 blocks, should not happen because of the check when setting the attestation window length
         assert(blockHash != bytes32(0));
         _windows[nextWindow].blockHash = blockHash;
-        _windows[nextWindow].nextWindow = WindowLibrary.setNextBlockNumber(nextWindow + attestationWindowLength_);
-        _windows[nextWindow].totalSupply = L2_STAKE_MANAGER.getPastTotalSupply(nextWindow);
+        _windows[nextWindow].nextWindow = WindowLib.setNextBlockNumber(nextWindow + attestationWindowLength_);
+        _windows[nextWindow].votingTotalSupply = L2_STAKE_MANAGER.getPastTotalSupply(nextWindow);
         _windowBlockNumbers.push(nextWindow);
         _windows[nextWindow].index = _windowBlockNumbers.length - 1;
         emit AttestationWindowScheduled(nextWindow, nextWindow + attestationWindowLength_);
     }
 
     function _processRewards(address operator) private {
-        Attestations storage a = _attestations[operator];
-        uint256 head = a.head;
+        Attestations storage attestations = _attestations[operator];
+        uint256 head = attestations.head;
         if (head == 0) {
-            a.head = a.tail;
+            attestations.head = attestations.tail;
             return;
         }
         _finalizeWindow(head);
-        Window storage w = _windows[head];
-        if (!w.finalized) return;
-        Attestation storage attestation = a.attestations[head];
-        a.head = attestation.next;
-        if (attestation.votedHash == w.mostVotedHash) {
+        Window storage window = _windows[head];
+        if (!window.finalized) return;
+        Attestation storage attestation = attestations.attestations[head];
+        attestations.head = attestation.next;
+        if (attestation.votedHash == window.mostVotedHash) {
             address beneficiary = L2_STAKE_MANAGER.beneficiary(operator);
-            uint256 rewards = w.reward * attestation.votes / w.mostVotedHashVotes;
+            uint256 rewards = window.rewardETH * attestation.votes / window.mostVotedHashVotes;
             (bool success,) = beneficiary.call{value: rewards}('');
             if (!success) revert RewardDistributionFailed();
         }
     }
 
-    function _finalizeWindow(uint256 window) private {
-        Window storage w = _windows[window];
-        uint256 blockNumber = _windowBlockNumbers[w.index];
-        if (w.finalized || _acceptingAttestations(blockNumber)) return;
-        w.finalized = true;
-        uint256 totalSupply = w.totalSupply;
-        uint256 attestationRatio = totalSupply == 0 ? 0 : w.mostVotedHashVotes * 1e18 / totalSupply;
-        uint256 rewardsToDistribute = w.reward * attestationRatio / 1e18;
-        uint256 unclaimedRewards = w.reward - rewardsToDistribute;
-        w.reward = rewardsToDistribute;
+    function _finalizeWindow(uint256 blockNumber) private {
+        Window storage window = _windows[blockNumber];
+        if (window.finalized || _acceptingAttestations(blockNumber)) return;
+        window.finalized = true;
+        uint256 totalSupply = window.votingTotalSupply;
+        uint256 attestationRatio =
+            totalSupply == 0 ? 0 : window.mostVotedHashVotes * PERCENTAGE_DENOMINATOR / totalSupply;
+        uint256 reward = window.rewardETH;
+        uint256 rewardsToDistribute = reward * attestationRatio / PERCENTAGE_DENOMINATOR;
+        uint256 unclaimedRewards = reward - rewardsToDistribute;
+        window.rewardETH = rewardsToDistribute;
         (bool success,) = address(this).call{value: unclaimedRewards}('');
         assert(success);
         AttestationResult result;
-        if (ATTESTATION_THRESHOLD > attestationRatio) result = AttestationResult.InsufficientVotes;
-        else result = w.mostVotedBlockHash == w.blockHash ? AttestationResult.Valid : AttestationResult.Invalid;
-        emit WindowFinalized(window, result, attestationRatio, rewardsToDistribute);
+        if (SUCCESSFUL_ATTESTATION_PERCENTAGE > attestationRatio) {
+            result = AttestationResult.InsufficientVotes;
+        } else {
+            result = window.mostVotedBlockHash == window.blockHash ? AttestationResult.Valid : AttestationResult.Invalid;
+        }
+        emit WindowFinalized(blockNumber, result, attestationRatio, rewardsToDistribute);
     }
 
     function _currentWindow() private view returns (Window storage window) {

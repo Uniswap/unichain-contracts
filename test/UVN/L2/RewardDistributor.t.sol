@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {IRewardDistributor, RewardDistributor} from '../../src/UVN/L2/RewardDistributor.sol';
-import {MockRewardPuller} from '../mock/MockRewardPuller.sol';
-import {MockVotesToken} from '../mock/MockVotesToken.sol';
+import {IRewardDistributor, RewardDistributor} from '../../../src/UVN/L2/RewardDistributor.sol';
+import {MockRewardPuller} from '../../mock/MockRewardPuller.sol';
+import {MockVotesToken} from '../../mock/MockVotesToken.sol';
 import {MessageHashUtils} from '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 
 import 'forge-std/Test.sol';

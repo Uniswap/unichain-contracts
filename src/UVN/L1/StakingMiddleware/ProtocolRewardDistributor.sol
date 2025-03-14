@@ -49,9 +49,11 @@ abstract contract ProtocolRewardDistributor is UniStakerWrapper, IProtocolReward
     }
 
     function _updateGlobalRewardCheckpoint() internal returns (uint256 newGlobalRewardCheckpoint) {
-        // @audit a malicious reward notifier in the unistaker contract could brick deposits and withdrawals
-        // @audit no need for safe cast as WETH reward cannot exceed 2^120
-        uint256 reward = UNISTAKER.claimReward();
+        uint256 reward;
+        try UNISTAKER.claimReward() returns (uint256 newReward) {
+            // @audit a malicious reward notifier in the unistaker contract could brick deposits and withdrawals
+            reward = newReward;
+        } catch {}
         // @audit if total amount staked is 0, reward will also be 0
         if (reward == 0) return _globalRewardCheckpoint;
         newGlobalRewardCheckpoint = _getNewGlobalRewardCheckpoint(reward);

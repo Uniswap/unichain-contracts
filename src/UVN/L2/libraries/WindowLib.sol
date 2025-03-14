@@ -7,21 +7,21 @@ import {Search} from './Search.sol';
 struct Window {
     bool finalized;
     /// @dev the reward to distribute to the operators that voted for the most voted hash in this window
-    uint256 rewardETH;
+    uint96 rewardETH;
+    /// @dev the index of the window in the list of window block numbers
+    uint32 index;
     /// @dev the total supply of stake eligible to vote in this window
-    uint256 votingTotalSupply;
+    uint96 votingTotalSupply;
+    /// @dev the number of votes that attested to the most voted hash in this window
+    uint96 mostVotedHashVotes;
+    /// @dev pointer to the next window
+    NextWindow nextWindow;
     /// @dev the actual block hash of the last block in this window
     bytes32 blockHash;
     /// @dev the most voted for block hash in this window
     bytes32 mostVotedBlockHash;
     /// @dev the most voted for hash in this window that includes additional data
     bytes32 mostVotedHash;
-    /// @dev the number of votes that attested to the most voted hash in this window
-    uint256 mostVotedHashVotes;
-    /// @dev pointer to the next window
-    NextWindow nextWindow;
-    /// @dev the index of the window in the list of window block numbers
-    uint256 index;
     /// @dev the number of votes for each hash that was attested to in this window
     mapping(bytes32 votedHash => uint256 votes) attestations;
 }
@@ -33,7 +33,7 @@ struct Windows {
     mapping(uint256 blockNumber => Window window) windows;
 }
 
-type NextWindow is uint256;
+type NextWindow is uint128;
 
 using WindowLib for Windows global;
 using WindowLib for Window global;
@@ -54,9 +54,9 @@ library WindowLib {
         uint256 windowLength = $.windowLength;
         $.windows[blockNumber].nextWindow = NextWindowLib.setBlockNumber(blockNumber + windowLength);
         $.windows[blockNumber].blockHash = blockhash(blockNumber);
-        $.windows[blockNumber].votingTotalSupply = votingSupply;
-        $.windows[blockNumber].rewardETH = reward;
-        $.windows[blockNumber].index = $.blockNumbers.length;
+        $.windows[blockNumber].votingTotalSupply = uint96(votingSupply);
+        $.windows[blockNumber].rewardETH = uint96(reward);
+        $.windows[blockNumber].index = uint32($.blockNumbers.length);
         $.blockNumbers.push(blockNumber);
         return blockNumber + windowLength;
     }
@@ -77,7 +77,7 @@ library WindowLib {
         if (totalVotesAttested > window.mostVotedHashVotes) {
             window.mostVotedBlockHash = blockHash;
             window.mostVotedHash = votedHash;
-            window.mostVotedHashVotes = totalVotesAttested;
+            window.mostVotedHashVotes = uint96(totalVotesAttested);
         }
     }
 
@@ -161,8 +161,8 @@ library WindowLib {
 library NextWindowLib {
     /// @notice Returns the block number and reward for a given scheduled window
     function get(NextWindow nextWindow) internal pure returns (uint256 blockNumber_, uint256 reward_) {
-        uint256 value = NextWindow.unwrap(nextWindow);
-        return (value >> 128, value & type(uint128).max);
+        uint128 value = NextWindow.unwrap(nextWindow);
+        return (value >> 96, value & type(uint96).max);
     }
 
     /// @notice Sets the block number for a new scheduled window
@@ -182,15 +182,15 @@ library NextWindowLib {
 
     /// @notice Returns the block number of the scheduled window
     function blockNumber(NextWindow nextWindow) internal pure returns (uint256 blockNumber_) {
-        return NextWindow.unwrap(nextWindow) >> 128;
+        return NextWindow.unwrap(nextWindow) >> 96;
     }
 
     /// @notice Returns the reward of the scheduled window
     function reward(NextWindow nextWindow) internal pure returns (uint256 reward_) {
-        return NextWindow.unwrap(nextWindow) & type(uint128).max;
+        return NextWindow.unwrap(nextWindow) & type(uint96).max;
     }
 
     function _encode(uint256 blockNumber_, uint256 reward_) private pure returns (NextWindow) {
-        return NextWindow.wrap(blockNumber_ << 128 | reward_);
+        return NextWindow.wrap(uint128(uint32(blockNumber_)) << 96 | uint96(reward_));
     }
 }

@@ -173,7 +173,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         uint256 reward = window.rewardETH;
         uint256 rewardsToDistribute = reward * attestationRatio / PERCENTAGE_DENOMINATOR;
         uint256 unclaimedRewards = reward - rewardsToDistribute;
-        window.rewardETH = rewardsToDistribute;
+        window.rewardETH = uint96(rewardsToDistribute);
         (bool success,) = address(this).call{value: unclaimedRewards}('');
         assert(success);
         AttestationResult result;

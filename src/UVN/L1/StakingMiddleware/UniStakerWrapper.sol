@@ -6,6 +6,8 @@ import {
 } from '../../../interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol';
 import {StakeManager} from './StakeManager.sol';
 
+/// @title UniStakerWrapper - Base contract for the StakingMiddleware
+/// @notice This contract manages deposits into the UniStaker contract. It allows delegators to participate in UNI governance and accrue protocol fees distributed by the UniStaker contract. The deposit into UniStaker is optional, once a delegator opts in, all subsequent deposits will also be deposited into the UniStaker contract.
 contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     /// @inheritdoc IUniStakerWrapper
     IUniStaker public immutable UNISTAKER;
@@ -19,6 +21,34 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     {
         UNISTAKER = unistaker;
         REWARD_TOKEN = IERC20(address(unistaker.REWARD_TOKEN()));
+    }
+
+    /// @dev After a delegator stakes, if they are opted into the UniStaker contract, deposit their stake into the UniStaker contract
+    function _afterStake(address delegator, uint96 amount) internal virtual override {
+        if (_isDepositedIntoUniStaker(delegator)) {
+            _depositIntoUniStaker(amount, address(0));
+        }
+        super._afterStake(delegator, amount);
+    }
+
+    /// @dev Before a delegator withdraws, if they are opted into the UniStaker contract, withdraw their stake from the UniStaker contract
+    function _beforeWithdraw(address delegator, uint96 amount) internal virtual override {
+        if (_isDepositedIntoUniStaker(delegator)) {
+            _withdrawFromUniStaker(delegator, amount);
+        }
+        super._beforeWithdraw(delegator, amount);
+    }
+
+    /// @dev Before a delegator is slashed, if they are opted into the UniStaker contract, withdraw their stake from the UniStaker contract
+    function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+        internal
+        virtual
+        override
+    {
+        if (_isDepositedIntoUniStaker(delegator)) {
+            _withdrawFromUniStaker(delegator, amount);
+        }
+        super._beforeSlash(delegator, amount, newStake, newPendingWithdrawalAmount);
     }
 
     /// @inheritdoc IUniStakerWrapper
@@ -44,40 +74,15 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
         _depositIntoUniStaker(0, newGovernanceDelegatee);
     }
 
-    function _afterStake(address delegator, uint96 amount) internal virtual override {
-        if (_isDepositedIntoUniStaker(delegator)) {
-            _depositIntoUniStaker(amount, address(0));
-        }
-        super._afterStake(delegator, amount);
-    }
-
-    function _beforeWithdraw(address delegator, uint96 amount) internal virtual override {
-        if (_isDepositedIntoUniStaker(delegator)) {
-            _withdrawFromUniStaker(delegator, amount);
-        }
-        super._beforeWithdraw(delegator, amount);
-    }
-
-    function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
-        internal
-        virtual
-        override
-    {
-        if (_isDepositedIntoUniStaker(delegator)) {
-            _withdrawFromUniStaker(delegator, amount);
-        }
-        super._beforeSlash(delegator, amount, newStake, newPendingWithdrawalAmount);
-    }
-
+    /// @dev Deposits a delegator's stake into the UniStaker contract and/or updates their governance delegatee. On first deposit, the delegator MUST provide both, the stake and a delegatee and a deposit id is returned. On subsequent deposits, the deposit id is reused and identifies the delegator's entire stake.
     function _depositIntoUniStaker(uint96 amount, address delegatee) internal returns (uint256 depositId) {
         depositId = _depositIds[msg.sender];
         if (amount != 0) {
-            // @audit later conversion to uint96 is safe as the supply of the token is < 2^96
             STAKE_TOKEN.approve(address(UNISTAKER), amount);
         }
         if (depositId == 0) {
             depositId = IUniStaker.DepositIdentifier.unwrap(UNISTAKER.stake(amount, delegatee));
-            // @audit technically depositId 0 is a valid depositId in Unistaker but it will probably be used by the time this contract is deployed
+            // @audit technically depositId 0 is a valid depositId in UniStaker but it will probably be used by the time this contract is deployed
             assert(depositId != 0);
             _depositIds[msg.sender] = depositId;
             emit UniStakerDeposited(msg.sender, depositId, amount);
@@ -93,10 +98,12 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
         }
     }
 
+    /// @dev Withdraws an amount from the sender's stake deposited into the UniStaker contract
     function _withdrawFromUniStaker(uint96 amount) internal {
         _withdrawFromUniStaker(msg.sender, amount);
     }
 
+    /// @dev Withdraws an amount from a delegator's stake deposited into the UniStaker contract. If the entire stake is withdrawn, subsequent deposits will no longer auto-deposit into the UniStaker contract.
     function _withdrawFromUniStaker(address delegator, uint96 amount) internal {
         uint256 depositId = _depositIds[delegator];
         // TODO revert if not deposited and amount is not 0

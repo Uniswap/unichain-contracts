@@ -1,8 +1,10 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/10fd24e97f437a5e7731628f80c2a61f2eb81fe3/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
+
+This contract manages the slashing of delegators and operators. When operators are slashed, the slashed amount is converted into the remaining percentage of the operator's slashable delegated stake. The voting power of the operator is updated immediately. As delegators have their own deposits into the UniStaker contract, slashing is applied to the delegator's slashable stake when the delegator next interacts with the StakingMiddleware contract. Slashing can also be applied by anyone at any time. To ensure there isn't an incentive to not stay slashed and continue accruing protocol fees in the UniStaker contract, rewards accrued by the delegator are also slashed.
 
 
 ## State Variables
@@ -23,12 +25,16 @@ mapping(address delegator => DelegatorSlashingData data) internal _delegatorSlas
 ## Functions
 ### _afterOperatorSelection
 
+*After a delegator selects an operator, store the number of slashing instances an operator had before the delegation to keep track of future slashing instances that occur after the delegation*
+
 
 ```solidity
 function _afterOperatorSelection(address delegator, address operator) internal virtual override;
 ```
 
 ### _afterOperatorDeselection
+
+*After a delegator undelegates from an operator, reset the slashing tracking data for the delegator*
 
 
 ```solidity
@@ -37,12 +43,16 @@ function _afterOperatorDeselection(address delegator) internal virtual override;
 
 ### _beforeStake
 
+*Before a delegator stakes, apply all pending slashing instances to the delegator's stake*
+
 
 ```solidity
 function _beforeStake(address delegator, uint96 amount) internal override;
 ```
 
 ### _beforeUnstake
+
+*Before a delegator unstakes, apply all pending slashing instances to the delegator's stake*
 
 
 ```solidity
@@ -51,12 +61,16 @@ function _beforeUnstake(address delegator, uint96 amount) internal override;
 
 ### _beforeWithdraw
 
+*Before a delegator withdraws, apply all pending slashing instances to the delegator's stake*
+
 
 ```solidity
 function _beforeWithdraw(address delegator, uint96 amount) internal override;
 ```
 
 ### _beforeUniStakerDeposit
+
+*Before a delegator deposits into the UniStaker contract, apply all pending slashing instances to the delegator's stake*
 
 
 ```solidity
@@ -65,12 +79,16 @@ function _beforeUniStakerDeposit(address delegator, uint96 amount) internal over
 
 ### _beforeUniStakerWithdrawal
 
+*Before a delegator withdraws from the UniStaker contract, apply all pending slashing instances to the delegator's stake*
+
 
 ```solidity
 function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal override;
 ```
 
 ### _beforeUniStakerDelegateChange
+
+*Before a delegator changes their governance delegatee, apply all pending slashing instances to the delegator's stake*
 
 
 ```solidity
@@ -79,6 +97,8 @@ function _beforeUniStakerDelegateChange(address delegator, address newGovernance
 
 ### _beforeRewardsWithdrawal
 
+*Before a delegator withdraws their rewards, apply all pending slashing instances to the delegator's stake*
+
 
 ```solidity
 function _beforeRewardsWithdrawal(address delegator) internal override;
@@ -86,12 +106,16 @@ function _beforeRewardsWithdrawal(address delegator) internal override;
 
 ### _beforeOperatorUndelegationAnnouncement
 
+*Before a delegator announces their intention to undelegate from an operator, apply all pending slashing instances to the delegator's stake*
+
 
 ```solidity
 function _beforeOperatorUndelegationAnnouncement(address delegator) internal override;
 ```
 
 ### _beforeOperatorDeselection
+
+*Before a delegator undelegates from an operator, apply all pending slashing instances to the delegator's stake*
 
 
 ```solidity
@@ -136,6 +160,8 @@ function slashingPendingForDelegator(address delegator) external view returns (b
 
 ### rewardsOf
 
+*Overrides the `rewardsOf` function in `ProtocolRewardDistributor` to reflect correct rewards for a delegator accounting for slashing*
+
 
 ```solidity
 function rewardsOf(address delegator)
@@ -154,12 +180,16 @@ function _slashOperatorVotes(address operator, uint256 remainingPercentage) inte
 
 ### _delegatorStake
 
+*Overrides the `delegatorStake` function in `StakeManager` to reflect correct stake for a delegator accounting for slashing*
+
 
 ```solidity
 function _delegatorStake(address delegator) internal view override returns (uint96);
 ```
 
 ### _slashableStake
+
+*Overrides the `slashableStake` function in `StakeManager` to reflect correct slashable stake for a delegator accounting for slashing*
 
 
 ```solidity

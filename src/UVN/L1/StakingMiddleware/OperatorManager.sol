@@ -6,12 +6,15 @@ import {ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
 import {Nonces, Votes} from './libraries/Votes.sol';
 import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 
+/// @title OperatorManager - Base contract for the StakingMiddleware
+/// @notice This contract manages the selection of operators by delegators. The selection of operators implements the `IVotes` interface. Before a delegator can undelegate from an operator, they must pass a delay period. During this delay period their voting power is set to 0 but they remain slashable until the undelegation is finalized.
 abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperatorManager {
     constructor() EIP712('UVN-StakingMiddleware', '1') {}
 
     mapping(address operator => uint256 amount) private _slashableStakes;
     mapping(address delegator => uint256 undelegationTimestamp) private _undelegationTimestamp;
 
+    /// @dev After a delegator stakes, increase the operator's voting power immediately and increase the slashable stake
     function _afterStake(address delegator, uint96 amount) internal virtual override {
         super._afterStake(delegator, amount);
         address operator = delegates(delegator);
@@ -21,6 +24,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         }
     }
 
+    /// @dev After a delegator unstakes their stake, decrease the operator's voting power immediately
     function _afterUnstake(address delegator, uint96 amount) internal virtual override {
         super._afterUnstake(delegator, amount);
         address operator = delegates(delegator);
@@ -29,6 +33,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         }
     }
 
+    /// @dev After a delegator withdraws their unstaked stake, decrease the slashable stake of the operator
     function _afterWithdraw(address delegator, uint96 amount) internal virtual override {
         super._afterWithdraw(delegator, amount);
         _slashableStakes[delegates(delegator)] -= amount;
@@ -51,6 +56,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         return uint96(_slashableStakes[operator]);
     }
 
+    /// @dev Manages the delegation/undelegation of a delegator to an operator. If the operator is set to `address(0)`, the delegator is undelegated from their current operator. Otherwise, the delegator is delegated to the new operator.
     function _delegate(address delegator, address operator) internal override {
         if (operator == address(0)) {
             _deselectOperator(delegator);
@@ -60,6 +66,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         }
     }
 
+    /// @dev Delegates a delegator's stake to an operator, the delegator must not be already delegating to an operator and must have any pending undelegation finalized
     function _selectOperator(address delegator, address operator) internal {
         _beforeOperatorSelection(delegator, operator);
         if (delegates(delegator) != address(0)) revert OperatorAlreadySelected();
@@ -71,6 +78,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         _afterOperatorSelection(delegator, operator);
     }
 
+    /// @dev Undelegates a delegator from an operator, the delegator must first announce their intention to undelegate by calling `announceOperatorUndelegation`. This function can only be called once the delay has passed.
     function _deselectOperator(address delegator) internal {
         _beforeOperatorDeselection(delegator);
         address operator = delegates(delegator);

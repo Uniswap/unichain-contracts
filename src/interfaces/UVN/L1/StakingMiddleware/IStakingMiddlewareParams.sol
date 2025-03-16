@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+/// @title StakingMiddlewareParams - Base contract for the StakingMiddleware
+/// @notice This contract manages the parameters of the StakingMiddleware contract. It allows roles to set the withdrawal delay and the slashing beneficiary.
 interface IStakingMiddlewareParams {
+    /// @notice Emitted when the withdrawal delay is updated
     event WithdrawalDelayUpdated(uint256 oldWithdrawalDelay, uint256 newWithdrawalDelay);
+    /// @notice Emitted when the slashing beneficiary is updated
     event SlashingBeneficiaryUpdated(address oldSlashingBeneficiary, address newSlashingBeneficiary);
 
     /// @notice Updates the withdrawal delay

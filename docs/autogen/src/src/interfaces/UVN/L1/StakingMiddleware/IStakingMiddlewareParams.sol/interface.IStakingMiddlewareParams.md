@@ -1,5 +1,7 @@
 # IStakingMiddlewareParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b65aa4f5b827097e05d9ccfdf4601e76462b77b0/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol)
+
+This contract manages the parameters of the StakingMiddleware contract. It allows roles to set the withdrawal delay and the slashing beneficiary.
 
 
 ## Functions
@@ -74,12 +76,16 @@ function PARAMS_SETTER_ROLE() external view returns (bytes32);
 
 ## Events
 ### WithdrawalDelayUpdated
+Emitted when the withdrawal delay is updated
+
 
 ```solidity
 event WithdrawalDelayUpdated(uint256 oldWithdrawalDelay, uint256 newWithdrawalDelay);
 ```
 
 ### SlashingBeneficiaryUpdated
+Emitted when the slashing beneficiary is updated
+
 
 ```solidity
 event SlashingBeneficiaryUpdated(address oldSlashingBeneficiary, address newSlashingBeneficiary);

@@ -1,8 +1,10 @@
 # StakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/10fd24e97f437a5e7731628f80c2a61f2eb81fe3/src/UVN/L1/StakingMiddleware/StakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/StakeManager.sol)
 
 **Inherits:**
 [StakingMiddlewareParams](/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md), [IStakeManager](/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol/interface.IStakeManager.md)
+
+This contract is used to manage the stake of a delegator. Delegators can stake the UNI token and withdraw their stake after a delay. After a delegator unstakes, their stake remains slashable until the withdrawal is completed (even if the withdrawal delay has passed but the stake has not been withdrawn yet). Slashings are always applied percentually to the entire stake, including pending withdrawals.
 
 
 ## State Variables
@@ -58,7 +60,7 @@ function stakeFor(address delegator, uint96 amount) public;
 
 Unstakes a stake from the StakingMiddleware contract and queues it for withdrawal
 
-*All pending withdrawals are still slashable if delegated to an operator even if the withdrawals are already unlocked!*
+*The voting power of the delegator is updated to the new stake immediately after unstaking*
 
 
 ```solidity
@@ -132,7 +134,7 @@ function withdrawal(address delegator, uint256 withdrawalId)
 
 ### _slashDelegatorStake
 
-*to ensure accurate accounting of total delegated stake to operators, pending withdrawals and slashable stake are slashed equally*
+*To ensure accurate accounting of total delegated stake to operators, pending withdrawals and slashable stake are slashed equally*
 
 *When pending withdrawals are slashed, cancel all pending withdrawals and create a new one with the remainder*
 

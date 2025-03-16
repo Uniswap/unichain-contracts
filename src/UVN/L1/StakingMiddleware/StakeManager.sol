@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import {IERC20, IStakeManager} from '../../../interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol';
 import {StakingMiddlewareParams} from './StakingMiddlewareParams.sol';
 
+/// @title StakeManager - Base contract for the StakingMiddleware
+/// @notice This contract is used to manage the stake of a delegator. Delegators can stake the UNI token and withdraw their stake after a delay. After a delegator unstakes, their stake remains slashable until the withdrawal is completed (even if the withdrawal delay has passed but the stake has not been withdrawn yet). Slashings are always applied percentually to the entire stake, including pending withdrawals.
 contract StakeManager is StakingMiddlewareParams, IStakeManager {
     uint256 internal constant PERCENTAGE_DENOMINATOR = 1e18;
 
@@ -109,7 +111,7 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
         return _depositorStake[delegator].pendingWithdrawals[withdrawalId];
     }
 
-    /// @dev to ensure accurate accounting of total delegated stake to operators, pending withdrawals and slashable stake are slashed equally
+    /// @dev To ensure accurate accounting of total delegated stake to operators, pending withdrawals and slashable stake are slashed equally
     /// @dev When pending withdrawals are slashed, cancel all pending withdrawals and create a new one with the remainder
     // @audit INVARIANT: The remaining slashed stake is always less or equal to the stake before the slashing minus the amount slashed to ensure the contract always has enough stake to cover the withdrawal of the entire stake
     function _slashDelegatorStake(address delegator, uint256 remainingPercentage) internal {

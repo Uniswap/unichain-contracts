@@ -5,6 +5,8 @@ import {IUniStaker} from '../IUnistaker.sol';
 import {IStakeManager} from './IStakeManager.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
+/// @title UniStakerWrapper - Base contract for the StakingMiddleware
+/// @notice This contract manages deposits into the UniStaker contract. It allows delegators to participate in UNI governance and accrue protocol fees distributed by the UniStaker contract. The deposit into UniStaker is optional, once a delegator opts in, all subsequent deposits will also be deposited into the UniStaker contract.
 interface IUniStakerWrapper is IStakeManager {
     /// @notice Thrown when a user attempts to deposit into the UniStaker contract while already deposited
     error AlreadyDepositedIntoUniStaker();

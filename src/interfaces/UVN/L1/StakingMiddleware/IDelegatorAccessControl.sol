@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import {IDelegatorVerifier} from './IDelegatorVerifier.sol';
 import {IOperatorManager} from './IOperatorManager.sol';
 
+/// @title DelegatorAccessControl - Base contract for the StakingMiddleware
+/// @notice This contract manages the access control of delegators to operators. It allows Operators to set rules for delegation. Self-delegation is always allowed. Operators can toggle whether delegation to them is allowed or not. Should an operator allow delegation, they can implement their own verification logic by two different mechanisms. Either by providing a verifier contract that implements the `IDelegatorVerifier` interface that verifies whether a delegator is allowed to delegate to them or not. Because the `delegate` function specified by ERC-5805 does not allow for arbitrary data to be passed during delegation, the operator can also provide an `authorizedSender` address. If a delegator is delegating via signature, the `authorizedSender` address can be set to ensure that the signature is provided by a contract that can perform arbitrary checks (e.g., verify a merkle proof to ensure a delegator is allowed).
 interface IDelegatorAccessControl is IOperatorManager {
     /// @notice Emitted when the delegation status is set
     event DelegationStatusUpdated(address indexed operator, bool status);
@@ -29,7 +31,6 @@ interface IDelegatorAccessControl is IOperatorManager {
 
     /// @notice Sets the authorized sender
     /// @param sender The address of the authorized sender
-    /// @dev when delegating by signature and the authorized sender is set, the verifier contract is not called, as the delegation already passed an authorization check
     function setAuthorizedSender(address sender) external;
 
     /// @notice Returns the delegation status

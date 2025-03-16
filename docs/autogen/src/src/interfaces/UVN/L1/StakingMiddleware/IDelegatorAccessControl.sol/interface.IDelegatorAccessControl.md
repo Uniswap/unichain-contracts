@@ -1,8 +1,10 @@
 # IDelegatorAccessControl
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/07d4bd0c93642e180d59fb2de755cf59c8c044e6/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol)
 
 **Inherits:**
 [IOperatorManager](/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
+
+This contract manages the access control of delegators to operators. It allows Operators to set rules for delegation. Self-delegation is always allowed. Operators can toggle whether delegation to them is allowed or not. Should an operator allow delegation, they can implement their own verification logic by two different mechanisms. Either by providing a verifier contract that implements the `IDelegatorVerifier` interface that verifies whether a delegator is allowed to delegate to them or not. Because the `delegate` function specified by ERC-5805 does not allow for arbitrary data to be passed during delegation, the operator can also provide an `authorizedSender` address. If a delegator is delegating via signature, the `authorizedSender` address can be set to ensure that the signature is provided by a contract that can perform arbitrary checks (e.g., verify a merkle proof to ensure a delegator is allowed).
 
 
 ## Functions
@@ -43,8 +45,6 @@ function setDelegationVerifier(IDelegatorVerifier verifier) external;
 ### setAuthorizedSender
 
 Sets the authorized sender
-
-*when delegating by signature and the authorized sender is set, the verifier contract is not called, as the delegation already passed an authorization check*
 
 
 ```solidity

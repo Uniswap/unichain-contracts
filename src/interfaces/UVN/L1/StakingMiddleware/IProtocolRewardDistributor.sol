@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import {IUniStakerWrapper} from './IUniStakerWrapper.sol';
 
+/// @title ProtocolRewardDistributor - Base contract for the StakingMiddleware
+/// @notice This contract distributes accrued protocol fees to delegators that have opted into depositing their underlying UNI stake into the UniStaker contract.
 interface IProtocolRewardDistributor is IUniStakerWrapper {
     /// @notice Emitted when protocol rewards are added from the UniStaker contract
     event RewardsAdded(uint256 amount);

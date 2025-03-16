@@ -1,8 +1,10 @@
 # DelegatorAccessControl
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/07d4bd0c93642e180d59fb2de755cf59c8c044e6/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol)
 
 **Inherits:**
 [IDelegatorAccessControl](/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md), [OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md)
+
+This contract manages the access control of delegators to operators. It allows Operators to set rules for delegation. Self-delegation is always allowed. Operators can toggle whether delegation to them is allowed or not. Should an operator allow delegation, they can implement their own verification logic by two different mechanisms. Either by providing a verifier contract that implements the `IDelegatorVerifier` interface that verifies whether a delegator is allowed to delegate to them or not. Because the `delegate` function specified by ERC-5805 does not allow for arbitrary data to be passed during delegation, the operator can also provide an `authorizedSender` address. If a delegator is delegating via signature, the `authorizedSender` address can be set to ensure that the signature is provided by a contract that can perform arbitrary checks (e.g., verify a merkle proof to ensure a delegator is allowed).
 
 
 ## State Variables
@@ -15,6 +17,8 @@ mapping(address delegator => AccessControl accessControl) private _delegatorAcce
 
 ## Functions
 ### _beforeOperatorSelection
+
+*Before a delegator selects an operator, check if they are allowed to delegate to them*
 
 
 ```solidity
@@ -59,8 +63,6 @@ function setDelegationVerifier(IDelegatorVerifier verifier) external;
 
 Sets the authorized sender
 
-*when delegating by signature and the authorized sender is set, the verifier contract is not called, as the delegation already passed an authorization check*
-
 
 ```solidity
 function setAuthorizedSender(address sender) external;
@@ -100,6 +102,18 @@ function authorizedSender(address operator) external view returns (address);
 ```
 
 ### _allowDelegation
+
+*Checks if a delegator is allowed to delegate to an operator*
+
+*Self-delegation is always allowed*
+
+*If the operator does not accept delegation, revert*
+
+*If the delegation is via signature and the authorized sender is set, ensure that the `delegate` function is called by the authorized sender*
+
+*If a verifier contract is set, call it to verify if the delegator is allowed to delegate to the operator*
+
+*If the authorized sender is set, but the delegator is not delegating by signature, revert if no verifier is set, else check verifier contract*
 
 
 ```solidity

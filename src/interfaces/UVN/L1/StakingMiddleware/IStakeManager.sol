@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 import {IStakingMiddlewareParams} from './IStakingMiddlewareParams.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
+/// @title StakeManager - Base contract for the StakingMiddleware
+/// @notice This contract is used to manage the stake of a delegator. Delegators can stake the UNI token and withdraw their stake after a delay. After a delegator unstakes, their stake remains slashable until the withdrawal is completed (even if the withdrawal delay has passed but the stake has not been withdrawn yet). Slashings are always applied percentually to the entire stake, including pending withdrawals.
 interface IStakeManager is IStakingMiddlewareParams {
     struct PendingWithdrawal {
         uint96 amount;
@@ -42,6 +44,7 @@ interface IStakeManager is IStakingMiddlewareParams {
     function stakeFor(address delegator, uint96 amount) external;
 
     /// @notice Unstakes a stake from the StakingMiddleware contract and queues it for withdrawal
+    /// @dev The voting power of the delegator is updated to the new stake immediately after unstaking
     /// @dev All pending withdrawals are still slashable if delegated to an operator even if the withdrawals are already unlocked!
     function unstake(uint96 amount) external returns (uint256 withdrawalId);
 
@@ -63,10 +66,7 @@ interface IStakeManager is IStakingMiddlewareParams {
     function pendingWithdrawalAmount(address delegator) external view returns (uint96);
 
     /// @notice Returns a withdrawal for a delegator
-    function withdrawal(address delegator, uint256 withdrawalId)
-        external
-        view
-        returns (IStakeManager.PendingWithdrawal memory);
+    function withdrawal(address delegator, uint256 withdrawalId) external view returns (PendingWithdrawal memory);
 
     /// @notice Returns the stake token
     function STAKE_TOKEN() external view returns (IERC20);

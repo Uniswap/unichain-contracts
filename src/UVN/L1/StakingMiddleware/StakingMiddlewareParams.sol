@@ -5,6 +5,8 @@ import {IDelegationManager} from '../../../interfaces/UVN/L1/IDelegationManager.
 import {IStakingMiddlewareParams} from '../../../interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 
+/// @title StakingMiddlewareParams - Base contract for the StakingMiddleware
+/// @notice This contract manages the parameters of the StakingMiddleware contract. It allows roles to set the withdrawal delay and the slashing beneficiary.
 contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
     bytes32 public constant PARAMS_SETTER_ROLE = keccak256('PARAMS_SETTER_ROLE');
 

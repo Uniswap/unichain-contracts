@@ -1,8 +1,10 @@
 # IStakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/6d1250e6e2f4daafd93fa5827aed4385164029bb/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol)
 
 **Inherits:**
 [IStakingMiddlewareParams](/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md)
+
+This contract is used to manage the stake of a delegator. Delegators can stake the UNI token and withdraw their stake after a delay. After a delegator unstakes, their stake remains slashable until the withdrawal is completed (even if the withdrawal delay has passed but the stake has not been withdrawn yet). Slashings are always applied percentually to the entire stake, including pending withdrawals.
 
 
 ## Functions
@@ -27,6 +29,8 @@ function stakeFor(address delegator, uint96 amount) external;
 ### unstake
 
 Unstakes a stake from the StakingMiddleware contract and queues it for withdrawal
+
+*The voting power of the delegator is updated to the new stake immediately after unstaking*
 
 *All pending withdrawals are still slashable if delegated to an operator even if the withdrawals are already unlocked!*
 
@@ -94,10 +98,7 @@ Returns a withdrawal for a delegator
 
 
 ```solidity
-function withdrawal(address delegator, uint256 withdrawalId)
-    external
-    view
-    returns (IStakeManager.PendingWithdrawal memory);
+function withdrawal(address delegator, uint256 withdrawalId) external view returns (PendingWithdrawal memory);
 ```
 
 ### STAKE_TOKEN

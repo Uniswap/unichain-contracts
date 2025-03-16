@@ -2,8 +2,11 @@
 pragma solidity 0.8.26;
 
 import {IProtocolRewardDistributor} from './IProtocolRewardDistributor.sol';
+import {IVotes} from '@openzeppelin/contracts/governance/utils/IVotes.sol';
 
-interface IOperatorManager is IProtocolRewardDistributor {
+/// @title OperatorManager - Base contract for the StakingMiddleware
+/// @notice This contract manages the selection of operators by delegators. The selection of operators implements the `IVotes` interface. Before a delegator can undelegate from an operator, they must pass a delay period. During this delay period their voting power is set to 0 but they remain slashable until the undelegation is finalized.
+interface IOperatorManager is IProtocolRewardDistributor, IVotes {
     /// @notice Emitted when a delegator announces their intention to undelegate from their current operator
     event OperatorUndelegationAnnounced(address indexed delegator, address indexed operator, uint256 timestamp);
 

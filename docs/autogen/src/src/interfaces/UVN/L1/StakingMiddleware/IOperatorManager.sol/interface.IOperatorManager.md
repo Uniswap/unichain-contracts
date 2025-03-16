@@ -1,8 +1,10 @@
 # IOperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/5add0d5c45e74462978e784c9ba783c7840cb2d6/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol)
 
 **Inherits:**
-[IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
+[IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md), IVotes
+
+This contract manages the selection of operators by delegators. The selection of operators implements the `IVotes` interface. Before a delegator can undelegate from an operator, they must pass a delay period. During this delay period their voting power is set to 0 but they remain slashable until the undelegation is finalized.
 
 
 ## Functions

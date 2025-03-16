@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -233,11 +233,18 @@ function _remainingStake(uint96 stake_, uint256 remainingPercentage) internal pu
 
 ### SLASHER_ROLE
 
-TODO invalidation of group of slashers?
+TODO invalidation of group of slashers by using nonces?
 
 
 ```solidity
 function SLASHER_ROLE() public pure returns (bytes32);
+```
+
+### _afterSlash
+
+
+```solidity
+function _afterSlash(address operator, uint96 remainingPercentage) internal virtual;
 ```
 
 ## Structs

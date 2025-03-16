@@ -144,10 +144,10 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
         }
         uint96 slashedAmount =
             uint96(currentStake + currentPendingWithdrawalAmount - newStake - newPendingWithdrawalAmount);
-        _beforeSlash(delegator, slashedAmount, newStake, newPendingWithdrawalAmount);
+        _beforeDelegatorSlashed(delegator, slashedAmount, newStake, newPendingWithdrawalAmount);
         STAKE_TOKEN.transfer(slashingBeneficiary(), slashedAmount);
         emit Slashed(delegator, slashedAmount, newStake);
-        _afterSlash(delegator, slashedAmount, newStake, newPendingWithdrawalAmount);
+        _afterDelegatorSlashed(delegator, slashedAmount, newStake, newPendingWithdrawalAmount);
     }
 
     function _delegatorStake(address delegator) internal view virtual returns (uint96) {
@@ -170,13 +170,17 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
 
     function _afterWithdraw(address delegator, uint96 amount) internal virtual {}
 
-    function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
-        internal
-        virtual
-    {}
+    function _beforeDelegatorSlashed(
+        address delegator,
+        uint96 amount,
+        uint96 newStake,
+        uint96 newPendingWithdrawalAmount
+    ) internal virtual {}
 
-    function _afterSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
-        internal
-        virtual
-    {}
+    function _afterDelegatorSlashed(
+        address delegator,
+        uint96 amount,
+        uint96 newStake,
+        uint96 newPendingWithdrawalAmount
+    ) internal virtual {}
 }

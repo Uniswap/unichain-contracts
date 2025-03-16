@@ -1,5 +1,5 @@
 # UniStakerWrapper
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
 
 **Inherits:**
 [StakeManager](/src/UVN/L1/StakingMiddleware/StakeManager.sol/contract.StakeManager.md), [IUniStakerWrapper](/src/interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol/interface.IUniStakerWrapper.md)
@@ -60,13 +60,13 @@ function _afterStake(address delegator, uint96 amount) internal virtual override
 function _beforeWithdraw(address delegator, uint96 amount) internal virtual override;
 ```
 
-### _beforeSlash
+### _beforeDelegatorSlashed
 
 *Before a delegator is slashed, if they are opted into the UniStaker contract, withdraw their stake from the UniStaker contract*
 
 
 ```solidity
-function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+function _beforeDelegatorSlashed(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
     internal
     virtual
     override;

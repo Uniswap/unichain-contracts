@@ -1,8 +1,8 @@
 # DelegatorAccessControl
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol)
 
 **Inherits:**
-[IDelegatorAccessControl](/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md), [OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md)
+[OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md), [IDelegatorAccessControl](/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md)
 
 This contract manages the access control of delegators to operators. It allows Operators to set rules for delegation. Self-delegation is always allowed. Operators can toggle whether delegation to them is allowed or not. Should an operator allow delegation, they can implement their own verification logic by two different mechanisms. Either by providing a verifier contract that implements the `IDelegatorVerifier` interface that verifies whether a delegator is allowed to delegate to them or not. Because the `delegate` function specified by ERC-5805 does not allow for arbitrary data to be passed during delegation, the operator can also provide an `authorizedSender` address. If a delegator is delegating via signature, the `authorizedSender` address can be set to ensure that the signature is provided by a contract that can perform arbitrary checks (e.g., verify a merkle proof to ensure a delegator is allowed).
 
@@ -11,7 +11,7 @@ This contract manages the access control of delegators to operators. It allows O
 ### _delegatorAccessControl
 
 ```solidity
-mapping(address delegator => AccessControl accessControl) private _delegatorAccessControl;
+mapping(address delegator => AccessControlParams accessControl) private _delegatorAccessControl;
 ```
 
 
@@ -121,10 +121,10 @@ function _allowDelegation(address delegator, address operator) internal view ret
 ```
 
 ## Structs
-### AccessControl
+### AccessControlParams
 
 ```solidity
-struct AccessControl {
+struct AccessControlParams {
     bool acceptDelegation;
     address authorizedSender;
     IDelegatorVerifier verifier;

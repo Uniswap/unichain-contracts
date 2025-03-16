@@ -1,5 +1,5 @@
 # StakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/StakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/UVN/L1/StakingMiddleware/StakeManager.sol)
 
 **Inherits:**
 [StakingMiddlewareParams](/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md), [IStakeManager](/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol/interface.IStakeManager.md)
@@ -199,20 +199,20 @@ function _beforeWithdraw(address delegator, uint96 amount) internal virtual;
 function _afterWithdraw(address delegator, uint96 amount) internal virtual;
 ```
 
-### _beforeSlash
+### _beforeDelegatorSlashed
 
 
 ```solidity
-function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+function _beforeDelegatorSlashed(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
     internal
     virtual;
 ```
 
-### _afterSlash
+### _afterDelegatorSlashed
 
 
 ```solidity
-function _afterSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+function _afterDelegatorSlashed(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
     internal
     virtual;
 ```

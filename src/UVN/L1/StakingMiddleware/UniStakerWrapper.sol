@@ -40,15 +40,16 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     }
 
     /// @dev Before a delegator is slashed, if they are opted into the UniStaker contract, withdraw their stake from the UniStaker contract
-    function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
-        internal
-        virtual
-        override
-    {
+    function _beforeDelegatorSlashed(
+        address delegator,
+        uint96 amount,
+        uint96 newStake,
+        uint96 newPendingWithdrawalAmount
+    ) internal virtual override {
         if (_isDepositedIntoUniStaker(delegator)) {
             _withdrawFromUniStaker(delegator, amount);
         }
-        super._beforeSlash(delegator, amount, newStake, newPendingWithdrawalAmount);
+        super._beforeDelegatorSlashed(delegator, amount, newStake, newPendingWithdrawalAmount);
     }
 
     /// @inheritdoc IUniStakerWrapper

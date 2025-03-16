@@ -9,14 +9,14 @@ import {OperatorManager} from './OperatorManager.sol';
 
 /// @title DelegatorAccessControl - Base contract for the StakingMiddleware
 /// @notice This contract manages the access control of delegators to operators. It allows Operators to set rules for delegation. Self-delegation is always allowed. Operators can toggle whether delegation to them is allowed or not. Should an operator allow delegation, they can implement their own verification logic by two different mechanisms. Either by providing a verifier contract that implements the `IDelegatorVerifier` interface that verifies whether a delegator is allowed to delegate to them or not. Because the `delegate` function specified by ERC-5805 does not allow for arbitrary data to be passed during delegation, the operator can also provide an `authorizedSender` address. If a delegator is delegating via signature, the `authorizedSender` address can be set to ensure that the signature is provided by a contract that can perform arbitrary checks (e.g., verify a merkle proof to ensure a delegator is allowed).
-abstract contract DelegatorAccessControl is IDelegatorAccessControl, OperatorManager {
-    struct AccessControl {
+abstract contract DelegatorAccessControl is OperatorManager, IDelegatorAccessControl {
+    struct AccessControlParams {
         bool acceptDelegation;
         address authorizedSender;
         IDelegatorVerifier verifier;
     }
 
-    mapping(address delegator => AccessControl accessControl) private _delegatorAccessControl;
+    mapping(address delegator => AccessControlParams accessControl) private _delegatorAccessControl;
 
     /// @dev Before a delegator selects an operator, check if they are allowed to delegate to them
     function _beforeOperatorSelection(address delegator, address operator) internal override {
@@ -64,7 +64,7 @@ abstract contract DelegatorAccessControl is IDelegatorAccessControl, OperatorMan
     /// @dev If a verifier contract is set, call it to verify if the delegator is allowed to delegate to the operator
     /// @dev If the authorized sender is set, but the delegator is not delegating by signature, revert if no verifier is set, else check verifier contract
     function _allowDelegation(address delegator, address operator) internal view returns (bool) {
-        AccessControl memory accessControl = _delegatorAccessControl[operator];
+        AccessControlParams memory accessControl = _delegatorAccessControl[operator];
         if (delegator == operator) {
             // allow self-delegation by default
             return true;

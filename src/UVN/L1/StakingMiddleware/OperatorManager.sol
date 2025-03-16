@@ -9,7 +9,7 @@ import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 /// @title OperatorManager - Base contract for the StakingMiddleware
 /// @notice This contract manages the selection of operators by delegators. The selection of operators implements the `IVotes` interface. Before a delegator can undelegate from an operator, they must pass a delay period. During this delay period their voting power is set to 0 but they remain slashable until the undelegation is finalized.
 abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperatorManager {
-    constructor() EIP712('UVN-StakingMiddleware', '1') {}
+    constructor(string memory name_) EIP712(name_, '1') {}
 
     mapping(address operator => uint256 amount) private _slashableStakes;
     mapping(address delegator => uint256 undelegationTimestamp) private _undelegationTimestamp;

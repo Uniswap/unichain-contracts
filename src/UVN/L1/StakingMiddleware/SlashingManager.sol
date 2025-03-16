@@ -184,7 +184,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         });
         _slashingInstances[operator].push(instance);
         super._slashOperatorVotes(operator, remainingPercentage);
-        // TODO notify delegation manager about slashing event
+        _afterSlash(operator, uint96(remainingPercentage));
     }
 
     /// @dev Overrides the `delegatorStake` function in `StakeManager` to reflect correct stake for a delegator accounting for slashing
@@ -274,8 +274,10 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         return uint96((uint256(stake_) * remainingPercentage) / PERCENTAGE_DENOMINATOR);
     }
 
-    /// TODO invalidation of group of slashers?
+    /// TODO invalidation of group of slashers by using nonces?
     function SLASHER_ROLE() public pure returns (bytes32) {
         return keccak256('SLASHER_ROLE');
     }
+
+    function _afterSlash(address operator, uint96 remainingPercentage) internal virtual {}
 }

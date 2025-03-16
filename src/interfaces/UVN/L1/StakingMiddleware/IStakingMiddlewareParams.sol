@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import {IAccessControl} from '@openzeppelin/contracts/access/IAccessControl.sol';
+
 /// @title StakingMiddlewareParams - Base contract for the StakingMiddleware
 /// @notice This contract manages the parameters of the StakingMiddleware contract. It allows roles to set the withdrawal delay and the slashing beneficiary.
-interface IStakingMiddlewareParams {
+interface IStakingMiddlewareParams is IAccessControl {
     /// @notice Emitted when the withdrawal delay is updated
     event WithdrawalDelayUpdated(uint256 oldWithdrawalDelay, uint256 newWithdrawalDelay);
     /// @notice Emitted when the slashing beneficiary is updated

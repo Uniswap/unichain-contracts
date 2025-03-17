@@ -5,10 +5,8 @@ import {
     IProtocolRewardDistributor,
     ProtocolRewardDistributor
 } from '../../../../src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol';
-import {StakeManager} from '../../../../src/UVN/L1/StakingMiddleware/StakeManager.sol';
 import {UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol';
 import {IUniStaker, UniStakerDeployer} from '../../../deployers/UniStakerDeployer.sol';
-import {MockVotesToken} from '../../../mock/MockVotesToken.sol';
 
 import {L1TestHandler} from '../L1TestHandler.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';

@@ -25,4 +25,7 @@ interface ISlashingManager is IDelegatorAccessControl {
 
     /// @notice Returns whether a delegator's stake is slashed and is pending for finalization
     function slashingPendingForDelegator(address delegator) external view returns (bool);
+
+    /// @notice Returns the role for slashers
+    function SLASHER_ROLE() external view returns (bytes32);
 }

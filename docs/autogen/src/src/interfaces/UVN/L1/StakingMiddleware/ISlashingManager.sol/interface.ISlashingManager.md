@@ -1,5 +1,5 @@
 # ISlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/a20d9de88d5c840c8536a212a24114da0a29a1fa/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol)
 
 **Inherits:**
 [IDelegatorAccessControl](/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md)
@@ -42,6 +42,15 @@ Returns whether a delegator's stake is slashed and is pending for finalization
 
 ```solidity
 function slashingPendingForDelegator(address delegator) external view returns (bool);
+```
+
+### SLASHER_ROLE
+
+Returns the role for slashers
+
+
+```solidity
+function SLASHER_ROLE() external view returns (bytes32);
 ```
 
 ## Events

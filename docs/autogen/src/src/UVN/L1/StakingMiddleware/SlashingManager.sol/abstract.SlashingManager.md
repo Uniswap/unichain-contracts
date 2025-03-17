@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/237a1154da63599fba331d8b41ad18f6d70fe59c/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -244,7 +244,7 @@ function SLASHER_ROLE() public pure returns (bytes32);
 
 
 ```solidity
-function _afterSlash(address operator, uint96 remainingPercentage) internal virtual;
+function _afterSlash(address operator, uint256 remainingPercentage) internal virtual;
 ```
 
 ## Structs

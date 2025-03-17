@@ -1,5 +1,5 @@
 # INotifier
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/8c1be1ff6fd1da269c202b06cfb4eb0e104f04ef/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/237a1154da63599fba331d8b41ad18f6d70fe59c/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol)
 
 **Inherits:**
 [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -58,5 +58,21 @@ thrown when the recipient of a safe transfer is not the operator or a contract
 
 ```solidity
 error InvalidRecipient();
+```
+
+### WrappedError
+ERC-7751 error wrapping reverts by service contracts
+
+
+```solidity
+error WrappedError(address target, bytes4 selector, bytes reason, bytes details);
+```
+
+### NotificationFailed
+details for wrapped error when a notification fails
+
+
+```solidity
+error NotificationFailed();
 ```
 

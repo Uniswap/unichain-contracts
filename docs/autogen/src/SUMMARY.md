@@ -33,6 +33,7 @@
           - [INotifier](src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol/interface.INotifier.md)
           - [IOperatorManager](src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
           - [IProtocolRewardDistributor](src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
+          - [IService](src/interfaces/UVN/L1/StakingMiddleware/IService.sol/interface.IService.md)
           - [ISlashingManager](src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
           - [IStakeManager](src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol/interface.IStakeManager.md)
           - [IStakingMiddlewareParams](src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md)

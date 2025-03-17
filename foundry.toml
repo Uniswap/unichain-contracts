@@ -23,7 +23,7 @@ remappings = [
 
 additional_compiler_profiles = [
   { name = "fee-splitter", optimizer_runs = 999999, via_ir = false, evm_version = "cancun" },
-  { name = "uvn-l1", optimizer_runs = 1000, via_ir = true, evm_version = "cancun" }
+  { name = "uvn-l1", optimizer_runs = 500, via_ir = true, evm_version = "cancun" }
 ]
 
 compilation_restrictions = [

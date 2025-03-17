@@ -1,5 +1,5 @@
 # Notifier
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/8c1be1ff6fd1da269c202b06cfb4eb0e104f04ef/src/UVN/L1/StakingMiddleware/Notifier.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/237a1154da63599fba331d8b41ad18f6d70fe59c/src/UVN/L1/StakingMiddleware/Notifier.sol)
 
 **Inherits:**
 [SlashingManager](/src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md), ERC721, [INotifier](/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol/interface.INotifier.md)
@@ -8,6 +8,13 @@ This contract allows operators to mint ERC721 tokens to deposit into service con
 
 
 ## State Variables
+### MIN_GAS
+
+```solidity
+uint256 private constant MIN_GAS = 500_000;
+```
+
+
 ### _uris
 
 ```solidity
@@ -21,6 +28,41 @@ mapping(address operator => string uri) private _uris;
 
 ```solidity
 constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) OperatorManager(name_);
+```
+
+### _afterStake
+
+
+```solidity
+function _afterStake(address delegator, uint96 amount) internal virtual override;
+```
+
+### _afterUnstake
+
+
+```solidity
+function _afterUnstake(address delegator, uint96 amount) internal virtual override;
+```
+
+### _afterOperatorSelection
+
+
+```solidity
+function _afterOperatorSelection(address delegator, address operator) internal virtual override;
+```
+
+### _afterOperatorUndelegationAnnouncement
+
+
+```solidity
+function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual override;
+```
+
+### _afterSlash
+
+
+```solidity
+function _afterSlash(address operator, uint256 remainingPercentage) internal virtual override;
 ```
 
 ### mint
@@ -66,11 +108,31 @@ function transferFrom(address, address, uint256) public pure override;
 function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public override;
 ```
 
-### _isContract
+### _reportOperatorStakeUpdate
+
+*reports the new operator stake to the service contract, triggered by a balance change through a delegator action*
+
+*if requireSuccess is true, the function will revert if the call to the service contract fails*
+
+*if requireSuccess is false, the function will not revert if the call to the service contract fails, this ensures that a delegator cannot be bricked by a malicious operator, they should always be able to undelegate from the operator to withdraw their stake. To ensure an honest undelegation can be processed by the recipient of the call, a minimum amount of gas is enforced.*
 
 
 ```solidity
-function _isContract(address account) private view returns (bool);
+function _reportOperatorStakeUpdate(address delegator, bool requireSuccess) internal;
+```
+
+### _reportOperatorSlash
+
+
+```solidity
+function _reportOperatorSlash(address operator, uint256 remainingPercentage) internal;
+```
+
+### _isServiceContract
+
+
+```solidity
+function _isServiceContract(address account) private view returns (bool);
 ```
 
 ### _toTokenId

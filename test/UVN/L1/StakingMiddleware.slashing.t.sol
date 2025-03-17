@@ -48,6 +48,8 @@ contract StakingMiddlewareSlashingTest is Test {
         deposit(address(this), 1000);
         stakingMiddleware.depositIntoUniStaker(address(this));
         vm.prank(operator);
+        stakingMiddleware.mint();
+        vm.prank(operator);
         stakingMiddleware.setDelegationStatus(true);
         stakingMiddleware.delegate(operator);
         assertEq(stakingMiddleware.delegatorStake(address(this)), 1000, 'delegator stake does not match');

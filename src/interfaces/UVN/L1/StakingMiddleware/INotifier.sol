@@ -11,10 +11,18 @@ interface INotifier is ISlashingManager {
 
     /// @notice Thrown when a token is already minted
     error AlreadyMinted();
+
     /// @notice thrown when the `transferFrom` function is called
     error UnsafeTransfer();
+
     /// @notice thrown when the recipient of a safe transfer is not the operator or a contract
     error InvalidRecipient();
+
+    /// @notice ERC-7751 error wrapping reverts by service contracts
+    error WrappedError(address target, bytes4 selector, bytes reason, bytes details);
+
+    /// @notice details for wrapped error when a notification fails
+    error NotificationFailed();
 
     /// @notice Allows an operator to mint a new token to deposit into service contracts
     function mint() external;

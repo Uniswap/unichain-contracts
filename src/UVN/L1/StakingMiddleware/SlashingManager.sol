@@ -184,7 +184,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         });
         _slashingInstances[operator].push(instance);
         super._slashOperatorVotes(operator, remainingPercentage);
-        _afterSlash(operator, uint96(remainingPercentage));
+        _afterSlash(operator, remainingPercentage);
     }
 
     /// @dev Overrides the `delegatorStake` function in `StakeManager` to reflect correct stake for a delegator accounting for slashing
@@ -279,5 +279,5 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         return keccak256('SLASHER_ROLE');
     }
 
-    function _afterSlash(address operator, uint96 remainingPercentage) internal virtual {}
+    function _afterSlash(address operator, uint256 remainingPercentage) internal virtual {}
 }

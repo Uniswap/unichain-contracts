@@ -70,6 +70,7 @@ abstract contract ProtocolRewardDistributor is UniStakerWrapper, IProtocolReward
         emit RewardsAdded(reward);
     }
 
+    /// @dev Pulls rewards from the UniStaker contracts and distributes them across all delegators, then updates the reward checkpoint for the delegator
     function _updateRewardCheckpoint(address account) internal {
         uint256 newRewardCheckpoint = _updateGlobalRewardCheckpoint();
         _distributeRewards(account, _calculateRewardUntil(account, newRewardCheckpoint), newRewardCheckpoint);

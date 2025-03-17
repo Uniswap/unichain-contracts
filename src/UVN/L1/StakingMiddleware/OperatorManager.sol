@@ -3,12 +3,12 @@ pragma solidity 0.8.26;
 
 import {IOperatorManager} from '../../../interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol';
 import {ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
-import {Nonces, Votes} from './libraries/Votes.sol';
+import {OperatorVotes} from './libraries/OperatorVotes.sol';
 import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 
 /// @title OperatorManager - Base contract for the StakingMiddleware
 /// @notice This contract manages the selection of operators by delegators. The selection of operators implements the `IVotes` interface. Before a delegator can undelegate from an operator, they must pass a delay period. During this delay period their voting power is set to 0 but they remain slashable until the undelegation is finalized.
-abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperatorManager {
+abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, IOperatorManager {
     constructor() EIP712('UVN-StakingMiddleware', '1') {}
 
     mapping(address operator => uint256 amount) private _slashableStakes;
@@ -20,7 +20,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         address operator = delegates(delegator);
         if (operator != address(0)) {
             _slashableStakes[operator] += amount;
-            _transferVotingUnits(address(0), operator, amount);
+            _transferVotingUnits(address(0), delegator, amount);
         }
     }
 
@@ -29,7 +29,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         super._afterUnstake(delegator, amount);
         address operator = delegates(delegator);
         if (operator != address(0)) {
-            _transferVotingUnits(operator, address(0), amount);
+            _transferVotingUnits(delegator, address(0), amount);
         }
     }
 
@@ -61,21 +61,21 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         if (operator == address(0)) {
             _deselectOperator(delegator);
         } else {
+            _beforeOperatorSelection(delegator, operator);
             _selectOperator(delegator, operator);
             super._delegate(delegator, operator);
+            _afterOperatorSelection(delegator, operator);
         }
     }
 
     /// @dev Delegates a delegator's stake to an operator, the delegator must not be already delegating to an operator and must have any pending undelegation finalized
     function _selectOperator(address delegator, address operator) internal {
-        _beforeOperatorSelection(delegator, operator);
         if (delegates(delegator) != address(0)) revert OperatorAlreadySelected();
         uint256 undelegateAt = _undelegationTimestamp[delegator];
         if (undelegateAt > block.timestamp) {
             revert UndelegationNotFinalized(undelegateAt);
         }
         _slashableStakes[operator] += _slashableStake(delegator);
-        _afterOperatorSelection(delegator, operator);
     }
 
     /// @dev Undelegates a delegator from an operator, the delegator must first announce their intention to undelegate by calling `announceOperatorUndelegation`. This function can only be called once the delay has passed.
@@ -94,7 +94,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
     function _slashOperatorVotes(address operator, uint256 remainingPercentage) internal virtual {
         _slashableStakes[operator] = _slashableStakes[operator] * remainingPercentage / PERCENTAGE_DENOMINATOR;
         uint256 newVotes = getVotes(operator) * remainingPercentage / PERCENTAGE_DENOMINATOR;
-        Votes._updateOperatorVotesAfterSlashing(operator, uint96(newVotes));
+        _updateOperatorVotesAfterSlashing(operator, uint96(newVotes));
     }
 
     function _getVotingUnits(address delegator) internal view virtual override returns (uint256) {

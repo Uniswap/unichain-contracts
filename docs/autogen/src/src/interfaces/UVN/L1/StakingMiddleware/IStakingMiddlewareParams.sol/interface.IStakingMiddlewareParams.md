@@ -1,5 +1,5 @@
 # IStakingMiddlewareParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/a20d9de88d5c840c8536a212a24114da0a29a1fa/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol)
 
 **Inherits:**
 IAccessControl

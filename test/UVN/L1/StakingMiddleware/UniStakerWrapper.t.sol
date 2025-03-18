@@ -3,9 +3,9 @@ pragma solidity 0.8.26;
 
 import {UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol';
 import {IUniStaker, UniStakerDeployer} from '../../../deployers/UniStakerDeployer.sol';
-import {MockVotesToken} from '../../../mock/MockVotesToken.sol';
+
+import {L1TestHandler} from '../L1TestHandler.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {Test} from 'forge-std/Test.sol';
 
 contract UniStakerWrapperHarness is UniStakerWrapper {
     constructor(IUniStaker unistaker_) UniStakerWrapper(unistaker_, msg.sender, 0, address(1)) {}
@@ -30,18 +30,12 @@ contract UniStakerWrapperHarness is UniStakerWrapper {
     }
 }
 
-contract UniStakerWrapperTest is Test {
-    IUniStaker unistaker;
-    MockVotesToken stakeToken;
-    MockVotesToken rewardToken;
+contract UniStakerWrapperTest is L1TestHandler {
     UniStakerWrapperHarness unistakerWrapper;
-    address delegatee = makeAddr('delegatee');
 
-    function setUp() public {
-        stakeToken = new MockVotesToken();
-        rewardToken = new MockVotesToken();
+    function setUp() public override {
+        super.setUp();
         stakeToken.mint(address(this), 1000);
-        unistaker = UniStakerDeployer.deploy(address(rewardToken), address(stakeToken), address(this));
         unistakerWrapper = new UniStakerWrapperHarness(unistaker);
         stakeToken.approve(address(unistakerWrapper), 1000);
         // use up the first depositId 0

@@ -101,6 +101,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
         return _delegatorStake(delegator);
     }
 
+    // TODO rename to _beforeOperatorDelegation?
     function _beforeOperatorSelection(address delegator, address operator) internal virtual {}
 
     function _afterOperatorSelection(address delegator, address operator) internal virtual {}
@@ -109,6 +110,7 @@ abstract contract OperatorManager is Votes, ProtocolRewardDistributor, IOperator
 
     function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual {}
 
+    // TODO rename to _beforeOperatorUndelegation?
     function _beforeOperatorDeselection(address delegator) internal virtual {}
 
     function _afterOperatorDeselection(address delegator) internal virtual {}

@@ -1,28 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {StakingMiddleware} from '../../../src/UVN/L1/StakingMiddleware.sol';
-import {IUniStaker, UniStakerDeployer} from '../../deployers/UniStakerDeployer.sol';
-import {MockVotesToken} from '../../mock/MockVotesToken.sol';
-import 'forge-std/Test.sol';
+import {L1TestHandler} from './L1TestHandler.sol';
 
-contract StakingMiddlewareSlashingTest is Test {
+contract StakingMiddlewareSlashingTest is L1TestHandler {
     uint256 private constant REWARD_DURATION = 30 days;
     uint96 private constant DEFAULT_REWARD = 1 ether;
 
-    IUniStaker unistaker;
-    MockVotesToken stakeToken;
-    MockVotesToken rewardToken;
-    StakingMiddleware stakingMiddleware;
-    address operator = makeAddr('operator');
     address slasher = makeAddr('slasher');
-    address slashingBeneficiary = makeAddr('slashing beneficiary');
 
-    function setUp() public {
-        stakeToken = new MockVotesToken();
-        rewardToken = new MockVotesToken();
-        unistaker = UniStakerDeployer.deploy(address(rewardToken), address(stakeToken), address(this));
-        stakingMiddleware = new StakingMiddleware(unistaker, address(this), 0, slashingBeneficiary);
+    function setUp() public override {
+        super.setUp();
         stakingMiddleware.grantRole(stakingMiddleware.SLASHER_ROLE(), slasher);
         unistaker.setRewardNotifier(address(this), true);
         unistaker.stake(0, operator);

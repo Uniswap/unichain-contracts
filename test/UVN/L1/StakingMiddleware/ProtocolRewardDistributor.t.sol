@@ -5,12 +5,11 @@ import {
     IProtocolRewardDistributor,
     ProtocolRewardDistributor
 } from '../../../../src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol';
-import {StakeManager} from '../../../../src/UVN/L1/StakingMiddleware/StakeManager.sol';
 import {UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol';
 import {IUniStaker, UniStakerDeployer} from '../../../deployers/UniStakerDeployer.sol';
-import {MockVotesToken} from '../../../mock/MockVotesToken.sol';
+
+import {L1TestHandler} from '../L1TestHandler.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import 'forge-std/Test.sol';
 
 contract ProtocolRewardDistributorHarness is ProtocolRewardDistributor {
     constructor(IUniStaker unistaker_, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
@@ -26,20 +25,14 @@ contract ProtocolRewardDistributorHarness is ProtocolRewardDistributor {
     }
 }
 
-contract UniStakerWrapperTest is Test {
-    IUniStaker unistaker;
-    MockVotesToken stakeToken;
-    MockVotesToken rewardToken;
+contract ProtocolRewardDistributorTest is L1TestHandler {
     ProtocolRewardDistributorHarness protocolRewardDistributor;
-    address delegatee = makeAddr('delegatee');
 
-    function setUp() public {
-        stakeToken = new MockVotesToken();
-        rewardToken = new MockVotesToken();
-        unistaker = UniStakerDeployer.deploy(address(rewardToken), address(stakeToken), address(this));
+    function setUp() public override {
+        super.setUp();
         unistaker.setRewardNotifier(address(this), true);
         protocolRewardDistributor =
-            new ProtocolRewardDistributorHarness(unistaker, address(this), 0, makeAddr('slashing beneficiary'));
+            new ProtocolRewardDistributorHarness(unistaker, address(this), 0, slashingBeneficiary);
         // use up the first depositId 0
         unistaker.stake(0, delegatee);
     }

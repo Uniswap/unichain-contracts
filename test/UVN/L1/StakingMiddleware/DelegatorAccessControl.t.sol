@@ -99,13 +99,15 @@ contract DelegatorAccessControlTest is L1TestHandler {
     }
 
     // Helper function to create a valid signature for delegateBySig
-    function _createSignature(uint256 privateKey, address operator, uint256 nonce, uint256 expiry)
+    function _createSignature(uint256 privateKey, address operator_, uint256 nonce, uint256 expiry)
         internal
         view
         returns (uint8 v, bytes32 r, bytes32 s)
     {
         bytes32 structHash = keccak256(
-            abi.encode(keccak256('Delegation(address delegatee,uint256 nonce,uint256 expiry)'), operator, nonce, expiry)
+            abi.encode(
+                keccak256('Delegation(address delegatee,uint256 nonce,uint256 expiry)'), operator_, nonce, expiry
+            )
         );
 
         bytes32 domainSeparator = keccak256(

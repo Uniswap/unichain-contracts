@@ -62,15 +62,15 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     }
 
     /// @dev Before a delegator deposits into the UniStaker contract, apply all pending slashing instances to the delegator's stake
-    function _beforeUniStakerDeposit(address delegator, uint96 amount) internal override {
+    function _beforeUniStakerDeposit(address delegator) internal override {
         applySlashing(delegator, type(uint256).max);
-        super._beforeUniStakerDeposit(delegator, amount);
+        super._beforeUniStakerDeposit(delegator);
     }
 
     /// @dev Before a delegator withdraws from the UniStaker contract, apply all pending slashing instances to the delegator's stake
-    function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal override {
+    function _beforeUniStakerWithdrawal(address delegator) internal override {
         applySlashing(delegator, type(uint256).max);
-        super._beforeUniStakerWithdrawal(delegator, amount);
+        super._beforeUniStakerWithdrawal(delegator);
     }
 
     /// @dev Before a delegator changes their governance delegatee, apply all pending slashing instances to the delegator's stake
@@ -102,6 +102,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         if (amount == 0) revert SlashingAmountZero();
         // TODO that amount does not exceed the total operator stake
         uint96 stakeBefore = slashableOperatorStake(operator);
+        if (amount > stakeBefore) amount = stakeBefore;
         uint256 remainingPercentage = ((stakeBefore - amount) * PERCENTAGE_DENOMINATOR) / stakeBefore;
         _slashOperatorVotes(operator, remainingPercentage);
     }

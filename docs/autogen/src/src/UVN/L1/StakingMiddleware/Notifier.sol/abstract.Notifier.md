@@ -1,5 +1,5 @@
 # Notifier
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/237a1154da63599fba331d8b41ad18f6d70fe59c/src/UVN/L1/StakingMiddleware/Notifier.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7dcfc053062e80b4db9d2b818e627cd6f4a79851/src/UVN/L1/StakingMiddleware/Notifier.sol)
 
 **Inherits:**
 [SlashingManager](/src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md), ERC721, [INotifier](/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol/interface.INotifier.md)
@@ -102,6 +102,8 @@ function transferFrom(address, address, uint256) public pure override;
 ### safeTransferFrom
 
 *only allow transfers to contracts and the operator*
+
+*always allow operator to claw back their own token forcefully*
 
 
 ```solidity

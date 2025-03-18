@@ -1,5 +1,5 @@
 # IService
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/237a1154da63599fba331d8b41ad18f6d70fe59c/src/interfaces/UVN/L1/StakingMiddleware/IService.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7dcfc053062e80b4db9d2b818e627cd6f4a79851/src/interfaces/UVN/L1/StakingMiddleware/IService.sol)
 
 **Inherits:**
 IERC165
@@ -41,5 +41,20 @@ function reportOperatorSlash(address operator, uint256 remainingPercentage) exte
 |----|----|-----------|
 |`operator`|`address`|The address of the operator.|
 |`remainingPercentage`|`uint256`|The remaining percentage of the operator's stake.|
+
+
+### onForceWithdrawal
+
+This function is called when an operator ERC-721 token is forcefully withdrawn.
+
+
+```solidity
+function onForceWithdrawal(address operator) external;
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`operator`|`address`|The address of the operator.|
 
 

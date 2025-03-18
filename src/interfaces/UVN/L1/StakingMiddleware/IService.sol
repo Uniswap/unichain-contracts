@@ -18,4 +18,8 @@ interface IService is IERC165 {
     /// @param operator The address of the operator.
     /// @param remainingPercentage The remaining percentage of the operator's stake.
     function reportOperatorSlash(address operator, uint256 remainingPercentage) external;
+
+    /// @notice This function is called when an operator ERC-721 token is forcefully withdrawn.
+    /// @param operator The address of the operator.
+    function onForceWithdrawal(address operator) external;
 }

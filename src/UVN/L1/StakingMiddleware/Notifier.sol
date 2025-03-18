@@ -68,9 +68,19 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
     }
 
     /// @dev only allow transfers to contracts and the operator
+    /// @dev always allow operator to claw back their own token forcefully
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public override {
-        if (to != _toAddress(tokenId) && !_isServiceContract(to)) revert InvalidRecipient();
-        super.safeTransferFrom(from, to, tokenId, data);
+        address operator = _toAddress(tokenId);
+        if (to != operator && !_isServiceContract(to)) revert InvalidRecipient();
+        if (msg.sender == operator && to == operator) {
+            // if the owner is both, the sender and the recipient, try catch the `onERC721Received` hook to ensure the owner can always claw back their own token but allow a service contract to implement arbitrary logic on withdrawals
+            super.transferFrom(from, to, tokenId);
+            if (_isServiceContract(from)) {
+                try IService(from).onForceWithdrawal{gas: MIN_GAS}(operator) {} catch {}
+            }
+        } else {
+            super.safeTransferFrom(from, to, tokenId, data);
+        }
     }
 
     /// @dev reports the new operator stake to the service contract, triggered by a balance change through a delegator action

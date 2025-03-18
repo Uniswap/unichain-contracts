@@ -1,5 +1,5 @@
 # UniStakerWrapper
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7dcfc053062e80b4db9d2b818e627cd6f4a79851/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
 
 **Inherits:**
 [StakeManager](/src/UVN/L1/StakingMiddleware/StakeManager.sol/contract.StakeManager.md), [IUniStakerWrapper](/src/interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol/interface.IUniStakerWrapper.md)
@@ -165,14 +165,14 @@ function _isDepositedIntoUniStaker(address delegator) internal view returns (boo
 
 
 ```solidity
-function _beforeUniStakerDeposit(address delegator, uint96 amount) internal virtual;
+function _beforeUniStakerDeposit(address delegator) internal virtual;
 ```
 
 ### _beforeUniStakerWithdrawal
 
 
 ```solidity
-function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal virtual;
+function _beforeUniStakerWithdrawal(address delegator) internal virtual;
 ```
 
 ### _beforeUniStakerDelegateChange

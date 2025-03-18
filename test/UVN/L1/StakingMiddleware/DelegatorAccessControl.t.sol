@@ -8,8 +8,11 @@ import {UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStak
 import {IUniStaker} from '../../../../src/interfaces/UVN/L1/IUnistaker.sol';
 import {IDelegatorAccessControl} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol';
 import {IDelegatorVerifier} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IDelegatorVerifier.sol';
+import {IOperatorManager} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol';
+import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 import {L1TestHandler} from '../L1TestHandler.sol';
+import {IVotes} from '@openzeppelin/contracts/governance/utils/IVotes.sol';
 
 // Mock implementation of IDelegatorVerifier for testing
 contract MockDelegatorVerifier is IDelegatorVerifier {
@@ -222,7 +225,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Attempt to delegate to operator should fail
         vm.prank(delegatorA);
-        vm.expectRevert(abi.encodeWithSignature('DelegationDisallowed()'));
+        vm.expectRevert(IDelegatorAccessControl.DelegationDisallowed.selector);
         delegatorAccessControl.delegate(operatorA);
     }
 
@@ -281,7 +284,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Attempt to delegate should fail because verifier returns false by default
         vm.prank(delegatorA);
-        vm.expectRevert(abi.encodeWithSignature('DelegationDisallowed()'));
+        vm.expectRevert(IDelegatorAccessControl.DelegationDisallowed.selector);
         delegatorAccessControl.delegate(operatorA);
     }
 
@@ -300,7 +303,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Attempt to delegate directly should fail
         vm.prank(delegatorA);
-        vm.expectRevert(abi.encodeWithSignature('DelegationDisallowed()'));
+        vm.expectRevert(IDelegatorAccessControl.DelegationDisallowed.selector);
         delegatorAccessControl.delegate(operatorA);
 
         // Create a valid signature for delegation
@@ -376,7 +379,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Delegation should fail with corrupted signature
         vm.prank(authorizedSender);
-        vm.expectRevert();
+        vm.expectRevert(ECDSA.ECDSAInvalidSignature.selector);
         delegatorAccessControl.delegateBySig(operatorA, nonce, expiry, v, r, s);
     }
 
@@ -400,7 +403,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Delegation should fail with expired signature
         vm.prank(authorizedSender);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(IVotes.VotesExpiredSignature.selector, expiry));
         delegatorAccessControl.delegateBySig(operatorA, nonce, expiry, v, r, s);
     }
 
@@ -468,7 +471,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Attempt to delegate directly should fail
         vm.prank(delegatorA);
-        vm.expectRevert(abi.encodeWithSignature('DelegationDisallowed()'));
+        vm.expectRevert(IDelegatorAccessControl.DelegationDisallowed.selector);
         delegatorAccessControl.delegate(operatorA);
     }
 
@@ -517,7 +520,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Cannot delegate to operatorB while already delegated
         vm.prank(delegatorA);
-        vm.expectRevert(abi.encodeWithSignature('OperatorAlreadySelected()'));
+        vm.expectRevert(IOperatorManager.OperatorAlreadySelected.selector);
         delegatorAccessControl.delegate(operatorB);
 
         // Undelegate from operatorA - first announce undelegation
@@ -555,7 +558,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Check via direct contract (should revert)
         vm.prank(delegatorA);
-        vm.expectRevert(abi.encodeWithSignature('DelegationDisallowed()'));
+        vm.expectRevert(IDelegatorAccessControl.DelegationDisallowed.selector);
         delegatorAccessControl.delegate(operatorA);
     }
 
@@ -588,7 +591,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Check via direct contract (should revert)
         vm.prank(delegatorA);
-        vm.expectRevert(abi.encodeWithSignature('DelegationDisallowed()'));
+        vm.expectRevert(IDelegatorAccessControl.DelegationDisallowed.selector);
         delegatorAccessControl.delegate(operatorA);
 
         // Allow delegation via verifier
@@ -683,7 +686,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Check via direct contract (should revert)
         vm.prank(delegatorA);
-        vm.expectRevert(abi.encodeWithSignature('DelegationDisallowed()'));
+        vm.expectRevert(IDelegatorAccessControl.DelegationDisallowed.selector);
         delegatorAccessControl.delegate(operatorA);
 
         // But delegation via authorized sender should work

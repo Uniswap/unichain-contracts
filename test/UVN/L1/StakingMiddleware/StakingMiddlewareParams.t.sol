@@ -22,7 +22,8 @@ contract StakingMiddlewareParamsHarness is StakingMiddlewareParams {
 }
 
 contract StakingMiddlewareParamsTest is L1TestHandler {
-    StakingMiddlewareParamsHarness params;
+    StakingMiddlewareParams params;
+    StakingMiddlewareParamsHarness paramsHarness;
     address paramsAdmin = makeAddr('paramsAdmin');
     address paramsSetter = makeAddr('paramsSetter');
     uint256 initialWithdrawalDelay = 7 days;
@@ -32,12 +33,21 @@ contract StakingMiddlewareParamsTest is L1TestHandler {
     function setUp() public override {
         super.setUp();
         initialSlashingBeneficiary = slashingBeneficiary;
-        params = new StakingMiddlewareParamsHarness(paramsAdmin, initialWithdrawalDelay, initialSlashingBeneficiary);
+
+        // Deploy the regular contract for most tests
+        params = new StakingMiddlewareParams(paramsAdmin, initialWithdrawalDelay, initialSlashingBeneficiary);
+
+        // Deploy the harness for internal function tests
+        paramsHarness =
+            new StakingMiddlewareParamsHarness(paramsAdmin, initialWithdrawalDelay, initialSlashingBeneficiary);
+
         PARAMS_SETTER_ROLE = params.PARAMS_SETTER_ROLE();
 
-        // Grant the PARAMS_SETTER_ROLE to paramsSetter
-        vm.prank(paramsAdmin);
+        // Grant the PARAMS_SETTER_ROLE to paramsSetter on both contracts
+        vm.startPrank(paramsAdmin);
         params.grantRole(PARAMS_SETTER_ROLE, paramsSetter);
+        paramsHarness.grantRole(PARAMS_SETTER_ROLE, paramsSetter);
+        vm.stopPrank();
     }
 
     function test_constructor() public view {
@@ -115,19 +125,19 @@ contract StakingMiddlewareParamsTest is L1TestHandler {
     }
 
     function test_internalFunctions() public {
-        // Test internal _setWithdrawalDelay function
+        // Test internal _setWithdrawalDelay function using the harness
         uint256 newWithdrawalDelay = 21 days;
         vm.expectEmit();
         emit IStakingMiddlewareParams.WithdrawalDelayUpdated(initialWithdrawalDelay, newWithdrawalDelay);
-        params.setWithdrawalDelayInternal(newWithdrawalDelay);
-        assertEq(params.withdrawalDelay(), newWithdrawalDelay);
+        paramsHarness.setWithdrawalDelayInternal(newWithdrawalDelay);
+        assertEq(paramsHarness.withdrawalDelay(), newWithdrawalDelay);
 
-        // Test internal _setSlashingBeneficiary function
+        // Test internal _setSlashingBeneficiary function using the harness
         address newSlashingBeneficiary = makeAddr('anotherSlashingBeneficiary');
         vm.expectEmit();
         emit IStakingMiddlewareParams.SlashingBeneficiaryUpdated(initialSlashingBeneficiary, newSlashingBeneficiary);
-        params.setSlashingBeneficiaryInternal(newSlashingBeneficiary);
-        assertEq(params.slashingBeneficiary(), newSlashingBeneficiary);
+        paramsHarness.setSlashingBeneficiaryInternal(newSlashingBeneficiary);
+        assertEq(paramsHarness.slashingBeneficiary(), newSlashingBeneficiary);
     }
 
     // Fuzz test for withdrawal delay updates
@@ -151,5 +161,66 @@ contract StakingMiddlewareParamsTest is L1TestHandler {
 
         // Verify the slashing beneficiary was updated
         assertEq(params.slashingBeneficiary(), newSlashingBeneficiary);
+    }
+
+    // Test that internal functions cannot be directly called on the contract
+    function test_internalFunctionsNotAccessible() public {
+        // Verify that _setWithdrawalDelay is not accessible
+        bytes memory setWithdrawalDelayCalldata = abi.encodeWithSignature('_setWithdrawalDelay(uint256)', 14 days);
+        (bool success,) = address(params).call(setWithdrawalDelayCalldata);
+        assertFalse(success, 'Internal function _setWithdrawalDelay should not be accessible');
+
+        // Verify that _setSlashingBeneficiary is not accessible
+        bytes memory setSlashingBeneficiaryCalldata =
+            abi.encodeWithSignature('_setSlashingBeneficiary(address)', makeAddr('newSlashingBeneficiary'));
+        (success,) = address(params).call(setSlashingBeneficiaryCalldata);
+        assertFalse(success, 'Internal function _setSlashingBeneficiary should not be accessible');
+    }
+
+    // Test that PARAMS_SETTER_ROLE is accessible via a getter
+    function test_paramsSetterRoleGetter() public view {
+        // Verify that PARAMS_SETTER_ROLE is accessible and matches the expected value
+        bytes32 expectedRole = keccak256('PARAMS_SETTER_ROLE');
+        assertEq(params.PARAMS_SETTER_ROLE(), expectedRole, 'PARAMS_SETTER_ROLE getter should return the correct value');
+    }
+
+    // Test multiple updates to parameters
+    function test_multipleUpdates() public {
+        // First update to withdrawal delay
+        uint256 firstDelay = 14 days;
+        vm.prank(paramsSetter);
+        params.updateWithdrawalDelay(firstDelay);
+        assertEq(params.withdrawalDelay(), firstDelay, 'First withdrawal delay update failed');
+
+        // Second update to withdrawal delay
+        uint256 secondDelay = 30 days;
+        vm.prank(paramsSetter);
+        params.updateWithdrawalDelay(secondDelay);
+        assertEq(params.withdrawalDelay(), secondDelay, 'Second withdrawal delay update failed');
+
+        // First update to slashing beneficiary
+        address firstBeneficiary = makeAddr('firstBeneficiary');
+        vm.prank(paramsSetter);
+        params.updateSlashingBeneficiary(firstBeneficiary);
+        assertEq(params.slashingBeneficiary(), firstBeneficiary, 'First slashing beneficiary update failed');
+
+        // Second update to slashing beneficiary
+        address secondBeneficiary = makeAddr('secondBeneficiary');
+        vm.prank(paramsSetter);
+        params.updateSlashingBeneficiary(secondBeneficiary);
+        assertEq(params.slashingBeneficiary(), secondBeneficiary, 'Second slashing beneficiary update failed');
+
+        // Verify events are emitted correctly on multiple updates
+        uint256 thirdDelay = 60 days;
+        vm.expectEmit();
+        emit IStakingMiddlewareParams.WithdrawalDelayUpdated(secondDelay, thirdDelay);
+        vm.prank(paramsSetter);
+        params.updateWithdrawalDelay(thirdDelay);
+
+        address thirdBeneficiary = makeAddr('thirdBeneficiary');
+        vm.expectEmit();
+        emit IStakingMiddlewareParams.SlashingBeneficiaryUpdated(secondBeneficiary, thirdBeneficiary);
+        vm.prank(paramsSetter);
+        params.updateSlashingBeneficiary(thirdBeneficiary);
     }
 }

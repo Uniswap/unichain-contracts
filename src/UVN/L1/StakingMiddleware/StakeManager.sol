@@ -48,13 +48,8 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
         if (currentStake < amount) revert InsufficientBalance();
         _beforeUnstake(msg.sender, amount);
         stake_.stake -= amount;
-        stake_.totalPendingWithdrawal += amount;
-        uint40 unlocksAt = uint40(block.timestamp + withdrawalDelay());
-        withdrawalId = stake_.pendingWithdrawals.length;
-        stake_.pendingWithdrawals.push(
-            IStakeManager.PendingWithdrawal({amount: amount, timestamp: unlocksAt, withdrawn: false})
-        );
-        emit Unstaked(msg.sender, amount, unlocksAt);
+        withdrawalId = _schedulePendingWithdrawal(msg.sender, amount);
+        emit Unstaked(msg.sender, amount);
         _afterUnstake(msg.sender, amount);
     }
 
@@ -122,22 +117,9 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
         uint96 newPendingWithdrawalAmount =
             uint96(currentPendingWithdrawalAmount * remainingPercentage / PERCENTAGE_DENOMINATOR);
         if (currentPendingWithdrawalAmount != 0) {
-            uint64 currentHead = stake_.head;
-            uint64 currentLength = uint64(stake_.pendingWithdrawals.length);
             // cancel all pending withdrawals and schedule a new one with the remainder
-            stake_.head = currentLength;
-            stake_.totalPendingWithdrawal = newPendingWithdrawalAmount;
-            uint40 unlocksAt = uint40(block.timestamp + withdrawalDelay());
-            stake_.pendingWithdrawals.push(
-                IStakeManager.PendingWithdrawal({
-                    amount: newPendingWithdrawalAmount,
-                    timestamp: unlocksAt,
-                    withdrawn: false
-                })
-            );
-            emit PendingWithdrawalsInvalidated(
-                delegator, currentHead, currentLength - 1, newPendingWithdrawalAmount, unlocksAt
-            );
+            _invalidatePendingWithdrawals(delegator);
+            _schedulePendingWithdrawal(delegator, newPendingWithdrawalAmount);
         }
         if (currentStake != 0) {
             _depositorStake[delegator].stake = uint96(newStake);
@@ -148,6 +130,30 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
         STAKE_TOKEN.transfer(slashingBeneficiary(), slashedAmount);
         emit Slashed(delegator, slashedAmount, newStake);
         _afterSlash(delegator, slashedAmount, newStake, newPendingWithdrawalAmount);
+    }
+
+    function _schedulePendingWithdrawal(address delegator, uint96 amount)
+        internal
+        virtual
+        returns (uint256 withdrawalId)
+    {
+        Stake storage stake_ = _depositorStake[delegator];
+        uint40 unlocksAt = uint40(block.timestamp + withdrawalDelay());
+        withdrawalId = stake_.pendingWithdrawals.length;
+        stake_.totalPendingWithdrawal += amount;
+        stake_.pendingWithdrawals.push(
+            IStakeManager.PendingWithdrawal({amount: amount, timestamp: unlocksAt, withdrawn: false})
+        );
+        emit WithdrawalQueued(delegator, withdrawalId, amount, unlocksAt);
+    }
+
+    function _invalidatePendingWithdrawals(address delegator) private {
+        Stake storage stake_ = _depositorStake[delegator];
+        uint64 currentHead = stake_.head;
+        uint64 currentLength = uint64(stake_.pendingWithdrawals.length);
+        stake_.head = currentLength;
+        stake_.totalPendingWithdrawal = 0;
+        emit PendingWithdrawalsInvalidated(delegator, currentHead, currentLength - 1);
     }
 
     function _delegatorStake(address delegator) internal view virtual returns (uint96) {

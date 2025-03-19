@@ -17,15 +17,16 @@ interface IStakeManager is IStakingMiddlewareParams {
     event Staked(address indexed delegator, address indexed sender, uint96 amount);
 
     /// @notice Emitted when a delegator unstakes a stake from the StakingMiddleware contract
-    event Unstaked(address indexed delegator, uint96 amount, uint40 unlocksAt);
+    event Unstaked(address indexed delegator, uint96 amount);
+
+    /// @notice Emitted when a delegator schedules a pending withdrawal
+    event WithdrawalQueued(address indexed delegator, uint256 withdrawalId, uint96 amount, uint40 unlocksAt);
 
     /// @notice Emitted when a delegator withdraws unstaked stakes from the StakingMiddleware contract
     event Withdrawn(address indexed delegator, address indexed recipient, uint96 amount);
 
     /// @notice Emitted when a delegator's pending withdrawals are invalidated during slashing
-    event PendingWithdrawalsInvalidated(
-        address indexed delegator, uint256 start, uint256 end, uint96 newWithdrawalAmount, uint40 newWithdrawalTimestamp
-    );
+    event PendingWithdrawalsInvalidated(address indexed delegator, uint256 start, uint256 end);
 
     /// @notice Emitted when a delegator's stake is slashed
     event Slashed(address indexed delegator, uint96 amount, uint96 newStake);

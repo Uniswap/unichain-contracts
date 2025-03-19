@@ -54,16 +54,16 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     /// @inheritdoc IUniStakerWrapper
     function depositIntoUniStaker(address governanceDelegatee) external returns (uint256 depositId) {
         if (_isDepositedIntoUniStaker(msg.sender)) revert AlreadyDepositedIntoUniStaker();
+        _beforeUniStakerDeposit(msg.sender);
         uint96 amount = _delegatorStake(msg.sender);
-        _beforeUniStakerDeposit(msg.sender, amount);
         depositId = _depositIntoUniStaker(amount, governanceDelegatee);
     }
 
     /// @inheritdoc IUniStakerWrapper
     function withdrawFromUniStaker() external {
         if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
+        _beforeUniStakerWithdrawal(msg.sender);
         uint96 amount = _delegatorStake(msg.sender);
-        _beforeUniStakerWithdrawal(msg.sender, amount);
         _withdrawFromUniStaker(amount);
     }
 
@@ -130,9 +130,9 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
         return _depositIds[delegator] != 0;
     }
 
-    function _beforeUniStakerDeposit(address delegator, uint96 amount) internal virtual {}
+    function _beforeUniStakerDeposit(address delegator) internal virtual {}
 
-    function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal virtual {}
+    function _beforeUniStakerWithdrawal(address delegator) internal virtual {}
 
     function _beforeUniStakerDelegateChange(address delegator, address newGovernanceDelegatee) internal virtual {}
 }

@@ -32,7 +32,7 @@ contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
     }
 
     function updateSlashingBeneficiary(address slashingBeneficiary_) external onlyRole(PARAMS_SETTER_ROLE) {
-        _slashingBeneficiary = slashingBeneficiary_;
+        _setSlashingBeneficiary(slashingBeneficiary_);
     }
 
     function _setWithdrawalDelay(uint256 withdrawalDelay_) internal {

@@ -25,15 +25,15 @@ abstract contract ProtocolRewardDistributor is UniStakerWrapper, IProtocolReward
     }
 
     /// @dev before a delegator deposits into the UniStaker contract, update their checkpoint to ensure correct reward distribution
-    function _beforeUniStakerDeposit(address delegator, uint96 amount) internal virtual override {
+    function _beforeUniStakerDeposit(address delegator) internal virtual override {
         _updateRewardCheckpoint(delegator);
-        super._beforeUniStakerDeposit(delegator, amount);
+        super._beforeUniStakerDeposit(delegator);
     }
 
     /// @dev before a delegator withdraws from the UniStaker contract, claim rewards with the balance prior to the withdrawal
-    function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal virtual override {
+    function _beforeUniStakerWithdrawal(address delegator) internal virtual override {
         _updateRewardCheckpoint(delegator);
-        super._beforeUniStakerWithdrawal(delegator, amount);
+        super._beforeUniStakerWithdrawal(delegator);
     }
 
     /// @inheritdoc IProtocolRewardDistributor

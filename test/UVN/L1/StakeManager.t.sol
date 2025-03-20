@@ -6,7 +6,7 @@ import {IStakeManager} from '../../../src/interfaces/UVN/L1/StakingMiddleware/IS
 import {L1TestHandler} from './L1TestHandler.sol';
 
 /// @notice Wrapper around StakeManager to test it in isolation
-contract StakeManagerTestWrapper is StakeManager {
+contract StakeManagerTestHarness is StakeManager {
     constructor(address stakeToken, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
         StakeManager(stakeToken, initialAdmin, withdrawalDelay_, slashingBeneficiary_)
     {}
@@ -15,29 +15,18 @@ contract StakeManagerTestWrapper is StakeManager {
     function slashDelegatorStake(address delegator, uint256 remainingPercentage) external {
         _slashDelegatorStake(delegator, remainingPercentage);
     }
-
-    // No-op implementations of virtual functions
-    function _beforeStake(address, uint96) internal override {}
-    function _afterStake(address, uint96) internal override {}
-    function _beforeUnstake(address, uint96) internal override {}
-    function _afterUnstake(address, uint96) internal override {}
-    function _beforeWithdraw(address, uint96) internal override {}
-    function _afterWithdraw(address, uint96) internal override {}
-    function _beforeSlash(address, uint96, uint96, uint96) internal override {}
-    function _afterSlash(address, uint96, uint96, uint96) internal override {}
 }
 
 contract StakeManagerTest is L1TestHandler {
-    StakeManagerTestWrapper stakeManager;
+    StakeManagerTestHarness stakeManager;
     uint256 constant WITHDRAWAL_DELAY = 7 days;
 
     address initialAdmin = makeAddr('initial admin');
-    address delegator = makeAddr('delegator');
 
     function setUp() public override {
         super.setUp();
         stakeManager =
-            new StakeManagerTestWrapper(address(stakeToken), initialAdmin, WITHDRAWAL_DELAY, slashingBeneficiary);
+            new StakeManagerTestHarness(address(stakeToken), initialAdmin, WITHDRAWAL_DELAY, slashingBeneficiary);
     }
 
     function test_stake() public {

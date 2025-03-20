@@ -212,7 +212,7 @@ contract StakeManagerTest is L1TestHandler {
         assertEq(stakeToken.balanceOf(slashingBeneficiary), 200); // 1000 * 0.2 = 200
     }
 
-    function test_slashDelegatorStake_with_multiple_pending_withdrawals() public {
+    function test_slashDelegatorStake_multiplePendingWithdrawals() public {
         uint96 amount = 1000;
 
         // Setup

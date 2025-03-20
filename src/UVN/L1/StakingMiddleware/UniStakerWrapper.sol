@@ -56,6 +56,7 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
         if (_isDepositedIntoUniStaker(msg.sender)) revert AlreadyDepositedIntoUniStaker();
         _beforeUniStakerDeposit(msg.sender);
         uint96 amount = _delegatorStake(msg.sender);
+        if (amount == 0) revert NoStakeToDeposit();
         depositId = _depositIntoUniStaker(amount, governanceDelegatee);
     }
 
@@ -72,6 +73,11 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
         if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
         _beforeUniStakerDelegateChange(msg.sender, newGovernanceDelegatee);
         _depositIntoUniStaker(0, newGovernanceDelegatee);
+    }
+
+    /// @inheritdoc IUniStakerWrapper
+    function isDepositedIntoUniStaker(address delegator) external view returns (bool) {
+        return _isDepositedIntoUniStaker(delegator);
     }
 
     /// @dev Deposits a delegator's stake into the UniStaker contract and/or updates their governance delegatee. On first deposit, the delegator MUST provide both, the stake and a delegatee and a deposit id is returned. On subsequent deposits, the deposit id is reused and identifies the delegator's entire stake.

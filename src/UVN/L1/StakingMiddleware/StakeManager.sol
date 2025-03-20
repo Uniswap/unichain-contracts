@@ -62,7 +62,6 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
         uint256 i = 0;
         for (; head < len; head++) {
             if (i == n) break;
-            i++;
             IStakeManager.PendingWithdrawal storage pendingWithdrawal = stake_.pendingWithdrawals[head];
             uint40 nextTimestamp = pendingWithdrawal.timestamp;
             if (nextTimestamp > block.timestamp) {
@@ -71,7 +70,7 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
             }
             amount += pendingWithdrawal.amount;
             pendingWithdrawal.withdrawn = true;
-            head++;
+            i++;
         }
         stake_.head = head;
         stake_.totalPendingWithdrawal -= amount;

@@ -84,7 +84,10 @@ abstract contract ProtocolRewardDistributor is UniStakerWrapper, IProtocolReward
 
     /// @dev Calculates the new global reward checkpoint based on a new reward amount
     function _getNewGlobalRewardCheckpoint(uint256 reward) internal view returns (uint256) {
-        return _globalRewardCheckpoint + (reward * PRECISION) / _totalAmountDepositedIntoUniStaker();
+        uint256 totalStaked = _totalAmountDepositedIntoUniStaker();
+        // Return current checkpoint if no stakes (prevents divide by zero)
+        if (totalStaked == 0) return _globalRewardCheckpoint;
+        return _globalRewardCheckpoint + (reward * PRECISION) / totalStaked;
     }
 
     /// @dev Calculates the rewards a delegator has earned up to a given checkpoint

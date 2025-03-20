@@ -134,7 +134,11 @@ contract StakeManagerTest is L1TestHandler {
         vm.expectRevert(abi.encodeWithSelector(IStakeManager.NoPendingWithdrawalsToWithdraw.selector, uint64(0)));
         stakeManager.withdraw(delegator, 1);
         
+        vm.expectEmit(true, true, true, true);
+        emit IStakeManager.WithdrawalQueued(delegator, 0, 300, uint40(block.timestamp + WITHDRAWAL_DELAY));
         stakeManager.unstake(300);
+        vm.expectEmit(true, true, true, true);
+        emit IStakeManager.WithdrawalQueued(delegator, 1, 200, uint40(block.timestamp + WITHDRAWAL_DELAY));
         stakeManager.unstake(200);
         
         // Can't withdraw yet (before delay)

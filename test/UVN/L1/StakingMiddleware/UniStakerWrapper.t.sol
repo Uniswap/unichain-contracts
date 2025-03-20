@@ -1,32 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol';
+import {IUniStakerWrapper, UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol';
 import {IUniStaker, UniStakerDeployer} from '../../../deployers/UniStakerDeployer.sol';
 
 import {L1TestHandler} from '../L1TestHandler.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract UniStakerWrapperHarness is UniStakerWrapper {
-    constructor(IUniStaker unistaker_) UniStakerWrapper(unistaker_, msg.sender, 0, address(1)) {}
+    constructor(IUniStaker unistaker, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
+        UniStakerWrapper(unistaker, initialAdmin, withdrawalDelay_, slashingBeneficiary_)
+    {}
 
-    function stakedBalanceOf(address delegator) external view returns (uint256) {
-        return _stakedBalanceOf(delegator);
-    }
-
-    function totalAmountStaked() external view returns (uint256) {
-        return _totalAmountDepositedIntoUniStaker();
-    }
-
-    function depositIntoUniStakerHarness(uint96 amount, address governanceDelegatee)
-        external
-        returns (uint256 depositId)
-    {
-        depositId = _depositIntoUniStaker(amount, governanceDelegatee);
-    }
-
-    function withdrawFromUniStakerHarness(uint96 amount) external {
-        _withdrawFromUniStaker(amount);
+    function slashDelegatorStake(address delegator, uint256 remainingPercentage) external {
+        _slashDelegatorStake(delegator, remainingPercentage);
     }
 }
 
@@ -36,7 +23,7 @@ contract UniStakerWrapperTest is L1TestHandler {
     function setUp() public override {
         super.setUp();
         stakeToken.mint(address(this), 1000);
-        unistakerWrapper = new UniStakerWrapperHarness(unistaker);
+        unistakerWrapper = new UniStakerWrapperHarness(unistaker, address(this), 0, slashingBeneficiary);
         stakeToken.approve(address(unistakerWrapper), 1000);
         // use up the first depositId 0
         unistaker.stake(0, delegatee);
@@ -51,12 +38,48 @@ contract UniStakerWrapperTest is L1TestHandler {
     }
 
     function assertBalance(address account, uint256 expected) internal view {
-        assertEq(unistakerWrapper.stakedBalanceOf(account), expected);
+        uint256 balance =
+            unistakerWrapper.isDepositedIntoUniStaker(account) ? unistakerWrapper.delegatorStake(account) : 0;
+        assertEq(balance, expected);
+    }
+
+    function assertTotalAmountStaked(uint256 expected) internal view {
+        assertEq(unistaker.depositorTotalStaked(address(unistakerWrapper)), expected);
     }
 
     function expectERC20Transfer(address from, address to, uint256 amount) internal {
         vm.expectEmit();
         emit IERC20.Transfer(from, to, amount);
+    }
+
+    function deposit(address account, uint96 amount) internal returns (uint256 depositId) {
+        stakeToken.mint(account, amount);
+        vm.startPrank(account);
+        stakeToken.approve(address(unistakerWrapper), type(uint96).max);
+        unistakerWrapper.stake(amount);
+        depositId = unistakerWrapper.depositIntoUniStaker(delegatee);
+        vm.stopPrank();
+    }
+
+    function test_RevertIf_withdrawingWhileNotDeposited() public {
+        vm.expectRevert(abi.encodeWithSelector(IUniStakerWrapper.NotDepositedIntoUniStaker.selector));
+        unistakerWrapper.withdrawFromUniStaker();
+    }
+
+    function test_RevertIf_alteringGovernanceDelegateeWhileNotDeposited() public {
+        vm.expectRevert(abi.encodeWithSelector(IUniStakerWrapper.NotDepositedIntoUniStaker.selector));
+        unistakerWrapper.alterGovernanceDelegatee(delegatee);
+    }
+
+    function test_RevertIf_depositingWhileAlreadyDeposited() public {
+        deposit(address(this), 1000);
+        vm.expectRevert(abi.encodeWithSelector(IUniStakerWrapper.AlreadyDepositedIntoUniStaker.selector));
+        unistakerWrapper.depositIntoUniStaker(delegatee);
+    }
+
+    function test_RevertIf_depositingWhileNotStakingAnyAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(IUniStakerWrapper.NoStakeToDeposit.selector));
+        unistakerWrapper.depositIntoUniStaker(delegatee);
     }
 
     function test_depositIntoUniStakerInitially() public {
@@ -71,7 +94,8 @@ contract UniStakerWrapperTest is L1TestHandler {
         emit IUniStaker.DelegateeAltered(nextDepositId, address(0), delegatee);
         unistakerWrapper.depositIntoUniStaker(delegatee);
         assertBalance(address(this), 1000);
-        assertEq(unistakerWrapper.totalAmountStaked(), 1000);
+        assertTotalAmountStaked(1000);
+        assertTrue(unistakerWrapper.isDepositedIntoUniStaker(address(this)));
     }
 
     function test_delegateChangeAfterDeposit() public {
@@ -80,8 +104,7 @@ contract UniStakerWrapperTest is L1TestHandler {
         address newDelegatee = makeAddr('newDelegatee');
         vm.expectEmit();
         emit IUniStaker.DelegateeAltered(toId(depositId), delegatee, newDelegatee);
-        uint256 newDepositId = unistakerWrapper.depositIntoUniStakerHarness(0, newDelegatee);
-        assertEq(newDepositId, depositId);
+        unistakerWrapper.alterGovernanceDelegatee(newDelegatee);
     }
 
     function test_stakeMore() public {
@@ -96,7 +119,7 @@ contract UniStakerWrapperTest is L1TestHandler {
         );
         unistakerWrapper.stake(subsequentDeposit);
         assertBalance(address(this), initialBalance + subsequentDeposit);
-        assertEq(unistakerWrapper.totalAmountStaked(), initialBalance + subsequentDeposit);
+        assertTotalAmountStaked(initialBalance + subsequentDeposit);
     }
 
     function test_withdrawal() public {
@@ -109,6 +132,94 @@ contract UniStakerWrapperTest is L1TestHandler {
         expectERC20Transfer(address(unistakerWrapper), address(this), withdrawalAmount);
         unistakerWrapper.withdraw(address(this), 1);
         assertBalance(address(this), 900);
-        assertEq(unistakerWrapper.totalAmountStaked(), 900);
+        assertTotalAmountStaked(900);
+        assertTrue(unistakerWrapper.isDepositedIntoUniStaker(address(this)));
+    }
+
+    function test_withdrawalCompleteBalance() public {
+        uint96 stakeAmount = 1000;
+        unistakerWrapper.stake(stakeAmount);
+        uint256 depositId = unistakerWrapper.depositIntoUniStaker(delegatee);
+        unistakerWrapper.unstake(stakeAmount);
+        vm.expectEmit();
+        emit IUniStaker.StakeWithdrawn(toId(depositId), stakeAmount, 0);
+        expectERC20Transfer(address(unistakerWrapper), address(this), stakeAmount);
+        unistakerWrapper.withdraw(address(this), 1);
+        assertBalance(address(this), 0);
+        assertTotalAmountStaked(0);
+        assertFalse(unistakerWrapper.isDepositedIntoUniStaker(address(this)));
+    }
+
+    function test_stakeAfterCompleteWithdrawalShouldIssueNewDepositId() public {
+        uint96 stakeAmount = 1000;
+        unistakerWrapper.stake(stakeAmount);
+        uint256 depositId = unistakerWrapper.depositIntoUniStaker(delegatee);
+        unistakerWrapper.unstake(stakeAmount);
+        vm.expectEmit();
+        emit IUniStaker.StakeWithdrawn(toId(depositId), stakeAmount, 0);
+        expectERC20Transfer(address(unistakerWrapper), address(this), stakeAmount);
+        unistakerWrapper.withdraw(address(this), 1);
+        assertBalance(address(this), 0);
+        assertTotalAmountStaked(0);
+        assertFalse(unistakerWrapper.isDepositedIntoUniStaker(address(this)));
+        uint256 newDepositId = deposit(delegator, stakeAmount);
+        assertEq(newDepositId, depositId + 1);
+    }
+
+    function test_shouldAutoDepositNewStakeWhenDeposited() public {
+        deposit(address(this), 1000);
+        uint96 newAmount = 500;
+        uint256 unistakerBalanceBefore = unistaker.depositorTotalStaked(address(unistakerWrapper));
+        unistakerWrapper.stake(newAmount);
+        assertTotalAmountStaked(unistakerBalanceBefore + newAmount);
+    }
+
+    function test_shouldAutoWithdrawFromUnistakerWhenDeposited() public {
+        deposit(address(this), 1000);
+        uint96 withdrawalAmount = 500;
+        uint256 unistakerBalanceBefore = unistaker.depositorTotalStaked(address(unistakerWrapper));
+        unistakerWrapper.unstake(withdrawalAmount);
+        unistakerWrapper.withdraw(address(this), 1);
+        assertTotalAmountStaked(unistakerBalanceBefore - withdrawalAmount);
+    }
+
+    function test_shouldNotAutoDepositOrWithdrawFromUnistakerIfNotDeposited() public {
+        // populate multiple depositIds
+        uint96 stakeAmount = 1000;
+        deposit(address(this), stakeAmount);
+        deposit(delegator, stakeAmount);
+
+        // withdraw again from one of the operators
+        unistakerWrapper.withdrawFromUniStaker();
+
+        // unistaker balance should not change when withdrawn delegator changes their stake
+        uint256 unistakerBalanceBefore = unistaker.depositorTotalStaked(address(unistakerWrapper));
+        assertTotalAmountStaked(unistakerBalanceBefore);
+        unistakerWrapper.stake(stakeAmount);
+        assertTotalAmountStaked(unistakerBalanceBefore);
+
+        unistakerWrapper.unstake(stakeAmount);
+        unistakerWrapper.withdraw(address(this), 1);
+        assertTotalAmountStaked(unistakerBalanceBefore);
+    }
+
+    function test_shouldResetDepositIdOnFullWithdrawal() public {
+        uint256 depositId = deposit(address(this), 1000);
+        unistakerWrapper.unstake(1000);
+        unistakerWrapper.withdraw(address(this), 1);
+
+        uint256 newDepositId = deposit(address(this), 1000);
+        assertNotEq(newDepositId, depositId);
+    }
+
+    function test_shouldWithdrawSlashedAmountBeforeSlashing() public {
+        uint96 stakeAmount = 1000;
+        uint256 remainingPercentage = 0.4e18;
+        deposit(address(this), stakeAmount);
+        unistakerWrapper.slashDelegatorStake(address(this), remainingPercentage);
+        uint256 remainingStake = stakeAmount * remainingPercentage / 1e18;
+        assertBalance(address(this), remainingStake);
+        assertTotalAmountStaked(remainingStake);
+        assertEq(stakeToken.balanceOf(slashingBeneficiary), stakeAmount - remainingStake);
     }
 }

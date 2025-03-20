@@ -6,7 +6,7 @@ import {IStakeManager} from '../../../src/interfaces/UVN/L1/StakingMiddleware/IS
 import {L1TestHandler} from './L1TestHandler.sol';
 
 /// @notice Wrapper around StakeManager to test it in isolation
-contract StakeManagerTestWrapper is StakeManager {
+contract StakeManagerTestHarness is StakeManager {
     constructor(address stakeToken, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
         StakeManager(stakeToken, initialAdmin, withdrawalDelay_, slashingBeneficiary_)
     {}
@@ -18,7 +18,7 @@ contract StakeManagerTestWrapper is StakeManager {
 }
 
 contract StakeManagerTest is L1TestHandler {
-    StakeManagerTestWrapper stakeManager;
+    StakeManagerTestHarness stakeManager;
     uint256 constant WITHDRAWAL_DELAY = 7 days;
 
     address initialAdmin = makeAddr('initial admin');
@@ -27,7 +27,7 @@ contract StakeManagerTest is L1TestHandler {
     function setUp() public override {
         super.setUp();
         stakeManager =
-            new StakeManagerTestWrapper(address(stakeToken), initialAdmin, WITHDRAWAL_DELAY, slashingBeneficiary);
+            new StakeManagerTestHarness(address(stakeToken), initialAdmin, WITHDRAWAL_DELAY, slashingBeneficiary);
     }
 
     function test_stake() public {

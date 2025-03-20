@@ -12,6 +12,7 @@ contract L1TestHandler is Test {
     MockVotesToken rewardToken;
     IStakingMiddleware stakingMiddleware;
 
+    address delegator = makeAddr('delegator');
     address delegatee = makeAddr('delegatee');
     address operator = makeAddr('operator');
     address slashingBeneficiary = makeAddr('slashing beneficiary');

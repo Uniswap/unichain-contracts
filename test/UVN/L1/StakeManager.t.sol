@@ -22,7 +22,6 @@ contract StakeManagerTest is L1TestHandler {
     uint256 constant WITHDRAWAL_DELAY = 7 days;
 
     address initialAdmin = makeAddr('initial admin');
-    address delegator = makeAddr('delegator');
 
     function setUp() public override {
         super.setUp();

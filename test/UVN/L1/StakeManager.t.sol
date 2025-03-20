@@ -15,16 +15,6 @@ contract StakeManagerTestWrapper is StakeManager {
     function slashDelegatorStake(address delegator, uint256 remainingPercentage) external {
         _slashDelegatorStake(delegator, remainingPercentage);
     }
-
-    // No-op implementations of virtual functions
-    function _beforeStake(address, uint96) internal override {}
-    function _afterStake(address, uint96) internal override {}
-    function _beforeUnstake(address, uint96) internal override {}
-    function _afterUnstake(address, uint96) internal override {}
-    function _beforeWithdraw(address, uint96) internal override {}
-    function _afterWithdraw(address, uint96) internal override {}
-    function _beforeSlash(address, uint96, uint96, uint96) internal override {}
-    function _afterSlash(address, uint96, uint96, uint96) internal override {}
 }
 
 contract StakeManagerTest is L1TestHandler {

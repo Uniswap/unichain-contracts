@@ -189,12 +189,14 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     }
 
     /// @dev Overrides the `delegatorStake` function in `StakeManager` to reflect correct stake for a delegator accounting for slashing
+    // TODO maybe override the public function here instead? it would save gas
     function _delegatorStake(address delegator) internal view override returns (uint96) {
         (, uint256 remainingPercentage,,,,) = _calculateSlashing(delegator, type(uint256).max, _globalRewardCheckpoint);
         return _remainingStake(StakeManager._delegatorStake(delegator), remainingPercentage);
     }
 
     /// @dev Overrides the `slashableStake` function in `StakeManager` to reflect correct slashable stake for a delegator accounting for slashing
+    // TODO maybe override the public function here instead? it would save gas
     function _slashableStake(address delegator) internal view override returns (uint96) {
         (, uint256 remainingPercentage,,,,) = _calculateSlashing(delegator, type(uint256).max, _globalRewardCheckpoint);
         return _remainingStake(StakeManager._slashableStake(delegator), remainingPercentage);

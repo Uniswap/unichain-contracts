@@ -47,6 +47,22 @@ contract StakeManagerTest is L1TestHandler {
         assertEq(stakeManager.pendingWithdrawalAmount(delegator), 0);
     }
 
+    /// @notice Fuzz test for the stake function
+    function test_stake_fuzz(uint96 amount) public {
+        vm.assume(amount > 0);
+        vm.assume(amount < type(uint96).max);
+
+        stakeToken.mint(delegator, amount);
+        vm.startPrank(delegator);
+        stakeToken.approve(address(stakeManager), amount);
+        stakeManager.stake(amount);
+        vm.stopPrank();
+
+        assertEq(stakeManager.delegatorStake(delegator), amount);
+        assertEq(stakeManager.slashableStake(delegator), amount);
+        assertEq(stakeManager.pendingWithdrawalAmount(delegator), 0);
+    }
+
     function test_stakeFor() public {
         uint96 amount = 1000;
         address sender = makeAddr('sender');
@@ -66,6 +82,24 @@ contract StakeManagerTest is L1TestHandler {
         assertEq(stakeManager.pendingWithdrawalAmount(delegator), 0);
     }
 
+    /// @notice Fuzz test for the stakeFor function
+    function test_stakeFor_fuzz(uint96 amount) public {
+        vm.assume(amount > 0);
+        vm.assume(amount < type(uint96).max);
+        
+        address sender = makeAddr('sender');
+
+        stakeToken.mint(sender, amount);
+        vm.startPrank(sender);
+        stakeToken.approve(address(stakeManager), amount);
+        stakeManager.stakeFor(delegator, amount);
+        vm.stopPrank();
+
+        assertEq(stakeManager.delegatorStake(delegator), amount);
+        assertEq(stakeManager.slashableStake(delegator), amount);
+        assertEq(stakeManager.pendingWithdrawalAmount(delegator), 0);
+    }
+
     function test_unstake() public {
         uint96 amount = 1000;
 
@@ -76,17 +110,17 @@ contract StakeManagerTest is L1TestHandler {
         stakeManager.stake(amount);
 
         // Execute
-        uint256 withdrawalId = stakeManager.unstake(500);
+        uint256 withdrawalId = stakeManager.unstake(amount);
         vm.stopPrank();
 
         // Verify
         assertEq(withdrawalId, 0);
-        assertEq(stakeManager.delegatorStake(delegator), 500);
-        assertEq(stakeManager.slashableStake(delegator), 1000);
-        assertEq(stakeManager.pendingWithdrawalAmount(delegator), 500);
+        assertEq(stakeManager.delegatorStake(delegator), 0);
+        assertEq(stakeManager.slashableStake(delegator), amount);
+        assertEq(stakeManager.pendingWithdrawalAmount(delegator), amount);
 
         IStakeManager.PendingWithdrawal memory withdrawal = stakeManager.withdrawal(delegator, withdrawalId);
-        assertEq(withdrawal.amount, 500);
+        assertEq(withdrawal.amount, amount);
         assertEq(withdrawal.timestamp, block.timestamp + WITHDRAWAL_DELAY);
         assertFalse(withdrawal.withdrawn);
     }

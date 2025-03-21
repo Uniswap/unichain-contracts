@@ -72,18 +72,19 @@ abstract contract DelegatorAccessControl is IDelegatorAccessControl, OperatorMan
         if (!accessControl.acceptDelegation) {
             return false;
         }
+        if (accessControl.authorizedSender == msg.sender) {
+            // delegated by signature and authorized sender is the msg.sender, allow delegation
+            // @audit authorized sender could be set to the delegator, in this case a delegation from the delegator directly would pass
+            return true;
+        }
         if (accessControl.authorizedSender != address(0)) {
-            if (accessControl.authorizedSender == msg.sender) {
-                // delegated by signature and authorized sender is the msg.sender, allow
-                // @audit authorized sender could be set to the delegator, in this case a delegation from the delegator directly would pass
-                return true;
-            }
+            // if delegating by signature and authorized sender is set, ensure that the signature is provided by the authorized sender
             if (delegator != msg.sender) {
-                // delegating by signature and authorized sender is not the msg.sender, revert
                 return false;
             }
+
+            // if not delegating by signature but the verifier is set, check the verifier contract if it is set, else only allow delegating by signature
             if (address(accessControl.verifier) == address(0)) {
-                // if not delegating by signature and no verifier is set, revert, else check verifier contract
                 return false;
             }
         }

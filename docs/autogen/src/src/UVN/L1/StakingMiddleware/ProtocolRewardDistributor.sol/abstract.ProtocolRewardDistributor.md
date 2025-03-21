@@ -1,5 +1,5 @@
 # ProtocolRewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/56612a29b47c81cd714020caac57a75179367dc6/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
 
 **Inherits:**
 [UniStakerWrapper](/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol/contract.UniStakerWrapper.md), [IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
@@ -125,6 +125,8 @@ function _updateGlobalRewardCheckpoint() internal returns (uint256 newGlobalRewa
 ```
 
 ### _updateRewardCheckpoint
+
+*Pulls rewards from the UniStaker contracts and distributes them across all delegators, then updates the reward checkpoint for the delegator*
 
 
 ```solidity

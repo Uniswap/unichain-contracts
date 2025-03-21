@@ -1,5 +1,5 @@
 # StakingMiddleware
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/83905ef6205bbfaf59409691913db2875c92ada2/src/UVN/L1/StakingMiddleware.sol)
 
 **Inherits:**
 [SlashingManager](/src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md), [IStakingMiddleware](/src/interfaces/UVN/L1/IStakingMiddleware.sol/interface.IStakingMiddleware.md)
@@ -18,7 +18,7 @@ constructor(IUniStaker unistaker_, address initialAdmin, uint256 withdrawalDelay
 
 ### nonces
 
-*Returns the next unused nonce for an address.*
+*The `Nonces` library does not come with an interface, to ensure that the function is included in the interface of this contract, add it here*
 
 
 ```solidity

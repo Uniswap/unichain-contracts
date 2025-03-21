@@ -1,8 +1,8 @@
 # OperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/ceada1ae0ce786b1a715a0c4cff008e665b4e9ed/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
 
 **Inherits:**
-[Votes](/src/UVN/L1/StakingMiddleware/libraries/Votes.sol/abstract.Votes.md), [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [IOperatorManager](/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
+[OperatorVotes](/src/UVN/L1/StakingMiddleware/libraries/OperatorVotes.sol/abstract.OperatorVotes.md), [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [IOperatorManager](/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
 
 This contract manages the selection of operators by delegators. The selection of operators implements the `IVotes` interface. Before a delegator can undelegate from an operator, they must pass a delay period. During this delay period their voting power is set to 0 but they remain slashable until the undelegation is finalized.
 

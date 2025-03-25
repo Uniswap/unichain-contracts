@@ -19,9 +19,9 @@ abstract contract DelegatorAccessControl is IDelegatorAccessControl, OperatorMan
     mapping(address delegator => AccessControl accessControl) private _delegatorAccessControl;
 
     /// @dev Before a delegator selects an operator, check if they are allowed to delegate to them
-    function _beforeOperatorSelection(address delegator, address operator) internal override {
+    function _beforeDelegation(address delegator, address operator) internal override {
         if (!_allowDelegation(delegator, operator)) revert DelegationDisallowed();
-        super._beforeOperatorSelection(delegator, operator);
+        super._beforeDelegation(delegator, operator);
     }
 
     /// @inheritdoc IDelegatorAccessControl

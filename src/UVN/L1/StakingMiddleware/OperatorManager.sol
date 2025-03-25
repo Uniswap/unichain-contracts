@@ -9,10 +9,18 @@ import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 /// @title OperatorManager - Base contract for the StakingMiddleware
 /// @notice This contract manages the selection of operators by delegators. The selection of operators implements the `IVotes` interface. Before a delegator can undelegate from an operator, they must pass a delay period. During this delay period their voting power is set to 0 but they remain slashable until the undelegation is finalized.
 abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, IOperatorManager {
-    constructor() EIP712('UVN-StakingMiddleware', '1') {}
+    /// @dev Storage for data required to finalize an undelegation
+    struct UndelegationData {
+        /// @dev The operator the delegator was delegating to
+        address operator;
+        /// @dev The timestamp at which the undelegation can be finalized
+        uint96 undelegateAt;
+    }
 
     mapping(address operator => uint256 amount) private _slashableStakes;
-    mapping(address delegator => uint256 undelegationTimestamp) private _undelegationTimestamp;
+    mapping(address delegator => UndelegationData undelegationData) private _undelegationData;
+
+    constructor() EIP712('UVN-StakingMiddleware', '1') {}
 
     /// @dev After a delegator stakes, increase the operator's voting power immediately and increase the slashable stake
     function _afterStake(address delegator, uint96 amount) internal virtual override {
@@ -41,14 +49,18 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
 
     /// @inheritdoc IOperatorManager
     function announceOperatorUndelegation() external {
-        address operator = delegates(msg.sender);
+        address delegator = msg.sender;
+        address operator = delegates(delegator);
+        if (_undelegationData[delegator].operator != address(0)) {
+            revert UndelegationNotFinalized(_undelegationData[delegator].undelegateAt);
+        }
         if (operator == address(0)) revert NoOperatorSelected();
-        _beforeOperatorUndelegationAnnouncement(msg.sender);
-        uint256 undelegateAt = block.timestamp + withdrawalDelay();
-        _undelegationTimestamp[msg.sender] = undelegateAt;
-        super._delegate(msg.sender, address(0));
-        emit OperatorUndelegationAnnounced(msg.sender, operator, undelegateAt);
-        _afterOperatorUndelegationAnnouncement(msg.sender);
+        _beforeUndelegationAnnouncement(delegator);
+        uint96 undelegateAt = uint96(block.timestamp + withdrawalDelay());
+        _undelegationData[delegator] = UndelegationData({operator: operator, undelegateAt: undelegateAt});
+        super._delegate(delegator, address(0));
+        emit OperatorUndelegationAnnounced(delegator, operator, undelegateAt);
+        _afterUndelegationAnnouncement(delegator);
     }
 
     /// @inheritdoc IOperatorManager
@@ -61,34 +73,36 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         if (operator == address(0)) {
             _deselectOperator(delegator);
         } else {
-            _beforeOperatorSelection(delegator, operator);
             _selectOperator(delegator, operator);
             super._delegate(delegator, operator);
-            _afterOperatorSelection(delegator, operator);
+            _afterDelegation(delegator, operator);
         }
     }
 
     /// @dev Delegates a delegator's stake to an operator, the delegator must not be already delegating to an operator and must have any pending undelegation finalized
     function _selectOperator(address delegator, address operator) internal {
         if (delegates(delegator) != address(0)) revert OperatorAlreadySelected();
-        uint256 undelegateAt = _undelegationTimestamp[delegator];
+        uint256 undelegateAt = _undelegationData[delegator].undelegateAt;
         if (undelegateAt > block.timestamp) {
             revert UndelegationNotFinalized(undelegateAt);
         }
+        _beforeDelegation(delegator, operator);
         _slashableStakes[operator] += _slashableStake(delegator);
     }
 
     /// @dev Undelegates a delegator from an operator, the delegator must first announce their intention to undelegate by calling `announceOperatorUndelegation`. This function can only be called once the delay has passed.
     function _deselectOperator(address delegator) internal {
-        _beforeOperatorDeselection(delegator);
         address operator = delegates(delegator);
-        if (operator == address(0)) revert NoOperatorSelected();
-        uint256 undelegateAt = _undelegationTimestamp[delegator];
-        if (undelegateAt > block.timestamp) {
-            revert UndelegationNotFinalized(undelegateAt);
+        UndelegationData memory undelegationData = _undelegationData[delegator];
+        // delegator is not delegating and has no pending undelegation
+        if (undelegationData.operator == address(0) && operator == address(0)) revert NoOperatorSelected();
+        if (undelegationData.undelegateAt > block.timestamp) {
+            revert UndelegationNotFinalized(undelegationData.undelegateAt);
         }
-        _slashableStakes[operator] -= _slashableStake(delegator);
-        _afterOperatorDeselection(delegator);
+        _beforeUndelegation(delegator);
+        _slashableStakes[undelegationData.operator] -= _slashableStake(delegator);
+        _undelegationData[delegator] = UndelegationData({operator: address(0), undelegateAt: 0});
+        _afterUndelegation(delegator);
     }
 
     function _slashOperatorVotes(address operator, uint256 remainingPercentage) internal virtual {
@@ -101,17 +115,15 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         return _delegatorStake(delegator);
     }
 
-    // TODO rename to _beforeOperatorDelegation?
-    function _beforeOperatorSelection(address delegator, address operator) internal virtual {}
+    function _beforeDelegation(address delegator, address operator) internal virtual {}
 
-    function _afterOperatorSelection(address delegator, address operator) internal virtual {}
+    function _afterDelegation(address delegator, address operator) internal virtual {}
 
-    function _beforeOperatorUndelegationAnnouncement(address delegator) internal virtual {}
+    function _beforeUndelegationAnnouncement(address delegator) internal virtual {}
 
-    function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual {}
+    function _afterUndelegationAnnouncement(address delegator) internal virtual {}
 
-    // TODO rename to _beforeOperatorUndelegation?
-    function _beforeOperatorDeselection(address delegator) internal virtual {}
+    function _beforeUndelegation(address delegator) internal virtual {}
 
-    function _afterOperatorDeselection(address delegator) internal virtual {}
+    function _afterUndelegation(address delegator) internal virtual {}
 }

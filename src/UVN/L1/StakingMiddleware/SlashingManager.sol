@@ -31,15 +31,15 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     mapping(address delegator => DelegatorSlashingData data) internal _delegatorSlashingData;
 
     /// @dev After a delegator selects an operator, store the number of slashing instances an operator had before the delegation to keep track of future slashing instances that occur after the delegation
-    function _afterOperatorSelection(address delegator, address operator) internal virtual override {
-        super._afterOperatorSelection(delegator, operator);
+    function _afterDelegation(address delegator, address operator) internal virtual override {
+        super._afterDelegation(delegator, operator);
         _delegatorSlashingData[delegator] =
             DelegatorSlashingData({length: uint160(_slashingInstances[operator].length), stakeBeforePartialSlashing: 0});
     }
 
     /// @dev After a delegator undelegates from an operator, reset the slashing tracking data for the delegator
-    function _afterOperatorDeselection(address delegator) internal virtual override {
-        super._afterOperatorDeselection(delegator);
+    function _afterUndelegation(address delegator) internal virtual override {
+        super._afterUndelegation(delegator);
         _delegatorSlashingData[delegator] = DelegatorSlashingData({length: 0, stakeBeforePartialSlashing: 0});
     }
 
@@ -86,15 +86,15 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     }
 
     /// @dev Before a delegator announces their intention to undelegate from an operator, apply all pending slashing instances to the delegator's stake
-    function _beforeOperatorUndelegationAnnouncement(address delegator) internal override {
+    function _beforeUndelegationAnnouncement(address delegator) internal override {
         applySlashing(delegator, type(uint256).max);
-        super._beforeOperatorUndelegationAnnouncement(delegator);
+        super._beforeUndelegationAnnouncement(delegator);
     }
 
     /// @dev Before a delegator undelegates from an operator, apply all pending slashing instances to the delegator's stake
-    function _beforeOperatorDeselection(address delegator) internal override {
+    function _beforeUndelegation(address delegator) internal override {
         applySlashing(delegator, type(uint256).max);
-        super._beforeOperatorDeselection(delegator);
+        super._beforeUndelegation(delegator);
     }
 
     /// @inheritdoc ISlashingManager

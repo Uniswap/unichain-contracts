@@ -55,12 +55,12 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
             revert UndelegationNotFinalized(_undelegationData[msg.sender].timestamp);
         }
         if (operator == address(0)) revert NoOperatorSelected();
-        _beforeOperatorUndelegationAnnouncement(msg.sender);
+        _beforeUndelegationAnnouncement(msg.sender);
         uint96 undelegateAt = uint96(block.timestamp + withdrawalDelay());
         _undelegationData[msg.sender] = UndelegationData({operator: operator, timestamp: undelegateAt});
         super._delegate(msg.sender, address(0));
         emit OperatorUndelegationAnnounced(msg.sender, operator, undelegateAt);
-        _afterOperatorUndelegationAnnouncement(msg.sender);
+        _afterUndelegationAnnouncement(msg.sender);
     }
 
     /// @inheritdoc IOperatorManager
@@ -75,7 +75,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         } else {
             _selectOperator(delegator, operator);
             super._delegate(delegator, operator);
-            _afterOperatorSelection(delegator, operator);
+            _afterDelegation(delegator, operator);
         }
     }
 
@@ -86,7 +86,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         if (undelegateAt > block.timestamp) {
             revert UndelegationNotFinalized(undelegateAt);
         }
-        _beforeOperatorSelection(delegator, operator);
+        _beforeDelegation(delegator, operator);
         _slashableStakes[operator] += _slashableStake(delegator);
     }
 
@@ -99,10 +99,10 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         if (undelegationData.timestamp > block.timestamp) {
             revert UndelegationNotFinalized(undelegationData.timestamp);
         }
-        _beforeOperatorDeselection(delegator);
+        _beforeUndelegation(delegator);
         _slashableStakes[undelegationData.operator] -= _slashableStake(delegator);
         _undelegationData[delegator] = UndelegationData({operator: address(0), timestamp: 0});
-        _afterOperatorDeselection(delegator);
+        _afterUndelegation(delegator);
     }
 
     function _slashOperatorVotes(address operator, uint256 remainingPercentage) internal virtual {
@@ -115,17 +115,15 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         return _delegatorStake(delegator);
     }
 
-    // TODO rename to _beforeOperatorDelegation?
-    function _beforeOperatorSelection(address delegator, address operator) internal virtual {}
+    function _beforeDelegation(address delegator, address operator) internal virtual {}
 
-    function _afterOperatorSelection(address delegator, address operator) internal virtual {}
+    function _afterDelegation(address delegator, address operator) internal virtual {}
 
-    function _beforeOperatorUndelegationAnnouncement(address delegator) internal virtual {}
+    function _beforeUndelegationAnnouncement(address delegator) internal virtual {}
 
-    function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual {}
+    function _afterUndelegationAnnouncement(address delegator) internal virtual {}
 
-    // TODO rename to _beforeOperatorUndelegation?
-    function _beforeOperatorDeselection(address delegator) internal virtual {}
+    function _beforeUndelegation(address delegator) internal virtual {}
 
-    function _afterOperatorDeselection(address delegator) internal virtual {}
+    function _afterUndelegation(address delegator) internal virtual {}
 }

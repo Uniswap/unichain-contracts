@@ -169,13 +169,17 @@ contract StakeManagerInvariantHandler is Test {
         uint256 len = _ghostDepositorStake.pendingWithdrawals.length;
         uint64 head = _ghostDepositorStake.head;
 
+        // Use try/catch to have more flexibility with handling conditional reverts
         uint96 amount;
         try stakeManagerTestHarness.withdraw(currentActor, n) returns (uint96 _amount) {
             amount = _amount;
         } catch (bytes memory revertData) {
+            // If there are no pending withdrawals, expect the revert with 0
             if (head == len) {
                 assertEq(revertData, abi.encodeWithSelector(IStakeManager.NoPendingWithdrawalsToWithdraw.selector, 0));
-            } else if (len > 0) {
+            }
+            // If there are pending withdraws expect the revert with the nextTimestamp
+            else if (len > 0) {
                 IStakeManager.PendingWithdrawal memory pendingWithdrawal = _ghostDepositorStake.pendingWithdrawals[head];
                 uint40 nextTimestamp = pendingWithdrawal.timestamp;
                 assertEq(
@@ -189,7 +193,6 @@ contract StakeManagerInvariantHandler is Test {
         _ghostDepositorStake.totalPendingWithdrawal -= amount;
     }
 
-    // Pending withdraws are not handled here
     function slash(uint256 remainingPercentage, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         uint96 _delegatorStake = stakeManagerTestHarness.delegatorStake(currentActor);
         uint96 _slashableStake = stakeManagerTestHarness.slashableStake(currentActor);

@@ -50,17 +50,18 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
 
     /// @inheritdoc IOperatorManager
     function announceOperatorUndelegation() external {
-        address operator = delegates(msg.sender);
-        if (_undelegationData[msg.sender].operator != address(0)) {
-            revert UndelegationNotFinalized(_undelegationData[msg.sender].timestamp);
+        address delegator = msg.sender;
+        address operator = delegates(delegator);
+        if (_undelegationData[delegator].operator != address(0)) {
+            revert UndelegationNotFinalized(_undelegationData[delegator].timestamp);
         }
         if (operator == address(0)) revert NoOperatorSelected();
-        _beforeUndelegationAnnouncement(msg.sender);
+        _beforeUndelegationAnnouncement(delegator);
         uint96 undelegateAt = uint96(block.timestamp + withdrawalDelay());
-        _undelegationData[msg.sender] = UndelegationData({operator: operator, timestamp: undelegateAt});
-        super._delegate(msg.sender, address(0));
-        emit OperatorUndelegationAnnounced(msg.sender, operator, undelegateAt);
-        _afterUndelegationAnnouncement(msg.sender);
+        _undelegationData[delegator] = UndelegationData({operator: operator, timestamp: undelegateAt});
+        super._delegate(delegator, address(0));
+        emit OperatorUndelegationAnnounced(delegator, operator, undelegateAt);
+        _afterUndelegationAnnouncement(delegator);
     }
 
     /// @inheritdoc IOperatorManager

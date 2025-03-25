@@ -10,6 +10,15 @@ import {Test} from 'forge-std/Test.sol';
 
 /// @notice Wrapper around StakeManager to test it in isolation
 contract StakeManagerTestHarness is StakeManager {
+    struct Stake_ {
+        uint96 stake;
+        uint96 totalPendingWithdrawal;
+        uint64 head;
+        IStakeManager.PendingWithdrawal[] pendingWithdrawals;
+    }
+
+    mapping(address delegator => Stake_) private _ghostDepositorStake;
+
     constructor(address stakeToken, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
         StakeManager(stakeToken, initialAdmin, withdrawalDelay_, slashingBeneficiary_)
     {}
@@ -17,6 +26,64 @@ contract StakeManagerTestHarness is StakeManager {
     /// @notice Helper function to test the internal _slashDelegatorStake function
     function slashDelegatorStake(address delegator, uint256 remainingPercentage) external {
         _slashDelegatorStake(delegator, remainingPercentage);
+    }
+
+    /// Implement _before* hooks to track changes to the ghost stake
+
+    function _beforeStake(address delegator, uint96 amount) internal override {
+        super._beforeStake(delegator, amount);
+        _ghostDepositorStake[delegator].stake += amount;
+    }
+
+    function _beforeUnstake(address delegator, uint96 amount) internal override {
+        super._beforeUnstake(delegator, amount);
+        _ghostDepositorStake[delegator].stake -= amount;
+        // Add pending withdraw to ghost stake
+        _ghostSchedulePendingWithdrawal(delegator, amount);
+    }
+
+    function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
+        internal
+        override
+    {
+        super._beforeSlash(delegator, amount, newStake, newPendingWithdrawalAmount);
+
+        Stake_ storage stake_ = _ghostDepositorStake[delegator];
+        uint256 currentPendingWithdrawalAmount = stake_.totalPendingWithdrawal;
+        // set equal to new stake
+        _ghostDepositorStake[delegator].stake = newStake;
+
+        if (currentPendingWithdrawalAmount != 0) {
+            // cancel all pending withdrawals and schedule a new one with the remainder
+            _ghostInvalidatePendingWithdrawals(delegator);
+            _ghostSchedulePendingWithdrawal(delegator, newPendingWithdrawalAmount);
+        }
+    }
+
+    function getStake(address delegator) external view returns (Stake_ memory) {
+        return _ghostDepositorStake[delegator];
+    }
+
+    /// Ghost mirrored functions from StakeManager
+
+    function _ghostInvalidatePendingWithdrawals(address delegator) private {
+        Stake_ storage stake_ = _ghostDepositorStake[delegator];
+        uint64 currentHead = stake_.head;
+        uint64 currentLength = uint64(stake_.pendingWithdrawals.length);
+        stake_.head = currentLength;
+        stake_.totalPendingWithdrawal = 0;
+        emit PendingWithdrawalsInvalidated(delegator, currentHead, currentLength - 1);
+    }
+
+    function _ghostSchedulePendingWithdrawal(address delegator, uint96 amount) private returns (uint256 withdrawalId) {
+        Stake_ storage stake_ = _ghostDepositorStake[delegator];
+        uint40 unlocksAt = uint40(block.timestamp + withdrawalDelay());
+        withdrawalId = stake_.pendingWithdrawals.length;
+        stake_.totalPendingWithdrawal += amount;
+        stake_.pendingWithdrawals.push(
+            IStakeManager.PendingWithdrawal({amount: amount, timestamp: unlocksAt, withdrawn: false})
+        );
+        emit WithdrawalQueued(delegator, withdrawalId, amount, unlocksAt);
     }
 }
 
@@ -44,8 +111,12 @@ contract StakeManagerInvariantHandler is Test {
         return uint96(bound(amount, 0, type(uint96).max - _stake));
     }
 
-    function _boundTo(uint96 amount, uint96 _stake) internal pure returns (uint96) {
-        return uint96(bound(amount, 0, _stake));
+    function _boundToUint96(uint96 amount, uint96 _max) internal pure returns (uint96) {
+        return uint96(bound(amount, 0, _max));
+    }
+
+    function _boundToUint256(uint256 amount, uint256 _max) internal pure returns (uint256) {
+        return uint256(bound(amount, 0, _max));
     }
 
     function stake(uint96 amount, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
@@ -84,13 +155,52 @@ contract StakeManagerInvariantHandler is Test {
         uint96 _slashableStake = stakeManagerTestHarness.slashableStake(currentActor);
 
         // Bound the amount to the current delegator stake
-        amount = _boundTo(amount, _delegatorStake);
+        amount = _boundToUint96(amount, _delegatorStake);
 
         stakeManagerTestHarness.unstake(amount);
 
         assertEq(stakeManagerTestHarness.delegatorStake(currentActor), _delegatorStake - amount);
         // No change to slashable stake because it includes pending withdrawals
         assertEq(stakeManagerTestHarness.slashableStake(currentActor), _slashableStake);
+    }
+
+    function withdraw(uint64 n, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
+        StakeManagerTestHarness.Stake_ memory _ghostDepositorStake = stakeManagerTestHarness.getStake(currentActor);
+        uint256 len = _ghostDepositorStake.pendingWithdrawals.length;
+        uint64 head = _ghostDepositorStake.head;
+
+        uint96 amount;
+        try stakeManagerTestHarness.withdraw(currentActor, n) returns (uint96 _amount) {
+            amount = _amount;
+        } catch (bytes memory revertData) {
+            if (head == len) {
+                assertEq(revertData, abi.encodeWithSelector(IStakeManager.NoPendingWithdrawalsToWithdraw.selector, 0));
+            } else if (len > 0) {
+                IStakeManager.PendingWithdrawal memory pendingWithdrawal = _ghostDepositorStake.pendingWithdrawals[head];
+                uint40 nextTimestamp = pendingWithdrawal.timestamp;
+                assertEq(
+                    revertData,
+                    abi.encodeWithSelector(IStakeManager.NoPendingWithdrawalsToWithdraw.selector, nextTimestamp)
+                );
+            }
+        }
+
+        _ghostDepositorStake.head = head;
+        _ghostDepositorStake.totalPendingWithdrawal -= amount;
+    }
+
+    // Pending withdraws are not handled here
+    function slash(uint256 remainingPercentage, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
+        uint96 _delegatorStake = stakeManagerTestHarness.delegatorStake(currentActor);
+        uint96 _slashableStake = stakeManagerTestHarness.slashableStake(currentActor);
+
+        remainingPercentage = _boundToUint256(remainingPercentage, 1e18);
+
+        stakeManagerTestHarness.slashDelegatorStake(currentActor, remainingPercentage);
+
+        // Stakes after slashing must be less than or equal to the original stake
+        assertLe(stakeManagerTestHarness.delegatorStake(currentActor), _delegatorStake);
+        assertLe(stakeManagerTestHarness.slashableStake(currentActor), _slashableStake);
     }
 }
 

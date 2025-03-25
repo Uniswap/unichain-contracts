@@ -82,12 +82,12 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
     }
 
     /// @inheritdoc IStakeManager
-    function delegatorStake(address delegator) external view returns (uint96) {
+    function delegatorStake(address delegator) public view virtual returns (uint96) {
         return _delegatorStake(delegator);
     }
 
     /// @inheritdoc IStakeManager
-    function slashableStake(address delegator) external view returns (uint96) {
+    function slashableStake(address delegator) public view virtual returns (uint96) {
         return _slashableStake(delegator);
     }
 
@@ -155,10 +155,13 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
         emit PendingWithdrawalsInvalidated(delegator, currentHead, currentLength - 1);
     }
 
+    // @audit this function should only be called if all slashing instances for a delegator have been applied
     function _delegatorStake(address delegator) internal view virtual returns (uint96) {
         return _depositorStake[delegator].stake;
     }
 
+    /// @dev slashable stake is the sum of the stake and the total pending withdrawals
+    // @audit this function should only be called if all slashing instances for a delegator have been applied
     function _slashableStake(address delegator) internal view virtual returns (uint96) {
         return _depositorStake[delegator].stake + _depositorStake[delegator].totalPendingWithdrawal;
     }

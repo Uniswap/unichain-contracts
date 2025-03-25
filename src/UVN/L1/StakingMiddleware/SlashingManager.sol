@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import {ISlashingManager} from '../../../interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol';
 import {DelegatorAccessControl} from './DelegatorAccessControl.sol';
 import {IProtocolRewardDistributor, ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
-import {StakeManager} from './StakeManager.sol';
+import {IStakeManager, StakeManager} from './StakeManager.sol';
 
 /// @title SlashingManager - Base contract for the StakingMiddleware
 /// @notice This contract manages the slashing of delegators and operators. When operators are slashed, the slashed amount is converted into the remaining percentage of the operator's slashable delegated stake. The voting power of the operator is updated immediately. As delegators have their own deposits into the UniStaker contract, slashing is applied to the delegator's slashable stake when the delegator next interacts with the StakingMiddleware contract. Slashing can also be applied by anyone at any time. To ensure there isn't an incentive to not stay slashed and continue accruing protocol fees in the UniStaker contract, rewards accrued by the delegator are also slashed.
@@ -170,9 +170,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
             _calculateSlashing(delegator, type(uint256).max, globalCheckpoint);
         return _earnedRewardsOf[delegator] + newRewards
             + _calculateRewardFromTo(
-                _remainingStake(StakeManager._delegatorStake(delegator), remainingPercentage),
-                newCheckpoint,
-                globalCheckpoint
+                _remainingStake(_delegatorStake(delegator), remainingPercentage), newCheckpoint, globalCheckpoint
             );
     }
 
@@ -189,17 +187,15 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     }
 
     /// @dev Overrides the `delegatorStake` function in `StakeManager` to reflect correct stake for a delegator accounting for slashing
-    // TODO maybe override the public function here instead? it would save gas
-    function _delegatorStake(address delegator) internal view override returns (uint96) {
+    function delegatorStake(address delegator) public view override(StakeManager, IStakeManager) returns (uint96) {
         (, uint256 remainingPercentage,,,,) = _calculateSlashing(delegator, type(uint256).max, _globalRewardCheckpoint);
-        return _remainingStake(StakeManager._delegatorStake(delegator), remainingPercentage);
+        return _remainingStake(_delegatorStake(delegator), remainingPercentage);
     }
 
     /// @dev Overrides the `slashableStake` function in `StakeManager` to reflect correct slashable stake for a delegator accounting for slashing
-    // TODO maybe override the public function here instead? it would save gas
-    function _slashableStake(address delegator) internal view override returns (uint96) {
+    function slashableStake(address delegator) public view override(StakeManager, IStakeManager) returns (uint96) {
         (, uint256 remainingPercentage,,,,) = _calculateSlashing(delegator, type(uint256).max, _globalRewardCheckpoint);
-        return _remainingStake(StakeManager._slashableStake(delegator), remainingPercentage);
+        return _remainingStake(_slashableStake(delegator), remainingPercentage);
     }
 
     /// @dev iterates over slashing occurrences by the operator a delegator has selected. For every slashing instance, it calculates the new stake based on the total percentage of the total delegated stake slashed.
@@ -217,7 +213,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         )
     {
         address operator = delegates(delegator);
-        uint96 currentStake = StakeManager._delegatorStake(delegator);
+        uint96 currentStake = _delegatorStake(delegator);
         uint256 currentCheckpoint = _rewardCheckpointOf[delegator];
         remainingPercentage = PERCENTAGE_DENOMINATOR;
         // user not delegated to an operator

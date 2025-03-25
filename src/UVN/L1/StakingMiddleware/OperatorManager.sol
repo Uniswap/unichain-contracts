@@ -87,7 +87,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
             revert UndelegationNotFinalized(undelegateAt);
         }
         _beforeOperatorSelection(delegator, operator);
-        _slashableStakes[operator] += StakeManager._slashableStake(delegator);
+        _slashableStakes[operator] += _slashableStake(delegator);
     }
 
     /// @dev Undelegates a delegator from an operator, the delegator must first announce their intention to undelegate by calling `announceOperatorUndelegation`. This function can only be called once the delay has passed.
@@ -100,8 +100,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
             revert UndelegationNotFinalized(undelegationData.timestamp);
         }
         _beforeOperatorDeselection(delegator);
-        // @audit is it safe to call StakeManager._slashableStake here? It's overwritten in SlashingManager and we enforce slashings before this function is called, it would save gas
-        _slashableStakes[undelegationData.operator] -= StakeManager._slashableStake(delegator);
+        _slashableStakes[undelegationData.operator] -= _slashableStake(delegator);
         _undelegationData[delegator] = UndelegationData({operator: address(0), timestamp: 0});
         _afterOperatorDeselection(delegator);
     }
@@ -113,8 +112,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
     }
 
     function _getVotingUnits(address delegator) internal view virtual override returns (uint256) {
-        // @audit is it safe to call StakeManager._delegatorStake here? It's overwritten in SlashingManager and we enforce slashings before this function is called, it would save gas
-        return StakeManager._delegatorStake(delegator);
+        return _delegatorStake(delegator);
     }
 
     // TODO rename to _beforeOperatorDelegation?

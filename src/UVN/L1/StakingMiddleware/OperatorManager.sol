@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import {IOperatorManager} from '../../../interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol';
 import {ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
-import {StakeManager} from './StakeManager.sol';
 import {OperatorVotes} from './libraries/OperatorVotes.sol';
 import {EIP712} from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 

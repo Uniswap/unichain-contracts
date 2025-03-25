@@ -13,8 +13,8 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
     struct UndelegationData {
         /// @dev The operator the delegator was delegating to
         address operator;
-        /// @dev The timestamp at which the undelegation will be finalized
-        uint96 timestamp;
+        /// @dev The timestamp at which the undelegation can be finalized
+        uint96 undelegateAt;
     }
 
     mapping(address operator => uint256 amount) private _slashableStakes;
@@ -52,12 +52,12 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         address delegator = msg.sender;
         address operator = delegates(delegator);
         if (_undelegationData[delegator].operator != address(0)) {
-            revert UndelegationNotFinalized(_undelegationData[delegator].timestamp);
+            revert UndelegationNotFinalized(_undelegationData[delegator].undelegateAt);
         }
         if (operator == address(0)) revert NoOperatorSelected();
         _beforeUndelegationAnnouncement(delegator);
         uint96 undelegateAt = uint96(block.timestamp + withdrawalDelay());
-        _undelegationData[delegator] = UndelegationData({operator: operator, timestamp: undelegateAt});
+        _undelegationData[delegator] = UndelegationData({operator: operator, undelegateAt: undelegateAt});
         super._delegate(delegator, address(0));
         emit OperatorUndelegationAnnounced(delegator, operator, undelegateAt);
         _afterUndelegationAnnouncement(delegator);
@@ -82,7 +82,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
     /// @dev Delegates a delegator's stake to an operator, the delegator must not be already delegating to an operator and must have any pending undelegation finalized
     function _selectOperator(address delegator, address operator) internal {
         if (delegates(delegator) != address(0)) revert OperatorAlreadySelected();
-        uint256 undelegateAt = _undelegationData[delegator].timestamp;
+        uint256 undelegateAt = _undelegationData[delegator].undelegateAt;
         if (undelegateAt > block.timestamp) {
             revert UndelegationNotFinalized(undelegateAt);
         }
@@ -96,12 +96,12 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         UndelegationData memory undelegationData = _undelegationData[delegator];
         // delegator is not delegating and has no pending undelegation
         if (undelegationData.operator == address(0) && operator == address(0)) revert NoOperatorSelected();
-        if (undelegationData.timestamp > block.timestamp) {
-            revert UndelegationNotFinalized(undelegationData.timestamp);
+        if (undelegationData.undelegateAt > block.timestamp) {
+            revert UndelegationNotFinalized(undelegationData.undelegateAt);
         }
         _beforeUndelegation(delegator);
         _slashableStakes[undelegationData.operator] -= _slashableStake(delegator);
-        _undelegationData[delegator] = UndelegationData({operator: address(0), timestamp: 0});
+        _undelegationData[delegator] = UndelegationData({operator: address(0), undelegateAt: 0});
         _afterUndelegation(delegator);
     }
 

@@ -107,7 +107,7 @@ contract StakeManagerInvariantHandler is Test {
         vm.stopPrank();
     }
 
-    function _boundUpper(uint96 amount, uint96 _stake) internal pure returns (uint96) {
+    function _boundUpperUint96(uint96 amount, uint96 _stake) internal pure returns (uint96) {
         return uint96(bound(amount, 0, type(uint96).max - _stake));
     }
 
@@ -123,7 +123,7 @@ contract StakeManagerInvariantHandler is Test {
         uint96 _delegatorStake = stakeManagerTestHarness.delegatorStake(currentActor);
         uint96 _slashableStake = stakeManagerTestHarness.slashableStake(currentActor);
 
-        amount = _boundUpper(amount, _slashableStake);
+        amount = _boundUpperUint96(amount, _slashableStake);
 
         stakeToken.mint(currentActor, amount);
         vm.startPrank(currentActor);
@@ -140,7 +140,7 @@ contract StakeManagerInvariantHandler is Test {
         uint96 _delegatorStake = stakeManagerTestHarness.delegatorStake(currentActor);
         uint96 _slashableStake = stakeManagerTestHarness.slashableStake(currentActor);
 
-        amount = _boundUpper(amount, _slashableStake);
+        amount = _boundUpperUint96(amount, _slashableStake);
 
         stakeToken.mint(address(this), amount);
         stakeToken.approve(address(stakeManagerTestHarness), amount);

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {StakeManager} from '../../../src/UVN/L1/StakingMiddleware/StakeManager.sol';
-import {IStakeManager} from '../../../src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol';
+import {StakeManager} from '../../../../src/UVN/L1/StakingMiddleware/StakeManager.sol';
+import {IStakeManager} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol';
 
-import {MockVotesToken} from '../../mock/MockVotesToken.sol';
-import {L1TestHandler} from './L1TestHandler.sol';
+import {MockVotesToken} from '../../../mock/MockVotesToken.sol';
+import {L1TestHandler} from '../L1TestHandler.sol';
 import {Test} from 'forge-std/Test.sol';
 
 /// @notice Wrapper around StakeManager to test it in isolation

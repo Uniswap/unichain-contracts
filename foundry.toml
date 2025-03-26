@@ -34,6 +34,9 @@ compilation_restrictions = [
 [profile.default.fuzz]
 runs = 1000
 
+[profile.default.invariant]
+fail_on_revert = true
+
 [profile.pr.fuzz]
 runs = 1000
 

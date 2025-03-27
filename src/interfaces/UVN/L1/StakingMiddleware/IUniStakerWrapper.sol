@@ -13,6 +13,9 @@ interface IUniStakerWrapper is IStakeManager {
     /// @notice Thrown when a user attempts to withdraw from the UniStaker contract while not deposited
     error NotDepositedIntoUniStaker();
 
+    /// @notice Thrown when a user attempts to deposit into the UniStaker contract while not staking any amount
+    error NoStakeToDeposit();
+
     /// @notice Emitted when a user deposits into the UniStaker contract
     event UniStakerDeposited(address indexed delegator, uint256 indexed depositId, uint96 amount);
 
@@ -33,6 +36,11 @@ interface IUniStakerWrapper is IStakeManager {
 
     /// @notice Alters the governance delegatee of the user's underlying stake in the UniStaker contract
     function alterGovernanceDelegatee(address newGovernanceDelegatee) external;
+
+    /// @notice Returns whether the user has deposited their underlying stake into the UniStaker contract
+    /// @param delegator The address of the delegator
+    /// @return Whether the user has deposited into the UniStaker contract
+    function isDepositedIntoUniStaker(address delegator) external view returns (bool);
 
     /// @notice Returns the UniStaker contract
     function UNISTAKER() external view returns (IUniStaker);

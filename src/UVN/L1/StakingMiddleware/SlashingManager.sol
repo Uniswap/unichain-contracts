@@ -196,7 +196,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         view
         returns (SlashingResult memory result)
     {
-        address operator = delegates(delegator);
+        address operator = _slashableOperatorOf(delegator);
         uint96 currentStake = _delegatorStake(delegator);
         result.newCheckpoint = _rewardCheckpointOf[delegator];
         result.remainingPercentage = PERCENTAGE_DENOMINATOR;

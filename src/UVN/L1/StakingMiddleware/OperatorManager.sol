@@ -109,10 +109,18 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         _slashableStakes[operator] = _slashableStakes[operator] * remainingPercentage / PERCENTAGE_DENOMINATOR;
         uint256 newVotes = getVotes(operator) * remainingPercentage / PERCENTAGE_DENOMINATOR;
         _updateOperatorVotesAfterSlashing(operator, uint96(newVotes));
+        emit OperatorSlashed(operator, uint96(remainingPercentage));
     }
 
     function _getVotingUnits(address delegator) internal view virtual override returns (uint256) {
         return _delegatorStake(delegator);
+    }
+
+    /// @dev Returns the current operator of a delegator, if the delegator has an active undelegation, the operator before the undelegation announcement is returned, otherwise the current operator is returned
+    function _slashableOperatorOf(address delegator) internal view returns (address) {
+        address undelegationOperator = _undelegationData[delegator].operator;
+        if (undelegationOperator != address(0)) return undelegationOperator;
+        return delegates(delegator);
     }
 
     function _beforeDelegation(address delegator, address operator) internal virtual {}

@@ -2,9 +2,7 @@
 // OpenZeppelin Contracts (last updated v5.0.0) (governance/utils/Votes.sol)
 
 /// @dev copied from @openzeppelin/contracts/governance/utils/Votes.sol
-/// modifications:
-/// _delegate: when a delegator delegates to an operator the total supply of votes increases by the total stake of the delegator and vice versa for undelegating
-/// _updateOperatorVotesAfterSlashing: added function to slash the operator votes (delegated votes of multiple delegators simultaneously), accepts the new amount of votes after slashing
+/// modifications: made functions and variables internal to override functionality in OperatorVotes
 
 pragma solidity ^0.8.20;
 
@@ -43,11 +41,11 @@ abstract contract Votes is Context, EIP712, Nonces, IERC5805 {
     bytes32 private constant DELEGATION_TYPEHASH =
         keccak256('Delegation(address delegatee,uint256 nonce,uint256 expiry)');
 
-    mapping(address account => address) private _delegatee;
+    mapping(address account => address) internal _delegatee;
 
-    mapping(address delegatee => Checkpoints.Trace208) private _delegateCheckpoints;
+    mapping(address delegatee => Checkpoints.Trace208) internal _delegateCheckpoints;
 
-    Checkpoints.Trace208 private _totalCheckpoints;
+    Checkpoints.Trace208 internal _totalCheckpoints;
 
     /**
      * @dev The clock was incorrectly modified.
@@ -169,21 +167,9 @@ abstract contract Votes is Context, EIP712, Nonces, IERC5805 {
     function _delegate(address account, address delegatee) internal virtual {
         address oldDelegate = delegates(account);
         _delegatee[account] = delegatee;
-        if (oldDelegate == address(0)) {
-            _push(_totalCheckpoints, _add, SafeCast.toUint208(_getVotingUnits(account)));
-        }
-        if (delegatee == address(0)) {
-            _push(_totalCheckpoints, _subtract, SafeCast.toUint208(_getVotingUnits(account)));
-        }
+
         emit DelegateChanged(account, oldDelegate, delegatee);
         _moveDelegateVotes(oldDelegate, delegatee, _getVotingUnits(account));
-    }
-
-    function _updateOperatorVotesAfterSlashing(address operator, uint96 newVotes) internal virtual {
-        uint256 oldVotes = _delegateCheckpoints[operator].latest();
-        uint256 diff = oldVotes - newVotes;
-        _push(_totalCheckpoints, _subtract, SafeCast.toUint208(diff));
-        _moveDelegateVotes(operator, address(0), diff);
     }
 
     /**
@@ -203,7 +189,7 @@ abstract contract Votes is Context, EIP712, Nonces, IERC5805 {
     /**
      * @dev Moves delegated votes from one delegate to another.
      */
-    function _moveDelegateVotes(address from, address to, uint256 amount) private {
+    function _moveDelegateVotes(address from, address to, uint256 amount) internal {
         if (from != to && amount > 0) {
             if (from != address(0)) {
                 (uint256 oldValue, uint256 newValue) =
@@ -240,15 +226,15 @@ abstract contract Votes is Context, EIP712, Nonces, IERC5805 {
         Checkpoints.Trace208 storage store,
         function(uint208, uint208) view returns (uint208) op,
         uint208 delta
-    ) private returns (uint208, uint208) {
+    ) internal returns (uint208, uint208) {
         return store.push(clock(), op(store.latest(), delta));
     }
 
-    function _add(uint208 a, uint208 b) private pure returns (uint208) {
+    function _add(uint208 a, uint208 b) internal pure returns (uint208) {
         return a + b;
     }
 
-    function _subtract(uint208 a, uint208 b) private pure returns (uint208) {
+    function _subtract(uint208 a, uint208 b) internal pure returns (uint208) {
         return a - b;
     }
 

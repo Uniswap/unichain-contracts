@@ -1,13 +1,11 @@
 # Votes
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/10fd24e97f437a5e7731628f80c2a61f2eb81fe3/src/UVN/L1/StakingMiddleware/libraries/Votes.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/ceada1ae0ce786b1a715a0c4cff008e665b4e9ed/src/UVN/L1/StakingMiddleware/libraries/Votes.sol)
 
 **Inherits:**
 Context, EIP712, Nonces, IERC5805
 
 *copied from @openzeppelin/contracts/governance/utils/Votes.sol
-modifications:
-_delegate: when a delegator delegates to an operator the total supply of votes increases by the total stake of the delegator and vice versa for undelegating
-_updateOperatorVotesAfterSlashing: added function to slash the operator votes (delegated votes of multiple delegators simultaneously), accepts the new amount of votes after slashing*
+modifications: made functions and variables internal to override functionality in OperatorVotes*
 
 *This is a base abstract contract that tracks voting units, which are a measure of voting power that can be
 transferred, and provides a system of vote delegation, where an account can delegate its voting units to a sort of
@@ -35,21 +33,21 @@ bytes32 private constant DELEGATION_TYPEHASH = keccak256('Delegation(address del
 ### _delegatee
 
 ```solidity
-mapping(address account => address) private _delegatee;
+mapping(address account => address) internal _delegatee;
 ```
 
 
 ### _delegateCheckpoints
 
 ```solidity
-mapping(address delegatee => Checkpoints.Trace208) private _delegateCheckpoints;
+mapping(address delegatee => Checkpoints.Trace208) internal _delegateCheckpoints;
 ```
 
 
 ### _totalCheckpoints
 
 ```solidity
-Checkpoints.Trace208 private _totalCheckpoints;
+Checkpoints.Trace208 internal _totalCheckpoints;
 ```
 
 
@@ -157,13 +155,6 @@ Emits events [IVotes-DelegateChanged](/lib/unistaker/lib/openzeppelin-contracts/
 function _delegate(address account, address delegatee) internal virtual;
 ```
 
-### _updateOperatorVotesAfterSlashing
-
-
-```solidity
-function _updateOperatorVotesAfterSlashing(address operator, uint96 newVotes) internal virtual;
-```
-
 ### _transferVotingUnits
 
 *Transfers, mints, or burns voting units. To register a mint, `from` should be zero. To register a burn, `to`
@@ -180,7 +171,7 @@ function _transferVotingUnits(address from, address to, uint256 amount) internal
 
 
 ```solidity
-function _moveDelegateVotes(address from, address to, uint256 amount) private;
+function _moveDelegateVotes(address from, address to, uint256 amount) internal;
 ```
 
 ### _numCheckpoints
@@ -206,7 +197,7 @@ function _checkpoints(address account, uint32 pos) internal view virtual returns
 
 ```solidity
 function _push(Checkpoints.Trace208 storage store, function(uint208, uint208) view returns (uint208) op, uint208 delta)
-    private
+    internal
     returns (uint208, uint208);
 ```
 
@@ -214,14 +205,14 @@ function _push(Checkpoints.Trace208 storage store, function(uint208, uint208) vi
 
 
 ```solidity
-function _add(uint208 a, uint208 b) private pure returns (uint208);
+function _add(uint208 a, uint208 b) internal pure returns (uint208);
 ```
 
 ### _subtract
 
 
 ```solidity
-function _subtract(uint208 a, uint208 b) private pure returns (uint208);
+function _subtract(uint208 a, uint208 b) internal pure returns (uint208);
 ```
 
 ### _getVotingUnits

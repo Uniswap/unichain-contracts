@@ -1,5 +1,5 @@
 # ProtocolRewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7dcfc053062e80b4db9d2b818e627cd6f4a79851/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/56612a29b47c81cd714020caac57a75179367dc6/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol)
 
 **Inherits:**
 [UniStakerWrapper](/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol/contract.UniStakerWrapper.md), [IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md)
@@ -61,7 +61,7 @@ function _beforeWithdraw(address delegator, uint96 amount) internal virtual over
 
 
 ```solidity
-function _beforeUniStakerDeposit(address delegator) internal virtual override;
+function _beforeUniStakerDeposit(address delegator, uint96 amount) internal virtual override;
 ```
 
 ### _beforeUniStakerWithdrawal
@@ -70,7 +70,7 @@ function _beforeUniStakerDeposit(address delegator) internal virtual override;
 
 
 ```solidity
-function _beforeUniStakerWithdrawal(address delegator) internal virtual override;
+function _beforeUniStakerWithdrawal(address delegator, uint96 amount) internal virtual override;
 ```
 
 ### withdrawRewards
@@ -125,6 +125,8 @@ function _updateGlobalRewardCheckpoint() internal returns (uint256 newGlobalRewa
 ```
 
 ### _updateRewardCheckpoint
+
+*Pulls rewards from the UniStaker contracts and distributes them across all delegators, then updates the reward checkpoint for the delegator*
 
 
 ```solidity

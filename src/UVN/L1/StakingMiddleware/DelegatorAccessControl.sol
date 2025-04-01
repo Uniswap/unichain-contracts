@@ -19,9 +19,9 @@ abstract contract DelegatorAccessControl is OperatorManager, IDelegatorAccessCon
     mapping(address delegator => AccessControlParams accessControl) private _delegatorAccessControl;
 
     /// @dev Before a delegator selects an operator, check if they are allowed to delegate to them
-    function _beforeOperatorSelection(address delegator, address operator) internal override {
+    function _beforeDelegation(address delegator, address operator) internal override {
         if (!_allowDelegation(delegator, operator)) revert DelegationDisallowed();
-        super._beforeOperatorSelection(delegator, operator);
+        super._beforeDelegation(delegator, operator);
     }
 
     /// @inheritdoc IDelegatorAccessControl
@@ -72,18 +72,19 @@ abstract contract DelegatorAccessControl is OperatorManager, IDelegatorAccessCon
         if (!accessControl.acceptDelegation) {
             return false;
         }
+        if (accessControl.authorizedSender == msg.sender) {
+            // delegated by signature and authorized sender is the msg.sender, allow delegation
+            // @audit authorized sender could be set to the delegator, in this case a delegation from the delegator directly would pass
+            return true;
+        }
         if (accessControl.authorizedSender != address(0)) {
-            if (accessControl.authorizedSender == msg.sender) {
-                // delegated by signature and authorized sender is the msg.sender, allow
-                // @audit authorized sender could be set to the delegator, in this case a delegation from the delegator directly would pass
-                return true;
-            }
+            // if delegating by signature and authorized sender is set, ensure that the signature is provided by the authorized sender
             if (delegator != msg.sender) {
-                // delegating by signature and authorized sender is not the msg.sender, revert
                 return false;
             }
+
+            // if not delegating by signature but the verifier is set, check the verifier contract if it is set, else only allow delegating by signature
             if (address(accessControl.verifier) == address(0)) {
-                // if not delegating by signature and no verifier is set, revert, else check verifier contract
                 return false;
             }
         }

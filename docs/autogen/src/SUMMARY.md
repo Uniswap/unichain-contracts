@@ -10,6 +10,7 @@
     - [❱ L1](src/UVN/L1/README.md)
       - [❱ StakingMiddleware](src/UVN/L1/StakingMiddleware/README.md)
         - [❱ libraries](src/UVN/L1/StakingMiddleware/libraries/README.md)
+          - [OperatorVotes](src/UVN/L1/StakingMiddleware/libraries/OperatorVotes.sol/abstract.OperatorVotes.md)
           - [Votes](src/UVN/L1/StakingMiddleware/libraries/Votes.sol/abstract.Votes.md)
         - [DelegatorAccessControl](src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md)
         - [Notifier](src/UVN/L1/StakingMiddleware/Notifier.sol/abstract.Notifier.md)

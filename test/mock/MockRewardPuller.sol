@@ -34,7 +34,9 @@ contract MockRewardPuller is IRewardPuller {
 }
 
 contract EmptyRewardPuller is IRewardPuller {
-    function pullRewards() external pure returns (uint256) {
+    function pullRewards() external returns (uint256) {
+        (bool success,) = msg.sender.call{value: 0}('');
+        require(success, 'RewardPuller: failed to pull rewards');
         return 0;
     }
 

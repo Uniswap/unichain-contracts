@@ -394,23 +394,24 @@ contract ProtocolRewardDistributorTest is L1TestHandler {
         assertGt(totalReward, firstReward, 'Total reward should be greater than first reward');
     }
 
-    function testFuzz_multipleRewardDeposits(uint256 seed) public {
-        uint256 numDepositors = 50;
-        uint96[] memory amounts = new uint96[](numDepositors);
-        address[] memory depositors = new address[](numDepositors);
-        uint256 totalAmount = 0;
-        uint256 maxDeltaWei = 10;
+    uint256 private constant PRECISION = 1e27;
+    uint256 private constant NUM_DEPOSITORS = 50;
+    uint256 private constant MAX_DELTA_WEI = 10;
+    uint256 private constant NUM_REWARD_DEPOSITS = 10;
 
-        // Track rewards like the contract does
-        uint256 PRECISION = 1e27;
+    function testFuzz_multipleRewardDeposits(uint256 seed) public {
+        uint96[] memory amounts = new uint96[](NUM_DEPOSITORS);
+        address[] memory depositors = new address[](NUM_DEPOSITORS);
+        uint256 totalAmount = 0;
+
         uint256 globalRewardCheckpoint;
 
         // Use memory mappings via arrays instead
-        uint256[] memory rewardCheckpoints = new uint256[](numDepositors);
-        uint256[] memory earnedRewards = new uint256[](numDepositors);
+        uint256[] memory rewardCheckpoints = new uint256[](NUM_DEPOSITORS);
+        uint256[] memory earnedRewards = new uint256[](NUM_DEPOSITORS);
 
         // Setup initial stakes
-        for (uint256 i = 0; i < numDepositors; i++) {
+        for (uint256 i = 0; i < NUM_DEPOSITORS; i++) {
             amounts[i] = _randomUint96(seed, i);
             depositors[i] = _depositor(i);
             stakeToken.mint(depositors[i], amounts[i]);
@@ -423,10 +424,8 @@ contract ProtocolRewardDistributorTest is L1TestHandler {
         }
 
         // Multiple reward deposits
-        uint256 numRewardDeposits = 10;
-
-        for (uint256 i = 0; i < numRewardDeposits; i++) {
-            uint256 rewardAmount = Math.min(_randomUint96(seed, numDepositors + i), 1 ether);
+        for (uint256 i = 0; i < NUM_REWARD_DEPOSITS; i++) {
+            uint256 rewardAmount = Math.min(_randomUint96(seed, NUM_DEPOSITORS + i), 1 ether);
             rewardToken.mint(address(unistaker), rewardAmount);
             unistaker.notifyRewardAmount(rewardAmount);
             // Advance time partially through reward period
@@ -441,13 +440,12 @@ contract ProtocolRewardDistributorTest is L1TestHandler {
             }
             protocolRewardDistributor.updateGlobalRewardCheckpoint();
 
-            // First calculate the checkpoint increment exactly as the contract does
-            uint256 checkpointIncrement = (unclaimedReward * PRECISION) / totalAmount;
-            uint256 newGlobalCheckpoint = globalRewardCheckpoint + checkpointIncrement;
+            // calculate the checkpoint increment exactly as the contract does
+            uint256 newGlobalCheckpoint = globalRewardCheckpoint + (unclaimedReward * PRECISION) / totalAmount;
             globalRewardCheckpoint = newGlobalCheckpoint;
 
             // Then calculate rewards exactly as the contract does
-            for (uint256 j = 0; j < numDepositors; j++) {
+            for (uint256 j = 0; j < NUM_DEPOSITORS; j++) {
                 address depositor = depositors[j];
                 uint256 checkpointDelta = newGlobalCheckpoint - rewardCheckpoints[j];
                 uint256 pendingReward = (amounts[j] * checkpointDelta) / PRECISION;
@@ -458,7 +456,7 @@ contract ProtocolRewardDistributorTest is L1TestHandler {
                 assertApproxEqAbs(
                     actualReward,
                     earnedRewards[j],
-                    maxDeltaWei,
+                    MAX_DELTA_WEI,
                     string.concat(
                         'Reward distribution mismatch for depositor ',
                         vm.toString(j),
@@ -469,7 +467,7 @@ contract ProtocolRewardDistributorTest is L1TestHandler {
             }
 
             // Random unstaking/staking after each reward distribution
-            for (uint256 j = 0; j < numDepositors; j++) {
+            for (uint256 j = 0; j < NUM_DEPOSITORS; j++) {
                 address depositor = depositors[j];
                 // 50% chance to modify position
                 if (uint256(keccak256(abi.encodePacked(seed, i, j))) % 2 == 0) {
@@ -501,10 +499,10 @@ contract ProtocolRewardDistributorTest is L1TestHandler {
         }
 
         // Final withdrawal check for each depositor
-        for (uint256 i = 0; i < numDepositors; i++) {
+        for (uint256 i = 0; i < NUM_DEPOSITORS; i++) {
             address depositor = depositors[i];
             uint256 finalReward = protocolRewardDistributor.rewardsOf(depositor);
-            assertApproxEqAbs(finalReward, earnedRewards[i], maxDeltaWei, 'Final reward mismatch');
+            assertApproxEqAbs(finalReward, earnedRewards[i], MAX_DELTA_WEI, 'Final reward mismatch');
 
             address recipient = _recipient(i);
             expectERC20Transfer(address(protocolRewardDistributor), recipient, finalReward);
@@ -512,7 +510,7 @@ contract ProtocolRewardDistributorTest is L1TestHandler {
             emit IProtocolRewardDistributor.RewardsWithdrawn(depositor, recipient, finalReward);
             vm.prank(depositor);
             uint256 withdrawn = protocolRewardDistributor.withdrawRewards(recipient);
-            assertApproxEqAbs(withdrawn, finalReward, maxDeltaWei);
+            assertApproxEqAbs(withdrawn, finalReward, MAX_DELTA_WEI);
         }
     }
 }

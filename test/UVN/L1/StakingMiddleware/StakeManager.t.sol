@@ -42,11 +42,13 @@ contract StakeManagerTestHarness is StakeManager {
         _ghostSchedulePendingWithdrawal(delegator, amount);
     }
 
-    function _beforeSlash(address delegator, uint96 amount, uint96 newStake, uint96 newPendingWithdrawalAmount)
-        internal
-        override
-    {
-        super._beforeSlash(delegator, amount, newStake, newPendingWithdrawalAmount);
+    function _beforeDelegatorSlashed(
+        address delegator,
+        uint96 amount,
+        uint96 newStake,
+        uint96 newPendingWithdrawalAmount
+    ) internal override {
+        super._beforeDelegatorSlashed(delegator, amount, newStake, newPendingWithdrawalAmount);
 
         Stake_ storage stake_ = _ghostDepositorStake[delegator];
         uint256 currentPendingWithdrawalAmount = stake_.totalPendingWithdrawal;

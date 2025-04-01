@@ -31,13 +31,13 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
         _reportOperatorStakeUpdate(delegator, true);
     }
 
-    function _afterOperatorSelection(address delegator, address operator) internal virtual override {
-        super._afterOperatorSelection(delegator, operator);
+    function _afterDelegation(address delegator, address operator) internal virtual override {
+        super._afterDelegation(delegator, operator);
         _reportOperatorStakeUpdate(delegator, true);
     }
 
-    function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual override {
-        super._afterOperatorUndelegationAnnouncement(delegator);
+    function _afterUndelegationAnnouncement(address delegator) internal virtual override {
+        super._afterUndelegationAnnouncement(delegator);
         _reportOperatorStakeUpdate(delegator, false);
     }
 

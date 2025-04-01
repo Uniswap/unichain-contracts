@@ -31,10 +31,13 @@ contract MockDelegatorVerifier is IDelegatorVerifier {
 contract DelegatorAccessControlHarness is DelegatorAccessControl {
     IUniStaker private immutable _unistaker;
 
-    constructor(IUniStaker unistaker_, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
-        OperatorManager()
-        UniStakerWrapper(unistaker_, initialAdmin, withdrawalDelay_, slashingBeneficiary_)
-    {
+    constructor(
+        string memory name,
+        IUniStaker unistaker_,
+        address initialAdmin,
+        uint256 withdrawalDelay_,
+        address slashingBeneficiary_
+    ) OperatorManager(name) UniStakerWrapper(unistaker_, initialAdmin, withdrawalDelay_, slashingBeneficiary_) {
         _unistaker = unistaker_;
     }
 
@@ -45,6 +48,8 @@ contract DelegatorAccessControlHarness is DelegatorAccessControl {
 }
 
 contract DelegatorAccessControlTest is L1TestHandler {
+    string private NAME = 'UVN Staking Middleware';
+
     DelegatorAccessControlHarness delegatorAccessControlHarness;
     DelegatorAccessControl delegatorAccessControl;
     MockDelegatorVerifier mockVerifier;
@@ -62,6 +67,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Deploy the harness
         delegatorAccessControlHarness = new DelegatorAccessControlHarness(
+            NAME,
             unistaker,
             address(this),
             7 days, // withdrawal delay
@@ -116,7 +122,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
-                keccak256('UVN-StakingMiddleware'),
+                keccak256(abi.encodePacked(NAME)),
                 keccak256('1'),
                 block.chainid,
                 address(delegatorAccessControl)

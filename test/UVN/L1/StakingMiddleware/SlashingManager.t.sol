@@ -27,7 +27,6 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
     uint96 private constant DEFAULT_STAKE = 1000 ether;
 
     SlashingManagerHarness slashingManager;
-    address slasher = makeAddr('slasher');
 
     function setUp() public override {
         super.setUp();
@@ -66,8 +65,6 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         slashingManager.slashPercentage(operator, 1);
         assertTrue(slashingManager.isDelegatorSlashed(delegator), 'delegator should be slashed');
     }
-
-    function ensureSlashedAfter() internal {}
 
     function test_RevertIf_SlashAmountZero() public {
         vm.startPrank(slasher);

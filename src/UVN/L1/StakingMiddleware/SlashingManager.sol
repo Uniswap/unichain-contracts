@@ -167,6 +167,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
 
     // @audit Can introduce minor rounding errors between the sum of all remaining balances and the the recorded total stake due to rounding errors
     function _slashOperatorVotes(address operator, uint256 remainingPercentage) internal override {
+        if (operator == address(0)) revert AddressZero();
         uint256 globalRewardCheckpoint = _updateGlobalRewardCheckpoint();
         SlashingInstance memory instance = SlashingInstance({
             remainingPercentage: uint96(remainingPercentage),

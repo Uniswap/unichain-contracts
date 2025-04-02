@@ -15,6 +15,7 @@ contract L1TestHandler is Test {
     address delegator = makeAddr('delegator');
     address delegatee = makeAddr('delegatee');
     address operator = makeAddr('operator');
+    address slasher = makeAddr('slasher');
     address slashingBeneficiary = makeAddr('slashing beneficiary');
 
     function setUp() public virtual {

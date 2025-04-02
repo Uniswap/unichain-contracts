@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import {IBaseService} from '../../interfaces/UVN/IBaseService.sol';
 import {IService, IStakeTableSync} from '../../interfaces/UVN/L1/IStakeTableSync.sol';
 import {IStakingMiddleware} from '../../interfaces/UVN/L1/IStakingMiddleware.sol';
-import {IBaseService} from '../../interfaces/UVN/interfaces/IBaseService.sol';
 import {OperatorTokenLib} from './StakingMiddleware/libraries/OperatorTokenLib.sol';
 import {IOptimismPortal2} from '@eth-optimism-bedrock/src/L1/interfaces/IOptimismPortal2.sol';
 import {IERC721Receiver} from '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';

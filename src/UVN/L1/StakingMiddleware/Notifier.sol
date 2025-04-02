@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IBaseService} from '../../../interfaces/UVN/IBaseService.sol';
 import {IService} from '../../../interfaces/UVN/L1/IService.sol';
 import {INotifier} from '../../../interfaces/UVN/L1/StakingMiddleware/INotifier.sol';
-import {IBaseService} from '../../../interfaces/UVN/interfaces/IBaseService.sol';
 import {OperatorManager} from './OperatorManager.sol';
 import {SlashingManager} from './SlashingManager.sol';
 import {OperatorTokenLib} from './libraries/OperatorTokenLib.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import {ERC721Utils} from '@openzeppelin/contracts/token/ERC721/utils/ERC721Utils.sol';
 
 /// @title Notifier - Base contract for the Notifier
 /// @notice This contract allows operators to mint ERC721 tokens to deposit into service contracts they want to operate for. Whenever a delegator modifies their stake or the operator is slashed, the current owner of the token is notified (e.g., service contract). This allows the operator to participate in network upgrades by depositing their token into a new service contract. Additionally, it allows service contracts to implement arbitrary logic on deposits by requiring data to be sent alongside the token, implement their own migration logic, etc. Additionally, the operator can set a URI for their token where they can expose an endpoint to provide more information about themselves.
@@ -21,26 +22,51 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
 
     constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) OperatorManager(name_) {}
 
+    /// @dev Report the new operator stake after staking
+    /// @dev Failing call to service contract can prevent a delegator from staking
     function _afterStake(address delegator, uint96 amount) internal virtual override {
         super._afterStake(delegator, amount);
-        _reportOperatorStakeUpdate(delegator, true);
+        address operator = delegates(delegator);
+        if (operator == address(0)) return;
+        uint96 operatorStake = uint96(getVotes(operator));
+        uint96 delegatorStake_ = _delegatorStake(delegator);
+        _reportOperatorStakeUpdate(operator, operatorStake, delegator, delegatorStake_, true);
     }
 
+    /// @dev Report the new operator stake after unstaking
+    /// @dev Failing call to service contract can prevent a delegator from unstaking
+    /// @dev Should a malicious service contract prevent unstaking, the delegator can always undelegate from the operator first
     function _afterUnstake(address delegator, uint96 amount) internal virtual override {
         super._afterUnstake(delegator, amount);
-        _reportOperatorStakeUpdate(delegator, true);
+        address operator = delegates(delegator);
+        if (operator == address(0)) return;
+        uint96 operatorStake = uint96(getVotes(operator));
+        uint96 delegatorStake_ = _delegatorStake(delegator);
+        _reportOperatorStakeUpdate(operator, operatorStake, delegator, delegatorStake_, true);
     }
 
+    /// @dev Report the new operator stake after delegation
+    /// @dev Failing call to service contract can prevent a delegator from delegating to an operator
     function _afterDelegation(address delegator, address operator) internal virtual override {
         super._afterDelegation(delegator, operator);
-        _reportOperatorStakeUpdate(delegator, true);
+        uint96 operatorStake = uint96(getVotes(operator));
+        uint96 delegatorStake_ = _delegatorStake(delegator);
+        _reportOperatorStakeUpdate(operator, operatorStake, delegator, delegatorStake_, true);
     }
 
+    /// @dev Report the new operator stake after undelegation announcement
+    /// @dev Set delegator stake to 0 as the delegator is undelegating their entire stake
+    /// @dev Call to service contract is not required to prevent a DOS attack on delegators
     function _afterUndelegationAnnouncement(address delegator) internal virtual override {
         super._afterUndelegationAnnouncement(delegator);
-        _reportOperatorStakeUpdate(delegator, false);
+        address operator = _slashableOperatorOf(delegator);
+        uint96 operatorStake = uint96(getVotes(operator));
+        uint96 delegatorStake_ = 0;
+        _reportOperatorStakeUpdate(operator, operatorStake, delegator, delegatorStake_, false);
     }
 
+    /// @dev Report the operator slash to the service contract
+    /// @dev Ensures the service contract cannot prevent the operator from being slashed by reverting the call
     function _afterSlash(address operator, uint256 remainingPercentage) internal virtual override {
         super._afterSlash(operator, remainingPercentage);
         _reportOperatorSlash(operator, remainingPercentage);
@@ -80,40 +106,43 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
             // if current owner is a service contract, try catch the `onForceWithdrawal` hook to ensure the owner can always force transfer their own token but allow a service contract to implement arbitrary logic on withdrawals
             try IService(from).onWithdrawal{gas: MIN_GAS}(operator) {} catch {}
         }
-        super.safeTransferFrom(from, to, tokenId, data);
+        ERC721.transferFrom(from, to, tokenId);
+        ERC721Utils.checkOnERC721Received(msg.sender, from, to, tokenId, data);
     }
 
     /// @dev Reports the new operator stake to the service contract, triggered by a balance change through a delegator action
     /// @dev If requireSuccess is true, the function will revert if the call to the service contract fails
     /// @dev If requireSuccess is false, the function will not revert if the call to the service contract fails, this ensures that a delegator cannot be DOSed by a malicious operator, they should always be able to undelegate from the operator to withdraw their stake. To ensure an honest undelegation can be processed by the recipient of the call, a minimum amount of gas is enforced.
-    function _reportOperatorStakeUpdate(address delegator, bool requireSuccess) internal {
-        address operator = delegates(delegator);
-        if (operator == address(0)) return;
+    function _reportOperatorStakeUpdate(
+        address operator,
+        uint96 operatorStake,
+        address delegator,
+        uint96 delegatorStake_,
+        bool requireSuccess
+    ) internal {
         // this reverts if the operator token is not minted
         address operatorHolder = _requireOwned(OperatorTokenLib.toTokenId(operator));
-        if (operatorHolder != operator) {
-            uint256 minGas = requireSuccess ? gasleft() * 63 / 64 : MIN_GAS;
-            try IService(operatorHolder).reportOperatorStake{gas: minGas}(
-                operator, uint96(getVotes(operator)), delegator, _delegatorStake(delegator)
-            ) {} catch (bytes memory reason) {
-                if (!requireSuccess) return;
-                revert WrappedError(
-                    operatorHolder,
-                    IBaseService.reportOperatorStake.selector,
-                    reason,
-                    abi.encodePacked(INotifier.NotificationFailed.selector)
-                );
-            }
+        if (operatorHolder == operator) return;
+        uint256 minGas = requireSuccess ? gasleft() * 63 / 64 : MIN_GAS;
+        try IService(operatorHolder).reportOperatorStake{gas: minGas}(
+            operator, operatorStake, delegator, delegatorStake_
+        ) {} catch (bytes memory reason) {
+            if (!requireSuccess) return;
+            revert WrappedError(
+                operatorHolder,
+                IBaseService.reportOperatorStake.selector,
+                reason,
+                abi.encodePacked(INotifier.NotificationFailed.selector)
+            );
         }
     }
 
     /// @dev Reports the operator slash to the service contract
     /// @dev Ensures the service contract cannot prevent the operator from being slashed by reverting the call
     function _reportOperatorSlash(address operator, uint256 remainingPercentage) internal {
-        address operatorHolder = _ownerOf(OperatorTokenLib.toTokenId(operator));
-        if (operator != address(0) && operatorHolder != address(0) && operatorHolder != operator) {
-            try IService(operatorHolder).reportOperatorSlash{gas: MIN_GAS}(operator, remainingPercentage) {} catch {}
-        }
+        address operatorHolder = _requireOwned(OperatorTokenLib.toTokenId(operator));
+        if (operatorHolder == operator) return;
+        try IService(operatorHolder).reportOperatorSlash{gas: MIN_GAS}(operator, remainingPercentage) {} catch {}
     }
 
     /// @dev Allow the operator to always force transfer their own token
@@ -124,7 +153,7 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
 
     /// @dev Checks if an account is a service contract by ensuring that the account is not an EOA or 7702 enabled account and that the smart contract supports the `IService` interface
     /// @dev Prevents malicious service contracts from preventing force transfers by reverting the ERC-165 check
-    function _isServiceContract(address account) private view returns (bool) {
+    function _isServiceContract(address account) internal view returns (bool) {
         uint32 size;
         assembly {
             size := extcodesize(account)

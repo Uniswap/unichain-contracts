@@ -13,7 +13,7 @@ import {ERC165, IERC165} from '@openzeppelin/contracts/utils/introspection/ERC16
 /// @notice This contract is used to sync the stake table of the StakingMiddleware contract to the L2. On notifications about slashing and balance changes from the StakingMiddleware, the data is forwarded to the StakeTable contract on L2. On deposits of operator ERC-721 tokens, the initial balance of the operator is reported to the StakeTable contract on L2. Should an operator already have delegators before depositing their operator token or should they withdraw their operator token and re-deposit it, inconsistencies in the stake of individual delegators could occur. This contract exposes two sync functions to forcefully sync the correct balances to L2.
 contract StakeTableSync is IStakeTableSync, ERC165 {
     IOptimismPortal2 public constant OPTIMISM_PORTAL =
-        IOptimismPortal2(payable(0xe2F826324b2faf99E513D16D266c3F80aE87832B));
+        IOptimismPortal2(payable(0x0bd48f6B86a26D3a217d0Fa6FfE2B491B956A7a2));
     IStakingMiddleware public immutable STAKING_MIDDLEWARE;
     address public immutable L2_STAKE_TABLE;
 
@@ -22,8 +22,9 @@ contract StakeTableSync is IStakeTableSync, ERC165 {
         _;
     }
 
-    constructor(IStakingMiddleware stakingMiddleware_) {
+    constructor(IStakingMiddleware stakingMiddleware_, address l2StakeTable) {
         STAKING_MIDDLEWARE = stakingMiddleware_;
+        L2_STAKE_TABLE = l2StakeTable;
     }
 
     /// @notice Reports the current stake of a delegator and their operator to L2
@@ -55,6 +56,7 @@ contract StakeTableSync is IStakeTableSync, ERC165 {
     /// @inheritdoc IStakeTableSync
     function sync(address delegator) external {
         address operator = STAKING_MIDDLEWARE.delegates(delegator);
+        if (operator == address(0)) revert NotDelegated();
         uint256 operatorBalance = STAKING_MIDDLEWARE.getVotes(operator);
         uint256 delegatorBalance = STAKING_MIDDLEWARE.delegatorStake(delegator);
         _reportOperatorStake(operator, operatorBalance, delegator, delegatorBalance);

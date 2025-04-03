@@ -111,8 +111,8 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         notifier.slashPercentage(operator, 1);
     }
 
-    function toId(address operator) internal pure returns (uint256) {
-        return uint256(uint160(operator));
+    function toId(address operator_) internal pure returns (uint256) {
+        return uint256(uint160(operator_));
     }
 
     function test_ShouldBeAbleToMintNFT(address operator) public {

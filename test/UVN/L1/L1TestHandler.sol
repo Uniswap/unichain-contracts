@@ -22,6 +22,7 @@ contract L1TestHandler is Test {
         stakeToken = new MockVotesToken();
         rewardToken = new MockVotesToken();
         unistaker = UniStakerDeployer.deploy(address(rewardToken), address(stakeToken), address(this));
+        // TODO check optimal gas / contract size with and without viaIR and remove deployer if without viaIR
         stakingMiddleware = StakingMiddlewareDeployer.deploy(address(unistaker), address(this), 0, slashingBeneficiary);
     }
 }

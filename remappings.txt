@@ -1,2 +1,4 @@
+lib/optimism:@rari-capital/solmate/=lib/optimism/packages/contracts-bedrock/lib/solmate
+lib/optimism:@openzeppelin/contracts=lib/optimism/packages/contracts-bedrock/lib/openzeppelin-contracts/contracts
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts
 @eth-optimism-bedrock/=lib/optimism/packages/contracts-bedrock

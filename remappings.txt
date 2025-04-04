@@ -1,4 +1,12 @@
-lib/optimism:@rari-capital/solmate/=lib/optimism/packages/contracts-bedrock/lib/solmate
-lib/optimism:@openzeppelin/contracts=lib/optimism/packages/contracts-bedrock/lib/openzeppelin-contracts/contracts
-@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts
-@eth-optimism-bedrock/=lib/optimism/packages/contracts-bedrock
+@eth-optimism-bedrock=lib/optimism/packages/contracts-bedrock
+lib/optimism/packages/contracts-bedrock:src=lib/optimism/packages/contracts-bedrock/src
+lib/optimism/packages/contracts-bedrock:scripts=lib/optimism/packages/contracts-bedrock/scripts
+lib/optimism/packages/contracts-bedrock:@rari-capital=lib/optimism/packages/contracts-bedrock/lib
+lib/optimism/packages/contracts-bedrock:@cwia=lib/optimism/packages/contracts-bedrock/lib/clones-with-immutable-args/src
+lib/optimism/packages/contracts-bedrock:@lib-keccak=lib/optimism/packages/contracts-bedrock/lib/lib-keccak/contracts/lib
+lib/optimism/packages/contracts-bedrock:ds-test=lib/optimism/packages/contracts-bedrock/lib/forge-std/lib/ds-test/src
+lib/optimism/packages/contracts-bedrock:kontrol-cheatcodes=lib/optimism/packages/contracts-bedrock/lib/kontrol-cheatcodes/src
+lib/optimism/packages/contracts-bedrock:solady=lib/optimism/packages/contracts-bedrock/lib/solady/src
+lib/optimism/packages/contracts-bedrock:@openzeppelin/contracts=lib/optimism/packages/contracts-bedrock/lib/openzeppelin-contracts/contracts
+lib/optimism/packages/contracts-bedrock:@openzeppelin/contracts-upgradeable=lib/optimism/packages/contracts-bedrock/lib/openzeppelin-contracts-upgradeable/contracts
+@openzeppelin/contracts=lib/openzeppelin-contracts/contracts

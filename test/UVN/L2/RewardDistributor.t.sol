@@ -192,18 +192,17 @@ contract RewardDistributorTest is RewardDistributorTestBase {
         assertEq(attestationBlockNumber, block.number - 1);
         uint256 originalAttestationBlockNumber = block.number - attestationDelay - 1;
         assertStatus(originalAttestationBlockNumber, IRewardDistributor.Status.Active, 'Window becomes active');
-        assertStatus(attestationBlockNumber, IRewardDistributor.Status.Active, 'Window extends to the previous block');
-        assertStatus(attestationBlockNumber + 1, IRewardDistributor.Status.Delayed, 'Next window is delayed');
+        // active window extends in increments of `attestationWindowLength` blocks, get the last block of the active window depending on the window length
+        uint256 activeWindowEnd = rd.latestActiveWindow();
+        assertStatus(activeWindowEnd, IRewardDistributor.Status.Active, 'Window extends to the previous block');
+        assertStatus(activeWindowEnd + 1, IRewardDistributor.Status.Delayed, 'Next window is delayed');
         vm.expectEmit();
-        emit IRewardDistributor.AttestationWindowExtended(originalAttestationBlockNumber, attestationBlockNumber);
+        emit IRewardDistributor.AttestationWindowExtended(originalAttestationBlockNumber, activeWindowEnd);
         vm.expectEmit();
-        emit IRewardDistributor.AttestationWindowActivated(
-            attestationBlockNumber, attestationBlockNumber + attestationWindowLength
-        );
-        attest(attestationBlockNumber);
-        assertStatus(
-            attestationBlockNumber + 1, IRewardDistributor.Status.Scheduled, 'Delayed window should become scheduled'
-        );
+        emit IRewardDistributor.AttestationWindowActivated(activeWindowEnd, activeWindowEnd + attestationWindowLength);
+        vm.roll(block.number);
+        attest(activeWindowEnd);
+        assertStatus(activeWindowEnd + 1, IRewardDistributor.Status.Scheduled, 'Delayed window should become scheduled');
     }
 
     function test_shouldReturnCorrectStatusEndToEnd() public {
@@ -228,7 +227,7 @@ contract RewardDistributorTest is RewardDistributorTestBase {
             'Window after scheduled window should not exist'
         );
         // move time forward one window length to activate scheduled window
-        vm.roll(block.number + rd.attestationWindowLength() + 1);
+        vm.roll(block.number + rd.attestationWindowLength());
         assertStatusRange(
             blockNumber,
             blockNumber + rd.attestationWindowLength() - 1,
@@ -259,9 +258,14 @@ contract RewardDistributorTest is RewardDistributorTestBase {
             blockNumber + rd.attestationWindowLength(),
             block.number - 1,
             IRewardDistributor.Status.Active,
-            'Active window should extend to the last block'
+            'Active window should extend in increments of `attestationWindowLength` blocks'
         );
-        assertEq(rd.latestActiveWindow(), block.number - 1);
+        uint256 lastActiveWindow = block.number - 1;
+        assertEq(
+            rd.latestActiveWindow(),
+            lastActiveWindow,
+            'latestActiveWindow should return the last block of the active window'
+        );
         assertStatusRange(
             block.number,
             block.number + rd.attestationWindowLength() - 1,
@@ -272,6 +276,27 @@ contract RewardDistributorTest is RewardDistributorTestBase {
             block.number + rd.attestationWindowLength(),
             IRewardDistributor.Status.NonExistent,
             'Window after delayed window should remain non existent'
+        );
+        // move forward one block, it should still return the same last block of the active window
+        vm.roll(block.number + 1);
+        assertEq(
+            rd.latestActiveWindow(),
+            lastActiveWindow,
+            'latestActiveWindow should still return the last block of the active window'
+        );
+        // move forward to the last block before the active window is extended
+        vm.roll(block.number + rd.attestationWindowLength() - 2);
+        assertEq(
+            rd.latestActiveWindow(),
+            lastActiveWindow,
+            'latestActiveWindow should still return the last block of the active window at the end of the active window'
+        );
+        // the active window is extended after `attestationWindowLength` blocks have passed
+        vm.roll(block.number + 1);
+        assertEq(
+            rd.latestActiveWindow(),
+            lastActiveWindow + rd.attestationWindowLength(),
+            'latestActiveWindow should return the last block of the active window after the active window is extended'
         );
         // set attestation period so initial window is now finalized
         rd.setAttestationPeriod(rd.attestationWindowLength() * 2 + 1);
@@ -378,7 +403,7 @@ contract RewardDistributorTest is RewardDistributorTestBase {
             blockNumber, IRewardDistributor.AttestationResult.Pending, 'Current window should be pending'
         );
         attest(operator2);
-        vm.roll(block.number + periodLength);
+        vm.roll(block.number + periodLength + 4); // move forward enough blocks so that the extended delayed window is at block.number - 1
         assertAttestationResult(
             blockNumber,
             IRewardDistributor.AttestationResult.InsufficientVotes,

@@ -126,7 +126,7 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         // the window is pending, activate the scheduled window
         if (block.number < nextWindowEnd + attestationWindowLength()) return nextWindowEnd;
         // a window is delayed, the active window is extended to the last block
-        return block.number - 1;
+        return _activeWindowEndAfterDelay(nextWindowEnd);
     }
 
     /// @dev The first attestation after the scheduled window has passed will activate the scheduled window. If there are no attestations to this window after `attestationLength` blocks, the window will start extending until this function is called on the first attestation or reward distribution.
@@ -136,11 +136,11 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         if (_windows.isNextWindowDelayed()) {
             // entire window has not received any attestations
             // extend the current window
-            emit AttestationWindowExtended(scheduledWindow, block.number - 1);
+            uint256 activeWindowEnd = _activeWindowEndAfterDelay(scheduledWindow);
+            emit AttestationWindowExtended(scheduledWindow, activeWindowEnd);
             lastActiveWindow.extendScheduledWindow();
-            scheduledWindow = block.number - 1;
+            scheduledWindow = activeWindowEnd;
         }
-
         uint256 votingSupply = L2_STAKE_MANAGER.getPastTotalSupply(scheduledWindow);
         uint256 newScheduledWindow = _windows.activate(scheduledWindow, reward, votingSupply);
         emit AttestationWindowActivated(scheduledWindow, newScheduledWindow);
@@ -199,8 +199,9 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
         uint256 attestationWindowLength_ = attestationWindowLength();
         if (block.number > scheduledWindowEnd + attestationWindowLength_) {
             // no attestations during the pending window were made, thus the next window could not be scheduled. Extend the current window until the next attestation occurs.
-            if (targetBlockNumber < block.number) return Status.Active;
-            if (targetBlockNumber < block.number + attestationWindowLength_) return Status.Delayed;
+            uint256 activeWindowEnd = _activeWindowEndAfterDelay(scheduledWindowEnd);
+            if (targetBlockNumber <= activeWindowEnd) return Status.Active;
+            if (targetBlockNumber <= activeWindowEnd + attestationWindowLength_) return Status.Delayed;
             return Status.NonExistent;
         }
         // currently a window is scheduled
@@ -216,5 +217,14 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
 
     function _acceptingAttestations(uint256 blockNumber) private view returns (bool) {
         return blockNumber + attestationPeriod() > block.number;
+    }
+
+    /// @dev When a window is delayed, the active window is extended in increments of `attestationWindowLength` blocks. This function returns the last block of the active window after a delay.
+    function _activeWindowEndAfterDelay(uint256 nextWindowEnd) private view returns (uint256) {
+        uint256 attestationWindowLength_ = attestationWindowLength();
+        uint256 blocksUntilNextWindow = (block.number - nextWindowEnd) % attestationWindowLength_;
+        // if the current block is exactly the next block to attest, still point to the last window
+        if (blocksUntilNextWindow == 0) blocksUntilNextWindow = attestationWindowLength_;
+        return block.number - blocksUntilNextWindow;
     }
 }

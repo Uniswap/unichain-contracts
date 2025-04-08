@@ -53,7 +53,7 @@ library WindowLib {
         assert(blockHash != bytes32(0));
         uint256 windowLength = $.windowLength;
         $.windows[blockNumber].nextWindow = NextWindowLib.setBlockNumber(blockNumber + windowLength);
-        $.windows[blockNumber].blockHash = blockhash(blockNumber);
+        $.windows[blockNumber].blockHash = blockHash;
         $.windows[blockNumber].votingTotalSupply = uint96(votingSupply);
         $.windows[blockNumber].rewardETH = uint96(reward);
         $.windows[blockNumber].index = uint32($.blockNumbers.length);

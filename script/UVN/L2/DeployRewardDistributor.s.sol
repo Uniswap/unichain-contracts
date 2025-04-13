@@ -12,7 +12,10 @@ contract DeployRewardDistributor is Script {
         vm.startBroadcast();
         MockVotesToken mockVotesToken = new MockVotesToken();
         EmptyRewardPuller emptyRewardPuller = new EmptyRewardPuller();
-        new RewardDistributor(msg.sender, mockVotesToken, emptyRewardPuller, 12, 120);
+        RewardDistributor rewardDistributor =
+            new RewardDistributor(msg.sender, mockVotesToken, emptyRewardPuller, 30, 120);
+        mockVotesToken.mint(msg.sender, 1000 ether);
+        rewardDistributor.grantRole(rewardDistributor.PARAM_SETTER_ROLE(), msg.sender);
         vm.stopBroadcast();
     }
 }

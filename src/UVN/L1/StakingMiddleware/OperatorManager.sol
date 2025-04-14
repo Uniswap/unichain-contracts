@@ -20,7 +20,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
     mapping(address operator => uint256 amount) private _slashableStakes;
     mapping(address delegator => UndelegationData undelegationData) private _undelegationData;
 
-    constructor() EIP712('UVN-StakingMiddleware', '1') {}
+    constructor(string memory name) EIP712(name, '1') {}
 
     /// @dev After a delegator stakes, increase the operator's voting power immediately and increase the slashable stake
     function _afterStake(address delegator, uint96 amount) internal virtual override {

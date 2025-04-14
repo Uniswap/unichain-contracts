@@ -14,10 +14,13 @@ import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 contract OperatorManagerHarness is OperatorManager {
     IUniStaker private immutable _unistaker;
 
-    constructor(IUniStaker unistaker_, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
-        OperatorManager()
-        UniStakerWrapper(unistaker_, initialAdmin, withdrawalDelay_, slashingBeneficiary_)
-    {
+    constructor(
+        string memory name,
+        IUniStaker unistaker_,
+        address initialAdmin,
+        uint256 withdrawalDelay_,
+        address slashingBeneficiary_
+    ) OperatorManager(name) UniStakerWrapper(unistaker_, initialAdmin, withdrawalDelay_, slashingBeneficiary_) {
         _unistaker = unistaker_;
     }
 
@@ -33,6 +36,8 @@ contract OperatorManagerHarness is OperatorManager {
 contract OperatorManagerTest is L1TestHandler {
     uint96 private constant DEFAULT_AMOUNT = 1000 ether;
 
+    string private NAME = 'UVN Staking Middleware';
+
     OperatorManagerHarness operatorManager;
 
     uint256 delegatorPk;
@@ -41,7 +46,7 @@ contract OperatorManagerTest is L1TestHandler {
         super.setUp();
 
         // Deploy the harness
-        operatorManager = new OperatorManagerHarness(unistaker, address(this), 0, slashingBeneficiary);
+        operatorManager = new OperatorManagerHarness(NAME, unistaker, address(this), 0, slashingBeneficiary);
         operatorManager.grantRole(operatorManager.PARAMS_SETTER_ROLE(), address(this));
 
         (delegator, delegatorPk) = makeAddrAndKey('delegator');
@@ -78,7 +83,7 @@ contract OperatorManagerTest is L1TestHandler {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
-                keccak256('UVN-StakingMiddleware'),
+                keccak256(abi.encodePacked(NAME)),
                 keccak256('1'),
                 block.chainid,
                 address(operatorManager)

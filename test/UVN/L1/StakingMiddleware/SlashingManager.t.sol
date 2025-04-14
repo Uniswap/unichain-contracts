@@ -3,13 +3,14 @@ pragma solidity 0.8.26;
 
 import {ISlashingManager, SlashingManager} from '../../../../src/UVN/L1/StakingMiddleware/SlashingManager.sol';
 
+import {IOperatorManager, OperatorManager} from '../../../../src/UVN/L1/StakingMiddleware/OperatorManager.sol';
 import {IUniStaker, UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol';
-import {IOperatorManager} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol';
 import {L1TestHandler} from '../L1TestHandler.sol';
 
 contract SlashingManagerHarness is SlashingManager {
     constructor(IUniStaker unistaker_, address initialAdmin, address slashingBeneficiary_)
         UniStakerWrapper(unistaker_, initialAdmin, 0, slashingBeneficiary_)
+        OperatorManager('UVN Staking Middleware')
     {}
 
     function isDelegatorSlashed(address delegator) public view returns (bool) {
@@ -26,7 +27,6 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
     uint96 private constant DEFAULT_STAKE = 1000 ether;
 
     SlashingManagerHarness slashingManager;
-    address slasher = makeAddr('slasher');
 
     function setUp() public override {
         super.setUp();
@@ -65,8 +65,6 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         slashingManager.slashPercentage(operator, 1);
         assertTrue(slashingManager.isDelegatorSlashed(delegator), 'delegator should be slashed');
     }
-
-    function ensureSlashedAfter() internal {}
 
     function test_RevertIf_SlashAmountZero() public {
         vm.startPrank(slasher);

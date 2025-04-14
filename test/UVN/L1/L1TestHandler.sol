@@ -15,12 +15,14 @@ contract L1TestHandler is Test {
     address delegator = makeAddr('delegator');
     address delegatee = makeAddr('delegatee');
     address operator = makeAddr('operator');
+    address slasher = makeAddr('slasher');
     address slashingBeneficiary = makeAddr('slashing beneficiary');
 
     function setUp() public virtual {
         stakeToken = new MockVotesToken();
         rewardToken = new MockVotesToken();
         unistaker = UniStakerDeployer.deploy(address(rewardToken), address(stakeToken), address(this));
+        // TODO check optimal gas / contract size with and without viaIR and remove deployer if without viaIR
         stakingMiddleware = StakingMiddlewareDeployer.deploy(address(unistaker), address(this), 0, slashingBeneficiary);
     }
 }

@@ -10,6 +10,8 @@ interface ISlashingManager is IDelegatorAccessControl {
     error SlashingAmountZero();
     /// @notice Thrown when a slashing percentage exceeds 100%
     error SlashingPercentageTooHigh();
+    /// @notice When the zero address is slashed
+    error AddressZero();
 
     /// @notice Emitted when a delegator's stake is slashed
     event OperatorSlashed(address indexed operator, uint256 remainingPercentage);

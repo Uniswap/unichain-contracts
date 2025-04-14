@@ -32,4 +32,13 @@ interface IFeeSplitter {
     /// @notice Distributes the fees collected from the fee vaults to their respective destinations
     /// @return feesDistributed Whether any fees were distributed
     function distributeFees() external returns (bool feesDistributed);
+
+    /// @notice Returns the address of the Optimism wallet
+    function OPTIMISM_WALLET() external view returns (address);
+
+    /// @notice Returns the address of the net fee recipient
+    function NET_FEE_RECIPIENT() external view returns (address);
+
+    /// @notice Returns the address of the L1 fee recipient
+    function L1_FEE_RECIPIENT() external view returns (address);
 }

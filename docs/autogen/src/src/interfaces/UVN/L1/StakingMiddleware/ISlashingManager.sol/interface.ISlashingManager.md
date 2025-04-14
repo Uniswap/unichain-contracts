@@ -1,5 +1,5 @@
 # ISlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/a20d9de88d5c840c8536a212a24114da0a29a1fa/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol)
 
 **Inherits:**
 [IDelegatorAccessControl](/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md)
@@ -77,5 +77,13 @@ Thrown when a slashing percentage exceeds 100%
 
 ```solidity
 error SlashingPercentageTooHigh();
+```
+
+### AddressZero
+When the zero address is slashed
+
+
+```solidity
+error AddressZero();
 ```
 

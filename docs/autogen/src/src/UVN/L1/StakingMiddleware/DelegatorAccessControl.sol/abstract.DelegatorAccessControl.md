@@ -1,5 +1,5 @@
 # DelegatorAccessControl
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol)
 
 **Inherits:**
 [OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md), [IDelegatorAccessControl](/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md)
@@ -16,13 +16,13 @@ mapping(address delegator => AccessControlParams accessControl) private _delegat
 
 
 ## Functions
-### _beforeOperatorSelection
+### _beforeDelegation
 
 *Before a delegator selects an operator, check if they are allowed to delegate to them*
 
 
 ```solidity
-function _beforeOperatorSelection(address delegator, address operator) internal override;
+function _beforeDelegation(address delegator, address operator) internal override;
 ```
 
 ### setDelegationStatus

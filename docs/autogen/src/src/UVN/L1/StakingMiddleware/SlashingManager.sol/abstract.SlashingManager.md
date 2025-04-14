@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7dcfc053062e80b4db9d2b818e627cd6f4a79851/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -8,37 +8,48 @@ This contract manages the slashing of delegators and operators. When operators a
 
 
 ## State Variables
+### SLASHER_ROLE
+
+```solidity
+bytes32 public constant SLASHER_ROLE = keccak256('SLASHER_ROLE');
+```
+
+
 ### _slashingInstances
+*List of slashing instances for an operator*
+
 
 ```solidity
 mapping(address operator => SlashingInstance[] instances) internal _slashingInstances;
 ```
 
 
-### _delegatorSlashingData
+### _delegatorNextSlashingInstance
+*Points to the next slashing instance of an operator a delegator delegated to, if the next slashing instance is equal to the operator's slashing instances array length, the delegator is not slashed*
+
 
 ```solidity
-mapping(address delegator => DelegatorSlashingData data) internal _delegatorSlashingData;
+mapping(address delegator => uint256 nextSlashingInstance) internal _delegatorNextSlashingInstance;
 ```
 
 
 ## Functions
-### _afterOperatorSelection
+### _afterDelegation
 
 *After a delegator selects an operator, store the number of slashing instances an operator had before the delegation to keep track of future slashing instances that occur after the delegation*
 
 
 ```solidity
-function _afterOperatorSelection(address delegator, address operator) internal virtual override;
+function _afterDelegation(address delegator, address operator) internal virtual override;
 ```
 
-### _afterOperatorDeselection
+### _afterUndelegation
 
 *After a delegator undelegates from an operator, reset the slashing tracking data for the delegator*
 
 
 ```solidity
-function _afterOperatorDeselection(address delegator) internal virtual override;
+function _afterUndelegation(address delegator) internal virtual override;
 ```
 
 ### _beforeStake
@@ -104,22 +115,22 @@ function _beforeUniStakerDelegateChange(address delegator, address newGovernance
 function _beforeRewardsWithdrawal(address delegator) internal override;
 ```
 
-### _beforeOperatorUndelegationAnnouncement
+### _beforeUndelegationAnnouncement
 
 *Before a delegator announces their intention to undelegate from an operator, apply all pending slashing instances to the delegator's stake*
 
 
 ```solidity
-function _beforeOperatorUndelegationAnnouncement(address delegator) internal override;
+function _beforeUndelegationAnnouncement(address delegator) internal override;
 ```
 
-### _beforeOperatorDeselection
+### _beforeUndelegation
 
 *Before a delegator undelegates from an operator, apply all pending slashing instances to the delegator's stake*
 
 
 ```solidity
-function _beforeOperatorDeselection(address delegator) internal override;
+function _beforeUndelegation(address delegator) internal override;
 ```
 
 ### slashAmount
@@ -128,7 +139,7 @@ Slashes a delegator's stake by a specific amount
 
 
 ```solidity
-function slashAmount(address operator, uint96 amount) external onlyRole(SLASHER_ROLE());
+function slashAmount(address operator, uint96 amount) external onlyRole(SLASHER_ROLE);
 ```
 
 ### slashPercentage
@@ -137,7 +148,7 @@ Slashes a delegator's stake by a percentage of the total stake
 
 
 ```solidity
-function slashPercentage(address operator, uint96 percentage) external onlyRole(SLASHER_ROLE());
+function slashPercentage(address operator, uint96 percentage) external onlyRole(SLASHER_ROLE);
 ```
 
 ### applySlashing
@@ -178,22 +189,22 @@ function rewardsOf(address delegator)
 function _slashOperatorVotes(address operator, uint256 remainingPercentage) internal override;
 ```
 
-### _delegatorStake
+### delegatorStake
 
 *Overrides the `delegatorStake` function in `StakeManager` to reflect correct stake for a delegator accounting for slashing*
 
 
 ```solidity
-function _delegatorStake(address delegator) internal view override returns (uint96);
+function delegatorStake(address delegator) public view override(StakeManager, IStakeManager) returns (uint96);
 ```
 
-### _slashableStake
+### slashableStake
 
 *Overrides the `slashableStake` function in `StakeManager` to reflect correct slashable stake for a delegator accounting for slashing*
 
 
 ```solidity
-function _slashableStake(address delegator) internal view override returns (uint96);
+function slashableStake(address delegator) public view override(StakeManager, IStakeManager) returns (uint96);
 ```
 
 ### _calculateSlashing
@@ -207,37 +218,34 @@ function _slashableStake(address delegator) internal view override returns (uint
 function _calculateSlashing(address delegator, uint256 n, uint256 globalCheckpoint)
     internal
     view
-    returns (
-        SlashingType slashingType,
-        uint256 remainingPercentage,
-        uint160 delegatorLength,
-        uint256 newRewards,
-        uint256 slashedRewards,
-        uint256 newCheckpoint
-    );
+    returns (SlashingResult memory result);
 ```
 
 ### _isDelegatorSlashed
 
+*Checks whether a delegator has pending slashing instances, if the next slashing instance is equal to the operator's slashing instances array length, the delegator is not slashed*
+
 
 ```solidity
-function _isDelegatorSlashed(uint256 delegatorInstanceLength, uint256 operatorLength) internal pure returns (bool);
+function _isDelegatorSlashed(uint256 nextDelegatorInstance, uint256 operatorLength) internal pure returns (bool);
 ```
 
 ### _remainingStake
 
+*Applies a slashing result to a stake*
+
 
 ```solidity
-function _remainingStake(uint96 stake_, uint256 remainingPercentage) internal pure returns (uint96);
+function _remainingStake(uint96 stake_, SlashingResult memory result) internal pure returns (uint96);
 ```
 
-### SLASHER_ROLE
+### _slashingOccurred
 
-TODO invalidation of group of slashers by using nonces?
+*Checks a slashing result whether a slashing occurred, if the remaining percentage is not 100%, a slashing occurred*
 
 
 ```solidity
-function SLASHER_ROLE() public pure returns (bytes32);
+function _slashingOccurred(SlashingResult memory result) internal pure returns (bool);
 ```
 
 ### _afterSlash
@@ -249,6 +257,8 @@ function _afterSlash(address operator, uint256 remainingPercentage) internal vir
 
 ## Structs
 ### SlashingInstance
+*Slashing instance recorded when an operator is slashed*
+
 
 ```solidity
 struct SlashingInstance {
@@ -257,23 +267,17 @@ struct SlashingInstance {
 }
 ```
 
-### DelegatorSlashingData
+### SlashingResult
+*Result of a slashing calculation*
+
 
 ```solidity
-struct DelegatorSlashingData {
-    uint160 length;
-    uint96 stakeBeforePartialSlashing;
-}
-```
-
-## Enums
-### SlashingType
-
-```solidity
-enum SlashingType {
-    NOT_SLASHED,
-    PARTIAL_SLASH,
-    FULL_SLASH
+struct SlashingResult {
+    uint256 remainingPercentage;
+    uint256 next;
+    uint256 newRewards;
+    uint256 slashedRewards;
+    uint256 newCheckpoint;
 }
 ```
 

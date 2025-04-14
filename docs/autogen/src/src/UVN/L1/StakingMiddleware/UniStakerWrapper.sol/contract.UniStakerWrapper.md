@@ -1,5 +1,5 @@
 # UniStakerWrapper
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7dcfc053062e80b4db9d2b818e627cd6f4a79851/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol)
 
 **Inherits:**
 [StakeManager](/src/UVN/L1/StakingMiddleware/StakeManager.sol/contract.StakeManager.md), [IUniStakerWrapper](/src/interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol/interface.IUniStakerWrapper.md)
@@ -112,6 +112,27 @@ Alters the governance delegatee of the user's underlying stake in the UniStaker 
 ```solidity
 function alterGovernanceDelegatee(address newGovernanceDelegatee) external;
 ```
+
+### isDepositedIntoUniStaker
+
+Returns whether the user has deposited their underlying stake into the UniStaker contract
+
+
+```solidity
+function isDepositedIntoUniStaker(address delegator) external view returns (bool);
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`delegator`|`address`|The address of the delegator|
+
+**Returns**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`<none>`|`bool`|Whether the user has deposited into the UniStaker contract|
+
 
 ### _depositIntoUniStaker
 

@@ -1,5 +1,5 @@
 # INotifier
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/237a1154da63599fba331d8b41ad18f6d70fe59c/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol)
 
 **Inherits:**
 [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -24,6 +24,19 @@ Allows an operator to set the URI for their token
 
 ```solidity
 function setURI(string memory uri) external;
+```
+
+### TRUSTED_SERVICE_ROLE
+
+Trusted service role
+
+*If a service contract is marked as trusted, reverts on slashings and on undelegations will revert the parent call.*
+
+*Reverting untrusted service contracts will not revert the parent call to ensure a malicious operator cannot prevent slashings or prevent delegators from undelegating.*
+
+
+```solidity
+function TRUSTED_SERVICE_ROLE() external view returns (bytes32);
 ```
 
 ## Events

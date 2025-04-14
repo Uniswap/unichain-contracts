@@ -1,5 +1,5 @@
 # Notifier
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7dcfc053062e80b4db9d2b818e627cd6f4a79851/src/UVN/L1/StakingMiddleware/Notifier.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/Notifier.sol)
 
 **Inherits:**
 [SlashingManager](/src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md), ERC721, [INotifier](/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol/interface.INotifier.md)
@@ -8,10 +8,28 @@ This contract allows operators to mint ERC721 tokens to deposit into service con
 
 
 ## State Variables
+### TRUSTED_SERVICE_ROLE
+Trusted service role
+
+*If a service contract is marked as trusted, reverts on slashings and on undelegations will revert the parent call.*
+
+
+```solidity
+bytes32 public constant TRUSTED_SERVICE_ROLE = keccak256('TRUSTED_SERVICE_ROLE');
+```
+
+
 ### MIN_GAS
 
 ```solidity
 uint256 private constant MIN_GAS = 500_000;
+```
+
+
+### SERVICE_CHECK_GAS
+
+```solidity
+uint256 private constant SERVICE_CHECK_GAS = 10_000;
 ```
 
 
@@ -32,6 +50,10 @@ constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) O
 
 ### _afterStake
 
+*Report the new operator stake after staking*
+
+*Failing call to service contract can prevent a delegator from staking*
+
 
 ```solidity
 function _afterStake(address delegator, uint96 amount) internal virtual override;
@@ -39,26 +61,46 @@ function _afterStake(address delegator, uint96 amount) internal virtual override
 
 ### _afterUnstake
 
+*Report the new operator stake after unstaking*
+
+*Failing call to service contract can prevent a delegator from unstaking*
+
+*Should a malicious service contract prevent unstaking, the delegator can always undelegate from the operator first*
+
 
 ```solidity
 function _afterUnstake(address delegator, uint96 amount) internal virtual override;
 ```
 
-### _afterOperatorSelection
+### _afterDelegation
+
+*Report the new operator stake after delegation*
+
+*Failing call to service contract can prevent a delegator from delegating to an operator*
 
 
 ```solidity
-function _afterOperatorSelection(address delegator, address operator) internal virtual override;
+function _afterDelegation(address delegator, address operator) internal virtual override;
 ```
 
-### _afterOperatorUndelegationAnnouncement
+### _afterUndelegationAnnouncement
+
+*Report the new operator stake after undelegation announcement*
+
+*Set delegator stake to 0 as the delegator is undelegating their entire stake*
+
+*Call to service contract is not required to prevent a DOS attack on delegators*
 
 
 ```solidity
-function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual override;
+function _afterUndelegationAnnouncement(address delegator) internal virtual override;
 ```
 
 ### _afterSlash
+
+*Report the operator slash to the service contract*
+
+*Ensures the service contract cannot prevent the operator from being slashed by reverting the call*
 
 
 ```solidity
@@ -101,9 +143,9 @@ function transferFrom(address, address, uint256) public pure override;
 
 ### safeTransferFrom
 
-*only allow transfers to contracts and the operator*
+*Only allow transfers to service contracts and the operator*
 
-*always allow operator to claw back their own token forcefully*
+*Notify service contracts of withdrawals*
 
 
 ```solidity
@@ -112,43 +154,52 @@ function safeTransferFrom(address from, address to, uint256 tokenId, bytes memor
 
 ### _reportOperatorStakeUpdate
 
-*reports the new operator stake to the service contract, triggered by a balance change through a delegator action*
+*Reports the new operator stake to the service contract, triggered by a balance change through a delegator action*
 
-*if requireSuccess is true, the function will revert if the call to the service contract fails*
+*If requireSuccess is true, the function will revert if the call to the service contract fails*
 
-*if requireSuccess is false, the function will not revert if the call to the service contract fails, this ensures that a delegator cannot be bricked by a malicious operator, they should always be able to undelegate from the operator to withdraw their stake. To ensure an honest undelegation can be processed by the recipient of the call, a minimum amount of gas is enforced.*
+*If requireSuccess is false, the function will not revert if the call to the service contract fails, this ensures that a delegator cannot be DOSed by a malicious operator, they should always be able to undelegate from the operator to withdraw their stake. To ensure an honest undelegation can be processed by the recipient of the call, a minimum amount of gas is enforced.*
 
 
 ```solidity
-function _reportOperatorStakeUpdate(address delegator, bool requireSuccess) internal;
+function _reportOperatorStakeUpdate(
+    address operator,
+    uint96 operatorStake,
+    address delegator,
+    uint96 delegatorStake_,
+    bool requireSuccess
+) internal;
 ```
 
 ### _reportOperatorSlash
+
+*Reports the operator slash to the service contract*
+
+*Ensures the service contract cannot prevent the operator from being slashed by reverting the call*
 
 
 ```solidity
 function _reportOperatorSlash(address operator, uint256 remainingPercentage) internal;
 ```
 
+### _isAuthorized
+
+*Allow the operator to always force transfer their own token*
+
+
+```solidity
+function _isAuthorized(address owner, address spender, uint256 tokenId) internal view override returns (bool);
+```
+
 ### _isServiceContract
 
+*Checks if an account is a service contract by ensuring that the account is not an EOA or 7702 enabled account and that the smart contract supports the `IService` interface*
 
-```solidity
-function _isServiceContract(address account) private view returns (bool);
-```
-
-### _toTokenId
+*Prevents malicious service contracts from preventing force transfers by reverting the ERC-165 check*
 
 
 ```solidity
-function _toTokenId(address owner) private pure returns (uint256);
-```
-
-### _toAddress
-
-
-```solidity
-function _toAddress(uint256 tokenId) private pure returns (address);
+function _isServiceContract(address account) internal view returns (bool);
 ```
 
 ### supportsInterface

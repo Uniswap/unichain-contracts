@@ -1,10 +1,7 @@
-# IService
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7dcfc053062e80b4db9d2b818e627cd6f4a79851/src/interfaces/UVN/L1/StakingMiddleware/IService.sol)
+# IBaseService
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/IBaseService.sol)
 
-**Inherits:**
-IERC165
-
-This interface is used by contracts that operators deposit their ERC-721 tokens into to operate for. It must implement the following functions in order to be notified of changes to operator's and delegator's stake.
+This interface is shared between L1 and L2 contracts to receive notifications about slashings, stake changes and operator withdrawals.
 
 
 ## Functions
@@ -14,7 +11,7 @@ This function is called when a delegator's stake changes.
 
 
 ```solidity
-function reportOperatorStake(address operator, uint96 newBalance, address delegator, uint96 newDelegatorStake)
+function reportOperatorStake(address operator, uint256 newBalance, address delegator, uint256 newDelegatorStake)
     external;
 ```
 **Parameters**
@@ -22,9 +19,9 @@ function reportOperatorStake(address operator, uint96 newBalance, address delega
 |Name|Type|Description|
 |----|----|-----------|
 |`operator`|`address`|The address of the operator.|
-|`newBalance`|`uint96`|The new balance of the operator.|
+|`newBalance`|`uint256`|The new balance of the operator.|
 |`delegator`|`address`|The address of the delegator.|
-|`newDelegatorStake`|`uint96`|The new stake of the delegator.|
+|`newDelegatorStake`|`uint256`|The new stake of the delegator.|
 
 
 ### reportOperatorSlash
@@ -43,13 +40,13 @@ function reportOperatorSlash(address operator, uint256 remainingPercentage) exte
 |`remainingPercentage`|`uint256`|The remaining percentage of the operator's stake.|
 
 
-### onForceWithdrawal
+### onWithdrawal
 
-This function is called when an operator ERC-721 token is forcefully withdrawn.
+This function is called when an operator ERC-721 token is transferred away from the service contract.
 
 
 ```solidity
-function onForceWithdrawal(address operator) external;
+function onWithdrawal(address operator) external;
 ```
 **Parameters**
 

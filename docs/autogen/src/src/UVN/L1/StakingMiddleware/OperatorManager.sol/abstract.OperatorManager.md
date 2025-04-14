@@ -1,5 +1,5 @@
 # OperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/ceada1ae0ce786b1a715a0c4cff008e665b4e9ed/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/OperatorManager.sol)
 
 **Inherits:**
 [OperatorVotes](/src/UVN/L1/StakingMiddleware/libraries/OperatorVotes.sol/abstract.OperatorVotes.md), [ProtocolRewardDistributor](/src/UVN/L1/StakingMiddleware/ProtocolRewardDistributor.sol/abstract.ProtocolRewardDistributor.md), [IOperatorManager](/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol/interface.IOperatorManager.md)
@@ -15,10 +15,10 @@ mapping(address operator => uint256 amount) private _slashableStakes;
 ```
 
 
-### _undelegationTimestamp
+### _undelegationData
 
 ```solidity
-mapping(address delegator => uint256 undelegationTimestamp) private _undelegationTimestamp;
+mapping(address delegator => UndelegationData undelegationData) private _undelegationData;
 ```
 
 
@@ -27,7 +27,7 @@ mapping(address delegator => uint256 undelegationTimestamp) private _undelegatio
 
 
 ```solidity
-constructor() EIP712('UVN-StakingMiddleware', '1');
+constructor(string memory name) EIP712(name, '1');
 ```
 
 ### _afterStake
@@ -118,45 +118,66 @@ function _slashOperatorVotes(address operator, uint256 remainingPercentage) inte
 function _getVotingUnits(address delegator) internal view virtual override returns (uint256);
 ```
 
-### _beforeOperatorSelection
+### _slashableOperatorOf
+
+*Returns the current operator of a delegator, if the delegator has an active undelegation, the operator before the undelegation announcement is returned, otherwise the current operator is returned*
 
 
 ```solidity
-function _beforeOperatorSelection(address delegator, address operator) internal virtual;
+function _slashableOperatorOf(address delegator) internal view returns (address);
 ```
 
-### _afterOperatorSelection
+### _beforeDelegation
 
 
 ```solidity
-function _afterOperatorSelection(address delegator, address operator) internal virtual;
+function _beforeDelegation(address delegator, address operator) internal virtual;
 ```
 
-### _beforeOperatorUndelegationAnnouncement
+### _afterDelegation
 
 
 ```solidity
-function _beforeOperatorUndelegationAnnouncement(address delegator) internal virtual;
+function _afterDelegation(address delegator, address operator) internal virtual;
 ```
 
-### _afterOperatorUndelegationAnnouncement
+### _beforeUndelegationAnnouncement
 
 
 ```solidity
-function _afterOperatorUndelegationAnnouncement(address delegator) internal virtual;
+function _beforeUndelegationAnnouncement(address delegator) internal virtual;
 ```
 
-### _beforeOperatorDeselection
+### _afterUndelegationAnnouncement
 
 
 ```solidity
-function _beforeOperatorDeselection(address delegator) internal virtual;
+function _afterUndelegationAnnouncement(address delegator) internal virtual;
 ```
 
-### _afterOperatorDeselection
+### _beforeUndelegation
 
 
 ```solidity
-function _afterOperatorDeselection(address delegator) internal virtual;
+function _beforeUndelegation(address delegator) internal virtual;
+```
+
+### _afterUndelegation
+
+
+```solidity
+function _afterUndelegation(address delegator) internal virtual;
+```
+
+## Structs
+### UndelegationData
+*Storage for data required to finalize an undelegation*
+
+
+```solidity
+struct UndelegationData {
+    address operator;
+    uint96 undelegateAt;
+}
 ```
 

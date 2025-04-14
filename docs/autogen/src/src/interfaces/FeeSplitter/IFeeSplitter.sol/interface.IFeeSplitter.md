@@ -1,5 +1,5 @@
 # IFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/01f4e5565a975be8c899959d029a1dc7e641a28e/src/interfaces/FeeSplitter/IFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/f7ee30d3904bcf7f9e6eea33683d2c2c6ac756df/src/interfaces/FeeSplitter/IFeeSplitter.sol)
 
 
 ## Functions
@@ -17,6 +17,33 @@ function distributeFees() external returns (bool feesDistributed);
 |----|----|-----------|
 |`feesDistributed`|`bool`|Whether any fees were distributed|
 
+
+### OPTIMISM_WALLET
+
+Returns the address of the Optimism wallet
+
+
+```solidity
+function OPTIMISM_WALLET() external view returns (address);
+```
+
+### NET_FEE_RECIPIENT
+
+Returns the address of the net fee recipient
+
+
+```solidity
+function NET_FEE_RECIPIENT() external view returns (address);
+```
+
+### L1_FEE_RECIPIENT
+
+Returns the address of the L1 fee recipient
+
+
+```solidity
+function L1_FEE_RECIPIENT() external view returns (address);
+```
 
 ## Events
 ### NoFeesCollected

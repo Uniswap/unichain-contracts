@@ -1,5 +1,5 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b7383382c1ce8df5f5120f02338dfd44fd340bf2/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
@@ -189,5 +189,14 @@ function _status(uint256 targetBlockNumber, uint256 windowBlockNumber, bool exis
 
 ```solidity
 function _acceptingAttestations(uint256 blockNumber) private view returns (bool);
+```
+
+### _activeWindowEndAfterDelay
+
+*When a window is delayed, the active window is extended in increments of `attestationWindowLength` blocks. This function returns the last block of the active window after a delay.*
+
+
+```solidity
+function _activeWindowEndAfterDelay(uint256 nextWindowEnd) private view returns (uint256);
 ```
 

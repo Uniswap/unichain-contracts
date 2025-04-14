@@ -1,5 +1,5 @@
 # StakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3cf601aa04842b039a5cf3b59e8450ff86ee0a21/src/UVN/L1/StakingMiddleware/StakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/StakeManager.sol)
 
 **Inherits:**
 [StakingMiddlewareParams](/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md), [IStakeManager](/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol/interface.IStakeManager.md)
@@ -97,7 +97,7 @@ Returns the stake of a delegator deposited in the StakingMiddleware contract
 
 
 ```solidity
-function delegatorStake(address delegator) external view returns (uint96);
+function delegatorStake(address delegator) public view virtual returns (uint96);
 ```
 
 ### slashableStake
@@ -108,7 +108,7 @@ Returns the slashable stake of a delegator
 
 
 ```solidity
-function slashableStake(address delegator) external view returns (uint96);
+function slashableStake(address delegator) public view virtual returns (uint96);
 ```
 
 ### pendingWithdrawalAmount
@@ -143,6 +143,20 @@ function withdrawal(address delegator, uint256 withdrawalId)
 function _slashDelegatorStake(address delegator, uint256 remainingPercentage) internal;
 ```
 
+### _schedulePendingWithdrawal
+
+
+```solidity
+function _schedulePendingWithdrawal(address delegator, uint96 amount) internal virtual returns (uint256 withdrawalId);
+```
+
+### _invalidatePendingWithdrawals
+
+
+```solidity
+function _invalidatePendingWithdrawals(address delegator) private;
+```
+
 ### _delegatorStake
 
 
@@ -151,6 +165,8 @@ function _delegatorStake(address delegator) internal view virtual returns (uint9
 ```
 
 ### _slashableStake
+
+*slashable stake is the sum of the stake and the total pending withdrawals*
 
 
 ```solidity

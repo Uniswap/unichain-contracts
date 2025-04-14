@@ -1,5 +1,5 @@
 # IOperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol)
 
 **Inherits:**
 [IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md), IVotes
@@ -31,6 +31,14 @@ function slashableOperatorStake(address operator) external view returns (uint96)
 ```
 
 ## Events
+### OperatorSlashed
+Emitted when an operator is slashed
+
+
+```solidity
+event OperatorSlashed(address indexed operator, uint96 remainingPercentage);
+```
+
 ### OperatorUndelegationAnnounced
 Emitted when a delegator announces their intention to undelegate from their current operator
 

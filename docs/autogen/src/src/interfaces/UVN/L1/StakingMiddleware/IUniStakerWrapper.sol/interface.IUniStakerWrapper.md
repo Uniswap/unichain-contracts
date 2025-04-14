@@ -1,5 +1,5 @@
 # IUniStakerWrapper
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol)
 
 **Inherits:**
 [IStakeManager](/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol/interface.IStakeManager.md)
@@ -48,6 +48,27 @@ Alters the governance delegatee of the user's underlying stake in the UniStaker 
 ```solidity
 function alterGovernanceDelegatee(address newGovernanceDelegatee) external;
 ```
+
+### isDepositedIntoUniStaker
+
+Returns whether the user has deposited their underlying stake into the UniStaker contract
+
+
+```solidity
+function isDepositedIntoUniStaker(address delegator) external view returns (bool);
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`delegator`|`address`|The address of the delegator|
+
+**Returns**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`<none>`|`bool`|Whether the user has deposited into the UniStaker contract|
+
 
 ### UNISTAKER
 
@@ -107,5 +128,13 @@ Thrown when a user attempts to withdraw from the UniStaker contract while not de
 
 ```solidity
 error NotDepositedIntoUniStaker();
+```
+
+### NoStakeToDeposit
+Thrown when a user attempts to deposit into the UniStaker contract while not staking any amount
+
+
+```solidity
+error NoStakeToDeposit();
 ```
 

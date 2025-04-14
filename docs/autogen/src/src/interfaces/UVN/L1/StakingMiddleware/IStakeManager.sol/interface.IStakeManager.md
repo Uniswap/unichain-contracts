@@ -1,5 +1,5 @@
 # IStakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol)
 
 **Inherits:**
 [IStakingMiddlewareParams](/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md)
@@ -124,7 +124,15 @@ Emitted when a delegator unstakes a stake from the StakingMiddleware contract
 
 
 ```solidity
-event Unstaked(address indexed delegator, uint96 amount, uint40 unlocksAt);
+event Unstaked(address indexed delegator, uint96 amount);
+```
+
+### WithdrawalQueued
+Emitted when a delegator schedules a pending withdrawal
+
+
+```solidity
+event WithdrawalQueued(address indexed delegator, uint256 withdrawalId, uint96 amount, uint40 unlocksAt);
 ```
 
 ### Withdrawn
@@ -140,9 +148,7 @@ Emitted when a delegator's pending withdrawals are invalidated during slashing
 
 
 ```solidity
-event PendingWithdrawalsInvalidated(
-    address indexed delegator, uint256 start, uint256 end, uint96 newWithdrawalAmount, uint40 newWithdrawalTimestamp
-);
+event PendingWithdrawalsInvalidated(address indexed delegator, uint256 start, uint256 end);
 ```
 
 ### Slashed

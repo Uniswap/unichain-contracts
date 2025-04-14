@@ -178,7 +178,11 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
             size := extcodesize(account)
         }
         // take into account 7702 accounts
-        if (size == 0 || size == 23) return false;
+        if (size == 0) return false;
+        if (size == 23) {
+            bytes memory code = account.code;
+            if (bytes2(code) == bytes2(uint16(0xef01))) return false;
+        }
         try IService(account).supportsInterface{gas: SERVICE_CHECK_GAS}(type(IService).interfaceId) returns (
             bool result
         ) {

@@ -226,8 +226,8 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
 
     function test_RevertIf_RecipientIs7702Account() public {
         address smartWallet = makeAddr('smart wallet');
-        // 7702 wallet has 23 bytes of code
-        vm.etch(smartWallet, abi.encodePacked(hex'1122334455667788990011223344556677889900112233'));
+        address implementation = makeAddr('implementation');
+        vm.etch(smartWallet, bytes.concat(hex'ef0100', abi.encodePacked(implementation)));
         vm.startPrank(operator);
         notifier.mint();
         assertFalse(notifier.isServiceContract(smartWallet));

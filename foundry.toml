@@ -10,18 +10,25 @@ ffi = true
 evm_version = "cancun"
 fs_permissions = [
   { access = "read-write", path = ".forge-snapshots"},
-  { access = "read", path = "script/" }
+  { access = "read", path = "script/" },
+  { access = "read", path = "out/" }
 ]
 
-remappings = [
-  "forge-std=lib/forge-std/src",
-  "@openzeppelin/contracts=lib/openzeppelin-contracts/contracts",
-  "@openzeppelin/contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts",
-  "@eth-optimism-bedrock=lib/optimism/packages/contracts-bedrock"
+additional_compiler_profiles = [
+  { name = "fee-splitter", optimizer_runs = 999999, via_ir = false, evm_version = "cancun" },
+  { name = "uvn-l1", optimizer_runs = 500, via_ir = false, evm_version = "cancun" }
+]
+
+compilation_restrictions = [
+  { paths = "src/FeeSplitter/**", via_ir = false, version = "=0.8.26" },
+  { paths = "src/UVN/L1/**", via_ir = false, optimizer_runs = 500, version = "=0.8.26" }
 ]
 
 [profile.default.fuzz]
 runs = 1000
+
+[profile.default.invariant]
+fail_on_revert = true
 
 [profile.pr.fuzz]
 runs = 1000

@@ -112,6 +112,7 @@ contract StakeTableSync is IStakeTableSync, ERC165 {
 
     /// @notice Sends a transaction to the L2 StakeTable contract
     function _depositTransaction(bytes memory data, uint64 gasLimit) internal {
+        // @audit this contract must be marked as a trusted service contract on the StakingMiddleware contract to ensure that when the deposit transaction is reverted (e.g., slashing or undelegation), the parent call is also reverted. Otherwise a deposit transaction can be frontrun by a malicious operator and make the deposit transaction revert. This would create inconsistencies in the stake table on L2.
         OPTIMISM_PORTAL.depositTransaction(L2_STAKE_TABLE, 0, gasLimit, false, data);
     }
 }

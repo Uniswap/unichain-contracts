@@ -29,10 +29,10 @@ contract NotifierHarness is Notifier {
         address operator,
         uint96 operatorStake,
         address delegator,
-        uint96 delegatorStake,
+        uint96 delegatorStake_,
         bool requireSuccess
     ) public {
-        _reportOperatorStakeUpdate(operator, operatorStake, delegator, delegatorStake, requireSuccess);
+        _reportOperatorStakeUpdate(operator, operatorStake, delegator, delegatorStake_, requireSuccess);
     }
 
     function reportOperatorSlash(address operator, uint256 remainingPercentage) public {
@@ -115,41 +115,41 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         return uint256(uint160(operator_));
     }
 
-    function test_ShouldBeAbleToMintNFT(address operator) public {
-        if (operator == address(0)) return;
-        uint256 expectedTokenId = toId(operator);
-        vm.prank(operator);
+    function test_ShouldBeAbleToMintNFT(address operator_) public {
+        if (operator_ == address(0)) return;
+        uint256 expectedTokenId = toId(operator_);
+        vm.prank(operator_);
         vm.expectEmit();
-        emit IERC721.Transfer(address(0), operator, expectedTokenId);
+        emit IERC721.Transfer(address(0), operator_, expectedTokenId);
         notifier.mint();
-        assertEq(notifier.balanceOf(operator), 1, 'operator should have 1 NFT');
-        assertEq(notifier.ownerOf(expectedTokenId), operator, 'NFT should be operator');
+        assertEq(notifier.balanceOf(operator_), 1, 'operator should have 1 NFT');
+        assertEq(notifier.ownerOf(expectedTokenId), operator_, 'NFT should be operator');
     }
 
-    function test_RevertIf_OperatorAlreadyHasNFTMinted(address operator) public {
-        if (operator == address(0)) return;
-        vm.startPrank(operator);
+    function test_RevertIf_OperatorAlreadyHasNFTMinted(address operator_) public {
+        if (operator_ == address(0)) return;
+        vm.startPrank(operator_);
         notifier.mint();
         vm.expectRevert(abi.encodeWithSelector(INotifier.AlreadyMinted.selector));
         notifier.mint();
     }
 
-    function test_RevertIf_SettingURIForNonExistentToken(address operator) public {
-        if (operator == address(0)) return;
-        vm.startPrank(operator);
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, toId(operator)));
+    function test_RevertIf_SettingURIForNonExistentToken(address operator_) public {
+        if (operator_ == address(0)) return;
+        vm.startPrank(operator_);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, toId(operator_)));
         notifier.setURI('test');
     }
 
-    function test_ShouldBeAbleToSetURI(address operator) public {
-        if (operator == address(0)) return;
-        vm.startPrank(operator);
+    function test_ShouldBeAbleToSetURI(address operator_) public {
+        if (operator_ == address(0)) return;
+        vm.startPrank(operator_);
         notifier.mint();
-        assertEq(notifier.tokenURI(toId(operator)), '');
+        assertEq(notifier.tokenURI(toId(operator_)), '');
         vm.expectEmit();
-        emit INotifier.URIUpdated(operator, toId(operator), 'test');
+        emit INotifier.URIUpdated(operator_, toId(operator_), 'test');
         notifier.setURI('test');
-        assertEq(notifier.tokenURI(toId(operator)), 'test');
+        assertEq(notifier.tokenURI(toId(operator_)), 'test');
     }
 
     function test_RevertIf_UnsafeTransfer() public {
@@ -349,6 +349,26 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         notifier.announceOperatorUndelegation();
     }
 
+    function test_TrustedServiceCanRevertOnUndelegationAnnouncement() public {
+        notifier.grantRole(notifier.TRUSTED_SERVICE_ROLE(), address(maliciousServiceContract));
+        depositNFT();
+        depositAndDelegate(delegator, DEFAULT_AMOUNT);
+        // transfer the NFT to a malicious service contract
+        vm.prank(operator);
+        notifier.safeTransferFrom(address(serviceContract), address(maliciousServiceContract), toId(operator));
+        vm.prank(delegator);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                INotifier.WrappedError.selector,
+                maliciousServiceContract,
+                IBaseService.reportOperatorStake.selector,
+                '',
+                abi.encodePacked(INotifier.NotificationFailed.selector)
+            )
+        );
+        notifier.announceOperatorUndelegation();
+    }
+
     function test_ShouldReportAfterSlash() public {
         depositNFT();
         depositAndDelegate(delegator, DEFAULT_AMOUNT);
@@ -382,6 +402,21 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
     function test_ShouldNotBeAbleToRevertDataBomb() public {
         depositNFT(address(revertDataBombServiceContract));
         notifier.reportOperatorStakeUpdate(operator, DEFAULT_AMOUNT, delegator, DEFAULT_AMOUNT, false);
+        notifier.reportOperatorSlash(operator, 1);
+    }
+
+    function test_TrustedServiceCanRevertOnSlashing() public {
+        notifier.grantRole(notifier.TRUSTED_SERVICE_ROLE(), address(maliciousServiceContract));
+        depositNFT(address(maliciousServiceContract));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                INotifier.WrappedError.selector,
+                maliciousServiceContract,
+                IBaseService.reportOperatorSlash.selector,
+                '',
+                abi.encodePacked(INotifier.NotificationFailed.selector)
+            )
+        );
         notifier.reportOperatorSlash(operator, 1);
     }
 }

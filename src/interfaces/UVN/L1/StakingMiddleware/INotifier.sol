@@ -29,4 +29,9 @@ interface INotifier is ISlashingManager {
 
     /// @notice Allows an operator to set the URI for their token
     function setURI(string memory uri) external;
+
+    /// @notice Trusted service role
+    /// @dev If a service contract is marked as trusted, reverts on slashings and on undelegations will revert the parent call.
+    /// @dev Reverting untrusted service contracts will not revert the parent call to ensure a malicious operator cannot prevent slashings or prevent delegators from undelegating.
+    function TRUSTED_SERVICE_ROLE() external view returns (bytes32);
 }

@@ -14,6 +14,9 @@ import {ERC721Utils} from '@openzeppelin/contracts/token/ERC721/utils/ERC721Util
 /// @title Notifier - Base contract for the Notifier
 /// @notice This contract allows operators to mint ERC721 tokens to deposit into service contracts they want to operate for. Whenever a delegator modifies their stake or the operator is slashed, the current owner of the token is notified (e.g., service contract). This allows the operator to participate in network upgrades by depositing their token into a new service contract. Additionally, it allows service contracts to implement arbitrary logic on deposits by requiring data to be sent alongside the token, implement their own migration logic, etc. Additionally, the operator can set a URI for their token where they can expose an endpoint to provide more information about themselves.
 abstract contract Notifier is SlashingManager, ERC721, INotifier {
+    /// @inheritdoc INotifier
+    bytes32 public constant TRUSTED_SERVICE_ROLE = keccak256('TRUSTED_SERVICE_ROLE');
+
     // TODO: adjust gas costs based on L2 measurements
     uint256 private constant MIN_GAS = 500_000;
     uint256 private constant SERVICE_CHECK_GAS = 10_000;
@@ -123,6 +126,10 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
         // this reverts if the operator token is not minted
         address operatorHolder = _requireOwned(OperatorTokenLib.toTokenId(operator));
         if (operatorHolder == operator) return;
+        if (!requireSuccess) {
+            // if the operator is trusted, the call is allowed to always revert on failure
+            requireSuccess = hasRole(TRUSTED_SERVICE_ROLE, operatorHolder);
+        }
         uint256 minGas = requireSuccess ? gasleft() * 63 / 64 : MIN_GAS;
         try IService(operatorHolder).reportOperatorStake{gas: minGas}(
             operator, operatorStake, delegator, delegatorStake_
@@ -142,7 +149,19 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
     function _reportOperatorSlash(address operator, uint256 remainingPercentage) internal {
         address operatorHolder = _requireOwned(OperatorTokenLib.toTokenId(operator));
         if (operatorHolder == operator) return;
-        try IService(operatorHolder).reportOperatorSlash{gas: MIN_GAS}(operator, remainingPercentage) {} catch {}
+        // if the operator is trusted, the call is allowed to always revert on failure
+        bool requireSuccess = hasRole(TRUSTED_SERVICE_ROLE, operatorHolder);
+        uint256 minGas = requireSuccess ? gasleft() * 63 / 64 : MIN_GAS;
+        try IService(operatorHolder).reportOperatorSlash{gas: minGas}(operator, remainingPercentage) {}
+        catch (bytes memory reason) {
+            if (!requireSuccess) return;
+            revert WrappedError(
+                operatorHolder,
+                IBaseService.reportOperatorSlash.selector,
+                reason,
+                abi.encodePacked(INotifier.NotificationFailed.selector)
+            );
+        }
     }
 
     /// @dev Allow the operator to always force transfer their own token

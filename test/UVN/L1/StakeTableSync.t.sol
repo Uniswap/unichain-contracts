@@ -31,7 +31,7 @@ contract StakeTableSyncTest is L1TestHandler {
         stakeTableSync = new StakeTableSync(stakingMiddleware, l2StakeTable);
         try vm.envString('INFURA_API_KEY') returns (string memory infuraKey) {
             string memory rpcUrl = string.concat('https://mainnet.infura.io/v3/', infuraKey);
-            vm.createSelectFork(rpcUrl);
+            vm.createSelectFork(rpcUrl, 21_117_000);
             forked = true;
             console2.log('Forked Ethereum mainnet');
         } catch {

@@ -1,7 +1,7 @@
 {
-  "depositERC721": "1073798",
-  "onWithdrawal": "231508",
-  "reportOperatorSlash": "231633",
-  "reportOperatorStake": "232450",
-  "syncOperator": "240482"
+  "depositERC721": "1073762",
+  "onWithdrawal": "231472",
+  "reportOperatorSlash": "231769",
+  "reportOperatorStake": "232414",
+  "syncOperator": "240617"
 }

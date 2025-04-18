@@ -1,5 +1,5 @@
 # Notifier
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/Notifier.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L1/StakingMiddleware/Notifier.sol)
 
 **Inherits:**
 [SlashingManager](/src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md), ERC721, [INotifier](/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol/interface.INotifier.md)
@@ -105,6 +105,15 @@ function _afterUndelegationAnnouncement(address delegator) internal virtual over
 
 ```solidity
 function _afterSlash(address operator, uint256 remainingPercentage) internal virtual override;
+```
+
+### _afterDelegatorSlash
+
+*After slashing is applied, report the new delegator stake to the service contract*
+
+
+```solidity
+function _afterDelegatorSlash(address delegator) internal virtual override;
 ```
 
 ### mint

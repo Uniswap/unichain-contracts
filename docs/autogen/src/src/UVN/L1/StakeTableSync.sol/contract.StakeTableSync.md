@@ -1,5 +1,5 @@
 # StakeTableSync
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakeTableSync.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L1/StakeTableSync.sol)
 
 **Inherits:**
 [IStakeTableSync](/src/interfaces/UVN/L1/IStakeTableSync.sol/interface.IStakeTableSync.md), ERC165
@@ -8,6 +8,20 @@ This contract is used to sync the stake table of the StakingMiddleware contract 
 
 
 ## State Variables
+### DEFAULT_GAS_LIMIT
+
+```solidity
+uint64 private constant DEFAULT_GAS_LIMIT = 200_000;
+```
+
+
+### DEPLOY_GAS_LIMIT
+
+```solidity
+uint64 private constant DEPLOY_GAS_LIMIT = 1_000_000;
+```
+
+
 ### OPTIMISM_PORTAL
 
 ```solidity
@@ -39,6 +53,8 @@ modifier onlyStakingMiddleware();
 
 ### constructor
 
+*The contract needs to be deployed via create3 to make the address deterministic and not dependent on the l2 stake table address*
+
 
 ```solidity
 constructor(IStakingMiddleware stakingMiddleware_, address l2StakeTable);
@@ -46,7 +62,9 @@ constructor(IStakingMiddleware stakingMiddleware_, address l2StakeTable);
 
 ### reportOperatorStake
 
-Reports the current stake of a delegator and their operator to L2
+This function is called when a delegator's stake changes.
+
+*Reports the current stake of a delegator and their operator to L2*
 
 *Only callable by the StakingMiddleware*
 
@@ -56,10 +74,21 @@ function reportOperatorStake(address operator, uint256 newBalance, address deleg
     external
     onlyStakingMiddleware;
 ```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`operator`|`address`|The address of the operator.|
+|`newBalance`|`uint256`|The new balance of the operator.|
+|`delegator`|`address`|The address of the delegator.|
+|`newDelegatorStake`|`uint256`|The new stake of the delegator.|
+
 
 ### reportOperatorSlash
 
-Reports a slashing incident to L2
+This function is called when an operator is slashed.
+
+*Reports a slashing incident to L2*
 
 *Only callable by the StakingMiddleware*
 
@@ -67,15 +96,30 @@ Reports a slashing incident to L2
 ```solidity
 function reportOperatorSlash(address operator, uint256 remainingPercentage) external onlyStakingMiddleware;
 ```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`operator`|`address`|The address of the operator.|
+|`remainingPercentage`|`uint256`|The remaining percentage of the operator's stake.|
+
 
 ### onWithdrawal
 
-Reports a withdrawal of an operator token to L2
+This function is called when an operator ERC-721 token is transferred away from the service contract.
+
+*Reports a withdrawal of an operator token to L2*
 
 
 ```solidity
-function onWithdrawal(address operator) external;
+function onWithdrawal(address operator) external onlyStakingMiddleware;
 ```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`operator`|`address`|The address of the operator.|
+
 
 ### sync
 
@@ -134,6 +178,13 @@ function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC
 |`<none>`|`bool`|`true` if the contract implements `interfaceID` and `interfaceID` is not 0xffffffff, `false` otherwise|
 
 
+### _syncOperator
+
+
+```solidity
+function _syncOperator(address operator, uint64 gasLimit) internal;
+```
+
 ### _reportOperatorStake
 
 Reports the current stake of a delegator and their operator to L2 with a default gas limit
@@ -166,5 +217,12 @@ Sends a transaction to the L2 StakeTable contract
 
 ```solidity
 function _depositTransaction(bytes memory data, uint64 gasLimit) internal;
+```
+
+### _requireDeposited
+
+
+```solidity
+function _requireDeposited(address operator) internal view;
 ```
 

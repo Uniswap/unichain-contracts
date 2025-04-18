@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -253,6 +253,13 @@ function _slashingOccurred(SlashingResult memory result) internal pure returns (
 
 ```solidity
 function _afterSlash(address operator, uint256 remainingPercentage) internal virtual;
+```
+
+### _afterDelegatorSlash
+
+
+```solidity
+function _afterDelegatorSlash(address delegator) internal virtual;
 ```
 
 ## Structs

@@ -1,5 +1,5 @@
 # IStakeTableSync
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/L1/IStakeTableSync.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/interfaces/UVN/L1/IStakeTableSync.sol)
 
 **Inherits:**
 [IService](/src/interfaces/UVN/L1/IService.sol/interface.IService.md)
@@ -43,11 +43,11 @@ Thrown when the `IService` functions are called by an account other than the Sta
 error NotStakingMiddleware();
 ```
 
-### NotDelegated
-Thrown when the `sync` function is called by an account that is not delegated to an operator
+### OperatorNotDeposited
+Thrown when the sync functions are called where an operator is not deposited into this contract
 
 
 ```solidity
-error NotDelegated();
+error OperatorNotDeposited();
 ```
 

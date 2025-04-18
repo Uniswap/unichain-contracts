@@ -75,6 +75,15 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
         _reportOperatorSlash(operator, remainingPercentage);
     }
 
+    /// @dev After slashing is applied, report the new delegator stake to the service contract
+    function _afterDelegatorSlash(address delegator) internal virtual override {
+        super._afterDelegatorSlash(delegator);
+        address operator = _slashableOperatorOf(delegator);
+        uint96 operatorStake = uint96(getVotes(operator));
+        uint96 delegatorStake_ = _delegatorStake(delegator);
+        _reportOperatorStakeUpdate(operator, operatorStake, delegator, delegatorStake_, false);
+    }
+
     /// @inheritdoc INotifier
     function mint() external {
         uint256 tokenId = OperatorTokenLib.toTokenId(msg.sender);

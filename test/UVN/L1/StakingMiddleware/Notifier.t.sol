@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import {INotifier, Notifier} from '../../../../src/UVN/L1/StakingMiddleware/Notifier.sol';
 
 import {IUniStaker, UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStakerWrapper.sol';
+import {IERC7751} from '../../../../src/interfaces/IERC7751.sol';
 import {IBaseService} from '../../../../src/interfaces/UVN/IBaseService.sol';
 import {
     EmptyContract,
@@ -359,7 +360,7 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         vm.prank(delegator);
         vm.expectRevert(
             abi.encodeWithSelector(
-                INotifier.WrappedError.selector,
+                IERC7751.WrappedError.selector,
                 maliciousServiceContract,
                 IBaseService.reportOperatorStake.selector,
                 '',
@@ -383,7 +384,7 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         depositNFT(address(maliciousServiceContract));
         vm.expectRevert(
             abi.encodeWithSelector(
-                INotifier.WrappedError.selector,
+                IERC7751.WrappedError.selector,
                 maliciousServiceContract,
                 IBaseService.reportOperatorStake.selector,
                 '',
@@ -410,7 +411,7 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         depositNFT(address(maliciousServiceContract));
         vm.expectRevert(
             abi.encodeWithSelector(
-                INotifier.WrappedError.selector,
+                IERC7751.WrappedError.selector,
                 maliciousServiceContract,
                 IBaseService.reportOperatorSlash.selector,
                 '',

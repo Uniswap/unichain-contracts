@@ -22,12 +22,14 @@ contract StakeTableSync is IStakeTableSync, ERC165 {
         _;
     }
 
+    /// @dev The contract needs to be deployed via create3 to make the address deterministic and not dependent on the l2 stake table address
     constructor(IStakingMiddleware stakingMiddleware_, address l2StakeTable) {
         STAKING_MIDDLEWARE = stakingMiddleware_;
         L2_STAKE_TABLE = l2StakeTable;
     }
 
-    /// @notice Reports the current stake of a delegator and their operator to L2
+    /// @inheritdoc IBaseService
+    /// @dev Reports the current stake of a delegator and their operator to L2
     /// @dev Only callable by the StakingMiddleware
     function reportOperatorStake(address operator, uint256 newBalance, address delegator, uint256 newDelegatorStake)
         external
@@ -36,7 +38,8 @@ contract StakeTableSync is IStakeTableSync, ERC165 {
         _reportOperatorStake(operator, newBalance, delegator, newDelegatorStake);
     }
 
-    /// @notice Reports a slashing incident to L2
+    /// @inheritdoc IBaseService
+    /// @dev Reports a slashing incident to L2
     /// @dev Only callable by the StakingMiddleware
     function reportOperatorSlash(address operator, uint256 remainingPercentage) external onlyStakingMiddleware {
         // TODO: measure gas cost and adjust
@@ -46,7 +49,8 @@ contract StakeTableSync is IStakeTableSync, ERC165 {
         );
     }
 
-    /// @notice Reports a withdrawal of an operator token to L2
+    /// @inheritdoc IBaseService
+    /// @dev Reports a withdrawal of an operator token to L2
     function onWithdrawal(address operator) external {
         // TODO: measure gas cost and adjust
         uint64 gasLimit = 1_000_000;

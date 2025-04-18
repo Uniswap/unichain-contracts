@@ -17,7 +17,6 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
     /// @inheritdoc INotifier
     bytes32 public constant TRUSTED_SERVICE_ROLE = keccak256('TRUSTED_SERVICE_ROLE');
 
-    // TODO: adjust gas costs based on L2 measurements
     uint256 private constant MIN_GAS = 500_000;
     uint256 private constant SERVICE_CHECK_GAS = 10_000;
 
@@ -115,7 +114,7 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
         address operator = OperatorTokenLib.toAddress(tokenId);
         if (to != operator && !_isServiceContract(to)) revert InvalidRecipient();
         if (from != operator && _isServiceContract(from)) {
-            // if current owner is a service contract, try catch the `onForceWithdrawal` hook to ensure the owner can always force transfer their own token but allow a service contract to implement arbitrary logic on withdrawals
+            // if current owner is a service contract, try catch the `onWithdrawal` hook to ensure the owner can always force transfer their own token but allow a service contract to implement arbitrary logic on withdrawals
             try IService(from).onWithdrawal{gas: MIN_GAS}(operator) {} catch {}
         }
         ERC721.transferFrom(from, to, tokenId);

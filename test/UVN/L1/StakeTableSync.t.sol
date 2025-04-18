@@ -13,8 +13,8 @@ import {console2} from 'forge-std/console2.sol';
 contract StakeTableSyncTest is L1TestHandler {
     uint256 private constant DEFAULT_AMOUNT = 1000;
     // TODO adjust gas limits after measuring
-    uint64 private constant DEFAULT_GAS_LIMIT = 1_000_000;
-    uint64 private constant INIT_GAS_LIMIT = 5_000_000;
+    uint64 private constant DEFAULT_GAS_LIMIT = 200_000;
+    uint64 private constant DEPLOY_GAS_LIMIT = 1_000_000;
 
     // Optimism event arguments
     uint256 private constant MINT_VALUE = 0;
@@ -81,6 +81,55 @@ contract StakeTableSyncTest is L1TestHandler {
         stakingMiddleware.delegate(operator);
     }
 
+    /// forge-config: default.isolate = true
+    function test_gas_reportOperatorStake() public onlyForked {
+        vm.prank(address(stakingMiddleware));
+        stakeTableSync.reportOperatorStake(address(this), DEFAULT_AMOUNT, address(this), DEFAULT_AMOUNT);
+        vm.snapshotGasLastCall('reportOperatorStake');
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_depositERC721() public onlyForked {
+        vm.startPrank(operator);
+        stakingMiddleware.mint();
+        IERC721(address(stakingMiddleware)).safeTransferFrom(operator, address(stakeTableSync), toId(operator));
+        vm.snapshotGasLastCall('depositERC721');
+        vm.stopPrank();
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_syncOperator() public onlyForked {
+        vm.startPrank(operator);
+        stakingMiddleware.mint();
+        IERC721(address(stakingMiddleware)).safeTransferFrom(operator, address(stakeTableSync), toId(operator));
+        vm.stopPrank();
+        stakeTableSync.syncOperator(operator);
+        vm.snapshotGasLastCall('syncOperator');
+    }
+
+    /// forge-config: default.isolate = true
+    function test_slashing() public onlyForked {
+        vm.prank(address(stakingMiddleware));
+        stakeTableSync.reportOperatorSlash(operator, DEFAULT_AMOUNT);
+        vm.snapshotGasLastCall('reportOperatorSlash');
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_onWithdrawal() public onlyForked {
+        vm.prank(address(stakingMiddleware));
+        stakeTableSync.onWithdrawal(operator);
+        vm.snapshotGasLastCall('onWithdrawal');
+    }
+
+    function test_RevertIf_NotStakingMiddleware() public {
+        vm.expectRevert(IStakeTableSync.NotStakingMiddleware.selector);
+        stakeTableSync.reportOperatorStake(operator, DEFAULT_AMOUNT, address(this), DEFAULT_AMOUNT);
+        vm.expectRevert(IStakeTableSync.NotStakingMiddleware.selector);
+        stakeTableSync.reportOperatorSlash(operator, DEFAULT_AMOUNT);
+        vm.expectRevert(IStakeTableSync.NotStakingMiddleware.selector);
+        stakeTableSync.onWithdrawal(operator);
+    }
+
     function test_ReportOperatorStake() public onlyForked {
         vm.expectEmit();
         emit IOptimismPortal2.TransactionDeposited(
@@ -134,7 +183,7 @@ contract StakeTableSyncTest is L1TestHandler {
             abi.encodePacked(
                 MINT_VALUE,
                 VALUE,
-                INIT_GAS_LIMIT,
+                DEPLOY_GAS_LIMIT,
                 IS_CREATION,
                 abi.encodeWithSelector(IBaseService.reportOperatorStake.selector, operator, 0, address(0), 0)
             )
@@ -158,7 +207,7 @@ contract StakeTableSyncTest is L1TestHandler {
             abi.encodePacked(
                 MINT_VALUE,
                 VALUE,
-                INIT_GAS_LIMIT,
+                DEPLOY_GAS_LIMIT,
                 IS_CREATION,
                 abi.encodeWithSelector(
                     IBaseService.reportOperatorStake.selector, operator, DEFAULT_AMOUNT, address(0), 0
@@ -169,8 +218,22 @@ contract StakeTableSyncTest is L1TestHandler {
     }
 
     function test_RevertIf_DelegatorNotDelegated() public onlyForked {
-        vm.expectRevert(IStakeTableSync.NotDelegated.selector);
+        vm.startPrank(operator);
+        stakingMiddleware.mint();
+        IERC721(address(stakingMiddleware)).safeTransferFrom(operator, address(stakeTableSync), toId(operator));
+        vm.stopPrank();
+        depositAndDelegate(delegator, uint96(DEFAULT_AMOUNT));
+        vm.prank(operator);
+        IERC721(address(stakingMiddleware)).safeTransferFrom(address(stakeTableSync), operator, toId(operator));
+        vm.expectRevert(IStakeTableSync.OperatorNotDeposited.selector);
         stakeTableSync.sync(delegator);
+    }
+
+    function test_RevertIf_OperatorNotDeposited() public onlyForked {
+        vm.prank(operator);
+        stakingMiddleware.mint();
+        vm.expectRevert(IStakeTableSync.OperatorNotDeposited.selector);
+        stakeTableSync.syncOperator(operator);
     }
 
     function test_ShouldBeAbleToSyncDelegatorStake() public onlyForked {
@@ -206,7 +269,7 @@ contract StakeTableSyncTest is L1TestHandler {
             abi.encodePacked(
                 MINT_VALUE,
                 VALUE,
-                INIT_GAS_LIMIT,
+                DEFAULT_GAS_LIMIT,
                 IS_CREATION,
                 abi.encodeWithSelector(
                     IBaseService.reportOperatorStake.selector, operator, DEFAULT_AMOUNT, address(0), 0

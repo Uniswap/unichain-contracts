@@ -9,8 +9,8 @@ interface IStakeTableSync is IService {
     /// @notice Thrown when the `IService` functions are called by an account other than the StakingMiddleware
     error NotStakingMiddleware();
 
-    /// @notice Thrown when the `sync` function is called by an account that is not delegated to an operator
-    error NotDelegated();
+    /// @notice Thrown when the sync functions are called where an operator is not deposited into this contract
+    error OperatorNotDeposited();
 
     /// @notice Syncs the current stake of a delegator and their operator to L2
     /// @dev This function can be called to sync inconsistencies in the stake table

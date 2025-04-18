@@ -19,7 +19,6 @@ contract L2StakeTableTest is Test {
     address delegator2;
 
     uint256 constant PERCENTAGE_DENOMINATOR = 1e18;
-    uint256 constant MIN_DELEGATOR_UPDATE_GAS = 200_000;
     uint256 constant OPERATOR_FEE_PERCENTAGE = 1e17; // 10%
 
     function setUp() public virtual {
@@ -32,8 +31,65 @@ contract L2StakeTableTest is Test {
         stakeTable = new L2StakeTable(l1StakeTableSync);
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(stakeTable.L1_STAKE_TABLE_SYNC(), l1StakeTableSync);
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_reportOperatorStake_newOperator() public {
+        vm.prank(l1StakeTableSync);
+        stakeTable.reportOperatorStake(operator1, 100 ether, address(0), 0);
+        vm.snapshotGasLastCall('reportOperatorStake:deployDelegatorClaim');
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_reportOperatorStake_existingOperator_cold() public {
+        vm.prank(l1StakeTableSync);
+        stakeTable.reportOperatorStake(operator1, 100 ether, address(0), 0);
+        vm.prank(l1StakeTableSync);
+        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
+        vm.snapshotGasLastCall('reportOperatorStake:delegatorClaim:cold');
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_reportOperatorStake_existingOperator_warm() public {
+        vm.prank(l1StakeTableSync);
+        stakeTable.reportOperatorStake(operator1, 100 ether, address(0), 0);
+        vm.prank(l1StakeTableSync);
+        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
+        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
+        vm.snapshotGasLastCall('reportOperatorStake:delegatorClaim:warm');
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_reportOperatorStake_existingOperator_with() public {
+        vm.prank(l1StakeTableSync);
+        stakeTable.reportOperatorStake(operator1, 100 ether, address(0), 0);
+        vm.prank(l1StakeTableSync);
+        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
+        address delegatorClaim = stakeTable.beneficiary(operator1);
+        (bool success,) = delegatorClaim.call{value: 1 ether}('');
+        assertTrue(success);
+        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
+        vm.snapshotGasLastCall('reportOperatorStake:delegatorClaimWithRewards');
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_reportSlashing() public {
+        stakeTable.reportOperatorStake(operator1, 0, address(0), 0);
+        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
+        vm.prank(l1StakeTableSync);
+        stakeTable.reportOperatorSlash(operator1, 0.5 ether);
+        vm.snapshotGasLastCall('reportOperatorSlash');
+    }
+
+    /// forge-config: default.isolate = true
+    function test_gas_onWithdrawal() public {
+        stakeTable.reportOperatorStake(operator1, 0, address(0), 0);
+        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
+        vm.prank(l1StakeTableSync);
+        stakeTable.onWithdrawal(operator1);
+        vm.snapshotGasLastCall('onWithdrawal');
     }
 
     function test_reportOperatorStake_newOperator() public {
@@ -165,7 +221,7 @@ contract L2StakeTableTest is Test {
         stakeTable.delegateBySig(operator1, 0, 0, 0, bytes32(0), bytes32(0));
     }
 
-    function test_delegates() public {
+    function test_delegates() public view {
         assertEq(stakeTable.delegates(operator1), operator1);
     }
 

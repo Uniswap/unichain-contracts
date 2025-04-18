@@ -41,7 +41,7 @@ contract DefaultDelegatorClaimTest is Test {
         delegatorClaim.reportDelegatorStake(delegator2, 50 ether);
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(delegatorClaim.OPERATOR(), operator);
         assertEq(delegatorClaim.totalDelegation(), 100 ether);
         assertEq(delegatorClaim.delegationOf(delegator1), 50 ether);
@@ -140,8 +140,9 @@ contract DefaultDelegatorClaimTest is Test {
 
         // Try to send rewards (should revert)
         vm.deal(address(this), 10 ether);
-        vm.expectRevert(IDefaultDelegatorClaim.NoDelegations.selector);
-        (bool success,) = address(delegatorClaim).call{value: 10 ether}('');
+        (bool success, bytes memory data) = address(delegatorClaim).call{value: 10 ether}('');
+        assertFalse(success);
+        assertEq(bytes4(data), IDefaultDelegatorClaim.NoDelegations.selector);
     }
 
     function test_claimRewards() public {
@@ -260,8 +261,9 @@ contract DefaultDelegatorClaimTest is Test {
 
         // Try to send rewards (should revert)
         vm.deal(address(this), 10 ether);
-        vm.expectRevert(IDefaultDelegatorClaim.OperatorFeeExceedsReward.selector);
-        (bool success,) = address(delegatorClaim).call{value: 10 ether}('');
+        (bool success, bytes memory data) = address(delegatorClaim).call{value: 10 ether}('');
+        assertFalse(success);
+        assertEq(bytes4(data), IDefaultDelegatorClaim.OperatorFeeExceedsReward.selector);
     }
 
     function testFuzz_rewardDistribution(uint256 rewardAmount) public {

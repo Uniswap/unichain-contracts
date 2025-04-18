@@ -5,7 +5,7 @@ libs = ["lib"]
 optimizer = true
 optimizer_runs = 999999
 via_ir = false
-verbosity = 2
+verbosity = 1
 ffi = true
 evm_version = "cancun"
 fs_permissions = [
@@ -16,12 +16,15 @@ fs_permissions = [
 
 additional_compiler_profiles = [
   { name = "fee-splitter", optimizer_runs = 999999, via_ir = false, evm_version = "cancun" },
-  { name = "uvn-l1", optimizer_runs = 500, via_ir = false, evm_version = "cancun" }
+  { name = "staking-middleware", optimizer_runs = 100, via_ir = false, evm_version = "cancun" },
+  { name = "uvn", optimizer_runs = 999999, via_ir = false, evm_version = "cancun" }
 ]
 
 compilation_restrictions = [
   { paths = "src/FeeSplitter/**", via_ir = false, version = "=0.8.26" },
-  { paths = "src/UVN/L1/**", via_ir = false, optimizer_runs = 500, version = "=0.8.26" }
+  { paths = "src/UVN/L1/StakingMiddleware.sol", via_ir = false, optimizer_runs = 100, version = "=0.8.26" },
+  { paths = "src/UVN/L1/StakeTableSync.sol", via_ir = false, optimizer_runs = 999999, version = "=0.8.26" },
+  { paths = "src/UVN/L2/**", via_ir = false, optimizer_runs = 999999, version = "=0.8.26" }
 ]
 
 [profile.default.fuzz]

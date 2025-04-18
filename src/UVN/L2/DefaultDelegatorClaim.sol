@@ -38,7 +38,6 @@ contract DefaultDelegatorClaim is IDefaultDelegatorClaim {
         uint256 reward = msg.value;
         uint256 operatorFee;
         if (address(operatorFeeManager) != address(0)) {
-            // @audit is a reentrancy guard needed on this function due to this call?
             operatorFee = operatorFeeManager.operatorFee(reward);
             if (operatorFee > reward) revert OperatorFeeExceedsReward();
             reward -= operatorFee;
@@ -67,10 +66,13 @@ contract DefaultDelegatorClaim is IDefaultDelegatorClaim {
     function reportDelegatorStake(address delegator, uint256 newDelegatorStake) external {
         if (msg.sender != STAKE_TABLE) revert NotStakeTable();
         _updateRewardCheckpoint(delegator);
-        int256 currentDelegatorStake = int256(delegationOf[delegator]);
+        uint256 currentDelegatorStake = delegationOf[delegator];
         delegationOf[delegator] = newDelegatorStake;
-        int256 delta = int256(newDelegatorStake) - currentDelegatorStake;
-        totalDelegation = uint256(int256(totalDelegation) + delta);
+        if (newDelegatorStake > currentDelegatorStake) {
+            totalDelegation += (newDelegatorStake - currentDelegatorStake);
+        } else if (currentDelegatorStake > newDelegatorStake) {
+            totalDelegation -= (currentDelegatorStake - newDelegatorStake);
+        }
         emit BalanceUpdated(delegator, newDelegatorStake);
     }
 

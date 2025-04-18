@@ -36,14 +36,11 @@ contract L2StakeTable is IL2StakeTable, Votes {
         external
         onlyL1StakeTableSync
     {
-        int256 currentVotes = int256(getVotes(operator));
-        // @audit newBalance can never overflow int256
-        int256 newVotes = int256(newBalance);
-        int256 delta = newVotes - currentVotes;
-        if (delta > 0) {
-            _transferVotingUnits(address(0), operator, uint256(delta));
-        } else if (delta < 0) {
-            _transferVotingUnits(operator, address(0), uint256(-delta));
+        uint256 currentVotes = getVotes(operator);
+        if (newBalance > currentVotes) {
+            _transferVotingUnits(address(0), operator, newBalance - currentVotes);
+        } else if (newBalance < currentVotes) {
+            _transferVotingUnits(operator, address(0), currentVotes - newBalance);
         }
         if (delegator == address(0) && address(_delegatorClaims[operator]) == address(0)) {
             // when an ERC-721 token is deposited, delegator is address(0) in the notification
@@ -52,7 +49,6 @@ contract L2StakeTable is IL2StakeTable, Votes {
         }
         if (delegator != address(0)) {
             IDelegatorClaim delegatorClaim = _delegatorClaims[operator];
-            // @audit a failing delegator stake update should not revert the operator stake update
             try delegatorClaim.reportDelegatorStake{gas: MIN_DELEGATOR_UPDATE_GAS}(delegator, newDelegatorStake) {}
             catch {
                 emit DelegatorStakeUpdateFailed(operator, delegator);

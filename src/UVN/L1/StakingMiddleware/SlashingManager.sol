@@ -138,6 +138,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
             REWARD_TOKEN.transfer(slashingBeneficiary(), result.slashedRewards);
         }
         _slashDelegatorStake(delegator, result.remainingPercentage);
+        _afterDelegatorSlash(delegator);
     }
 
     /// @inheritdoc ISlashingManager
@@ -261,4 +262,5 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     }
 
     function _afterSlash(address operator, uint256 remainingPercentage) internal virtual {}
+    function _afterDelegatorSlash(address delegator) internal virtual {}
 }

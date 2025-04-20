@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.0;
 
 /// @title IBaseService
 /// @notice This interface is shared between L1 and L2 contracts to receive notifications about slashings, stake changes and operator withdrawals.

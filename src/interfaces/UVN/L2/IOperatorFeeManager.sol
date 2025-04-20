@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.0;
 
 /// @title IOperatorFeeManager - Interface for the OperatorFeeManager
 /// @notice Contracts implementing this interface can be used to calculate the operator fee for a given reward received by delegators

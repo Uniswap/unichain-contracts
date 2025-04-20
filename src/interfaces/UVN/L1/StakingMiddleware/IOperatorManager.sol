@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.0;
 
 import {IProtocolRewardDistributor} from './IProtocolRewardDistributor.sol';
 import {IVotes} from '@openzeppelin/contracts/governance/utils/IVotes.sol';

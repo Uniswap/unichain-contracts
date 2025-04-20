@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity ^0.8.0;
 
 import {IERC7751} from '../../../interfaces/IERC7751.sol';
 import {IDelegatorClaim} from './IDelegatorClaim.sol';

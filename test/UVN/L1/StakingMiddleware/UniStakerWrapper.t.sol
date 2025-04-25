@@ -222,4 +222,12 @@ contract UniStakerWrapperTest is L1TestHandler {
         assertTotalAmountStaked(remainingStake);
         assertEq(stakeToken.balanceOf(slashingBeneficiary), stakeAmount - remainingStake);
     }
+
+    function test_shouldDepositPendingWithdrawals() public {
+        unistakerWrapper.stake(10);
+        unistakerWrapper.unstake(9);
+        unistakerWrapper.depositIntoUniStaker(delegatee);
+        assertTotalAmountStaked(10);
+        unistakerWrapper.withdraw(address(this), 1);
+    }
 }

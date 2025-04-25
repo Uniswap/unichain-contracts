@@ -56,7 +56,7 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     function depositIntoUniStaker(address governanceDelegatee) external returns (uint256 depositId) {
         if (_isDepositedIntoUniStaker(msg.sender)) revert AlreadyDepositedIntoUniStaker();
         _beforeUniStakerDeposit(msg.sender);
-        uint96 amount = _delegatorStake(msg.sender);
+        uint96 amount = _slashableStake(msg.sender);
         if (amount == 0) revert NoStakeToDeposit();
         depositId = _depositIntoUniStaker(amount, governanceDelegatee);
     }
@@ -65,7 +65,7 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     function withdrawFromUniStaker() external {
         if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
         _beforeUniStakerWithdrawal(msg.sender);
-        uint96 amount = _delegatorStake(msg.sender);
+        uint96 amount = _slashableStake(msg.sender);
         _withdrawFromUniStaker(amount);
     }
 

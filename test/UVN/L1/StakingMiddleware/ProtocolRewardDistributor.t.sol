@@ -476,6 +476,7 @@ contract ProtocolRewardDistributorTest is L1TestHandler {
                         vm.startPrank(depositor);
                         protocolRewardDistributor.withdrawFromUniStaker();
                         protocolRewardDistributor.unstake(amounts[j]);
+                        protocolRewardDistributor.withdraw(depositor, 1);
                         totalAmount -= amounts[j];
                         amounts[j] = 0;
                         vm.stopPrank();

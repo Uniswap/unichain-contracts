@@ -44,7 +44,10 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
     /// @dev After a delegator withdraws their unstaked stake, decrease the slashable stake of the operator
     function _afterWithdraw(address delegator, uint96 amount) internal virtual override {
         super._afterWithdraw(delegator, amount);
-        _slashableStakes[delegates(delegator)] -= amount;
+        address operator = delegates(delegator);
+        if (operator != address(0)) {
+            _slashableStakes[operator] -= amount;
+        }
     }
 
     /// @inheritdoc IOperatorManager

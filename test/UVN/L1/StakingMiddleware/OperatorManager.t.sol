@@ -6,7 +6,7 @@ import {UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStak
 import {IUniStaker} from '../../../../src/interfaces/UVN/L1/IUnistaker.sol';
 import {IDelegatorAccessControl} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol';
 import {IDelegatorVerifier} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IDelegatorVerifier.sol';
-
+import {IStakeManager} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol';
 import {L1TestHandler} from '../L1TestHandler.sol';
 import {IVotes} from '@openzeppelin/contracts/governance/utils/IVotes.sol';
 import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
@@ -334,5 +334,13 @@ contract OperatorManagerTest is L1TestHandler {
         assertTotalVotes(
             DEFAULT_AMOUNT + remainingVotes, 'total votes should decrease by slashed amount of the slashed operator'
         );
+    }
+
+    function test_shouldNotDecreaseSlashableStakeOnWithdrawalIfUndelegated() public {
+        operatorManager.stake(DEFAULT_AMOUNT);
+        operatorManager.unstake(DEFAULT_AMOUNT);
+        vm.expectEmit();
+        emit IStakeManager.Withdrawn(address(this), address(this), DEFAULT_AMOUNT);
+        operatorManager.withdraw(address(this), 1);
     }
 }

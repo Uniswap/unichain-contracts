@@ -11,6 +11,9 @@ interface IStakingMiddlewareParams is IAccessControl {
     /// @notice Emitted when the slashing beneficiary is updated
     event SlashingBeneficiaryUpdated(address oldSlashingBeneficiary, address newSlashingBeneficiary);
 
+    /// @notice Thrown when the withdrawal delay is set to a value greater than the maximum allowed
+    error InvalidWithdrawalDelay();
+
     /// @notice Updates the withdrawal delay
     /// @param withdrawalDelay The new withdrawal delay in seconds
     function updateWithdrawalDelay(uint256 withdrawalDelay) external;

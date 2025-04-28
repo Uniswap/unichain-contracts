@@ -9,6 +9,7 @@ import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 /// @notice This contract manages the parameters of the StakingMiddleware contract. It allows roles to set the withdrawal delay and the slashing beneficiary.
 contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
     bytes32 public constant PARAMS_SETTER_ROLE = keccak256('PARAMS_SETTER_ROLE');
+    uint256 public constant MAX_WITHDRAWAL_DELAY = 30 days;
 
     uint256 private _withdrawalDelay;
     address private _slashingBeneficiary;
@@ -36,6 +37,7 @@ contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
     }
 
     function _setWithdrawalDelay(uint256 withdrawalDelay_) internal {
+        if (withdrawalDelay_ > MAX_WITHDRAWAL_DELAY) revert InvalidWithdrawalDelay();
         uint256 oldWithdrawalDelay = _withdrawalDelay;
         _withdrawalDelay = withdrawalDelay_;
         emit WithdrawalDelayUpdated(oldWithdrawalDelay, withdrawalDelay_);

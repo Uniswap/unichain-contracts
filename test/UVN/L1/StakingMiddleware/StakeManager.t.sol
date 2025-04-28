@@ -79,13 +79,13 @@ contract StakeManagerTestHarness is StakeManager {
 
     function _ghostSchedulePendingWithdrawal(address delegator, uint96 amount) private returns (uint256 withdrawalId) {
         Stake_ storage stake_ = _ghostDepositorStake[delegator];
-        uint40 unlocksAt = uint40(block.timestamp + withdrawalDelay());
+        uint40 scheduledAt = uint40(block.timestamp);
         withdrawalId = stake_.pendingWithdrawals.length;
         stake_.totalPendingWithdrawal += amount;
         stake_.pendingWithdrawals.push(
-            IStakeManager.PendingWithdrawal({amount: amount, timestamp: unlocksAt, withdrawn: false})
+            IStakeManager.PendingWithdrawal({amount: amount, scheduledAt: scheduledAt, withdrawn: false})
         );
-        emit WithdrawalQueued(delegator, withdrawalId, amount, unlocksAt);
+        emit WithdrawalQueued(delegator, withdrawalId, amount, scheduledAt + uint40(withdrawalDelay()));
     }
 }
 
@@ -183,10 +183,13 @@ contract StakeManagerInvariantHandler is Test {
             // If there are pending withdraws expect the revert with the nextTimestamp
             else if (len > 0) {
                 IStakeManager.PendingWithdrawal memory pendingWithdrawal = _ghostDepositorStake.pendingWithdrawals[head];
-                uint40 nextTimestamp = pendingWithdrawal.timestamp;
+                uint40 nextTimestamp = pendingWithdrawal.scheduledAt;
                 assertEq(
                     revertData,
-                    abi.encodeWithSelector(IStakeManager.NoPendingWithdrawalsToWithdraw.selector, nextTimestamp)
+                    abi.encodeWithSelector(
+                        IStakeManager.NoPendingWithdrawalsToWithdraw.selector,
+                        nextTimestamp + stakeManagerTestHarness.withdrawalDelay()
+                    )
                 );
             }
         }
@@ -313,7 +316,7 @@ contract StakeManagerTest is L1TestHandler {
 
         IStakeManager.PendingWithdrawal memory withdrawal = stakeManager.withdrawal(delegator, withdrawalId);
         assertEq(withdrawal.amount, amount);
-        assertEq(withdrawal.timestamp, block.timestamp + WITHDRAWAL_DELAY);
+        assertEq(withdrawal.scheduledAt, block.timestamp);
         assertFalse(withdrawal.withdrawn);
     }
 
@@ -457,7 +460,7 @@ contract StakeManagerTest is L1TestHandler {
         // Check that only one pending withdrawal remains after slashing
         IStakeManager.PendingWithdrawal memory pendingWithdrawal = stakeManager.withdrawal(delegator, 2);
         assertEq(pendingWithdrawal.amount, 350);
-        assertEq(pendingWithdrawal.timestamp, block.timestamp + WITHDRAWAL_DELAY);
+        assertEq(pendingWithdrawal.scheduledAt, block.timestamp);
         assertFalse(pendingWithdrawal.withdrawn);
     }
 }

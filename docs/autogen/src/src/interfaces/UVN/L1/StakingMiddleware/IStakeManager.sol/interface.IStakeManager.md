@@ -1,5 +1,5 @@
 # IStakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7f66025a53e574ca519390c88a9335515138fc79/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol)
 
 **Inherits:**
 [IStakingMiddlewareParams](/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md)
@@ -184,7 +184,7 @@ error NoPendingWithdrawalsToWithdraw(uint64 nextWithdrawableTimestamp);
 ```solidity
 struct PendingWithdrawal {
     uint96 amount;
-    uint40 timestamp;
+    uint40 scheduledAt;
     bool withdrawn;
 }
 ```

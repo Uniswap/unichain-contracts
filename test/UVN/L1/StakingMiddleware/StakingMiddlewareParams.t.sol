@@ -142,6 +142,7 @@ contract StakingMiddlewareParamsTest is L1TestHandler {
 
     // Fuzz test for withdrawal delay updates
     function testFuzz_updateWithdrawalDelay(uint256 newWithdrawalDelay) public {
+        newWithdrawalDelay = bound(newWithdrawalDelay, 0, paramsHarness.MAX_WITHDRAWAL_DELAY());
         // Update withdrawal delay
         vm.prank(paramsSetter);
         params.updateWithdrawalDelay(newWithdrawalDelay);
@@ -187,13 +188,13 @@ contract StakingMiddlewareParamsTest is L1TestHandler {
     // Test multiple updates to parameters
     function test_multipleUpdates() public {
         // First update to withdrawal delay
-        uint256 firstDelay = 14 days;
+        uint256 firstDelay = 7 days;
         vm.prank(paramsSetter);
         params.updateWithdrawalDelay(firstDelay);
         assertEq(params.withdrawalDelay(), firstDelay, 'First withdrawal delay update failed');
 
         // Second update to withdrawal delay
-        uint256 secondDelay = 30 days;
+        uint256 secondDelay = 14 days;
         vm.prank(paramsSetter);
         params.updateWithdrawalDelay(secondDelay);
         assertEq(params.withdrawalDelay(), secondDelay, 'Second withdrawal delay update failed');
@@ -211,7 +212,7 @@ contract StakingMiddlewareParamsTest is L1TestHandler {
         assertEq(params.slashingBeneficiary(), secondBeneficiary, 'Second slashing beneficiary update failed');
 
         // Verify events are emitted correctly on multiple updates
-        uint256 thirdDelay = 60 days;
+        uint256 thirdDelay = 30 days;
         vm.expectEmit();
         emit IStakingMiddlewareParams.WithdrawalDelayUpdated(secondDelay, thirdDelay);
         vm.prank(paramsSetter);

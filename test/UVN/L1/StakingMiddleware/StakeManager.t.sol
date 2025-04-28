@@ -28,15 +28,15 @@ contract StakeManagerTestHarness is StakeManager {
         _slashDelegatorStake(delegator, remainingPercentage);
     }
 
-    /// Implement _before* hooks to track changes to the ghost stake
+    /// Implement _after* hooks to track changes to the ghost stake
 
-    function _beforeStake(address delegator, uint96 amount) internal override {
-        super._beforeStake(delegator, amount);
+    function _afterStake(address delegator, uint96 amount) internal override {
+        super._afterStake(delegator, amount);
         _ghostDepositorStake[delegator].stake += amount;
     }
 
-    function _beforeUnstake(address delegator, uint96 amount) internal override {
-        super._beforeUnstake(delegator, amount);
+    function _afterUnstake(address delegator, uint96 amount) internal override {
+        super._afterUnstake(delegator, amount);
         _ghostDepositorStake[delegator].stake -= amount;
         // Add pending withdraw to ghost stake
         _ghostSchedulePendingWithdrawal(delegator, amount);

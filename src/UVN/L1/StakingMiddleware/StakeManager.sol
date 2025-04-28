@@ -43,10 +43,10 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
 
     /// @inheritdoc IStakeManager
     function unstake(uint96 amount) external returns (uint256 withdrawalId) {
+        _beforeUnstake(msg.sender, amount);
         Stake storage stake_ = _depositorStake[msg.sender];
         uint256 currentStake = stake_.stake;
         if (currentStake < amount) revert InsufficientBalance();
-        _beforeUnstake(msg.sender, amount);
         stake_.stake -= amount;
         withdrawalId = _schedulePendingWithdrawal(msg.sender, amount);
         emit Unstaked(msg.sender, amount);

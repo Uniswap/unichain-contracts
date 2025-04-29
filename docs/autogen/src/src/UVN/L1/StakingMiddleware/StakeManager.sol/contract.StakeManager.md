@@ -1,5 +1,5 @@
 # StakeManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/StakeManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7f66025a53e574ca519390c88a9335515138fc79/src/UVN/L1/StakingMiddleware/StakeManager.sol)
 
 **Inherits:**
 [StakingMiddlewareParams](/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol/contract.StakingMiddlewareParams.md), [IStakeManager](/src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol/interface.IStakeManager.md)
@@ -199,6 +199,13 @@ function _beforeUnstake(address delegator, uint96 amount) internal virtual;
 
 ```solidity
 function _afterUnstake(address delegator, uint96 amount) internal virtual;
+```
+
+### _beforeWithdrawCalculation
+
+
+```solidity
+function _beforeWithdrawCalculation(address delegator) internal virtual;
 ```
 
 ### _beforeWithdraw

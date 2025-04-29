@@ -63,9 +63,9 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     }
 
     /// @dev Before a delegator withdraws, apply all pending slashing instances to the delegator's stake
-    function _beforeWithdraw(address delegator, uint96 amount) internal override {
+    function _beforeWithdrawCalculation(address delegator) internal override {
         applySlashing(delegator, type(uint256).max);
-        super._beforeWithdraw(delegator, amount);
+        super._beforeWithdrawCalculation(delegator);
     }
 
     /// @dev Before a delegator deposits into the UniStaker contract, apply all pending slashing instances to the delegator's stake

@@ -55,6 +55,7 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
 
     /// @inheritdoc IStakeManager
     function withdraw(address to, uint64 n) external returns (uint96 amount) {
+        _beforeWithdrawCalculation(msg.sender);
         Stake storage stake_ = _depositorStake[msg.sender];
         uint256 len = stake_.pendingWithdrawals.length;
         uint64 head = stake_.head;
@@ -173,6 +174,8 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
     function _beforeUnstake(address delegator, uint96 amount) internal virtual {}
 
     function _afterUnstake(address delegator, uint96 amount) internal virtual {}
+
+    function _beforeWithdrawCalculation(address delegator) internal virtual {}
 
     function _beforeWithdraw(address delegator, uint96 amount) internal virtual {}
 

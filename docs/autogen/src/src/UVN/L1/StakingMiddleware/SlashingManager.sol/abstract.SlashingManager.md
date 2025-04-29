@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7f66025a53e574ca519390c88a9335515138fc79/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -70,13 +70,13 @@ function _beforeStake(address delegator, uint96 amount) internal override;
 function _beforeUnstake(address delegator, uint96 amount) internal override;
 ```
 
-### _beforeWithdraw
+### _beforeWithdrawCalculation
 
 *Before a delegator withdraws, apply all pending slashing instances to the delegator's stake*
 
 
 ```solidity
-function _beforeWithdraw(address delegator, uint96 amount) internal override;
+function _beforeWithdrawCalculation(address delegator) internal override;
 ```
 
 ### _beforeUniStakerDeposit

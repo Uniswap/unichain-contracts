@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7f66025a53e574ca519390c88a9335515138fc79/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/d36fee7571a3aee70804ae50127a8ca3e2e6fc63/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -207,6 +207,17 @@ function delegatorStake(address delegator) public view override(StakeManager, IS
 function slashableStake(address delegator) public view override(StakeManager, IStakeManager) returns (uint96);
 ```
 
+### pendingWithdrawalAmount
+
+
+```solidity
+function pendingWithdrawalAmount(address delegator)
+    public
+    view
+    override(StakeManager, IStakeManager)
+    returns (uint96);
+```
+
 ### _calculateSlashing
 
 *iterates over slashing occurrences by the operator a delegator has selected. For every slashing instance, it calculates the new stake based on the total percentage of the total delegated stake slashed.*
@@ -230,22 +241,13 @@ function _calculateSlashing(address delegator, uint256 n, uint256 globalCheckpoi
 function _isDelegatorSlashed(uint256 nextDelegatorInstance, uint256 operatorLength) internal pure returns (bool);
 ```
 
-### _remainingStake
-
-*Applies a slashing result to a stake*
-
-
-```solidity
-function _remainingStake(uint96 stake_, SlashingResult memory result) internal pure returns (uint96);
-```
-
 ### _slashingOccurred
 
 *Checks a slashing result whether a slashing occurred, if the remaining percentage is not 100%, a slashing occurred*
 
 
 ```solidity
-function _slashingOccurred(SlashingResult memory result) internal pure returns (bool);
+function _slashingOccurred(SlashingResult memory result, address delegator) internal view returns (bool);
 ```
 
 ### _afterSlash
@@ -280,7 +282,8 @@ struct SlashingInstance {
 
 ```solidity
 struct SlashingResult {
-    uint256 remainingPercentage;
+    uint256 remainingStake;
+    uint256 remainingWithdrawals;
     uint256 next;
     uint256 newRewards;
     uint256 slashedRewards;

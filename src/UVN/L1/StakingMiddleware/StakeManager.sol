@@ -93,7 +93,7 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
     }
 
     /// @inheritdoc IStakeManager
-    function pendingWithdrawalAmount(address delegator) external view returns (uint96) {
+    function pendingWithdrawalAmount(address delegator) public view virtual returns (uint96) {
         return _depositorStake[delegator].totalPendingWithdrawal;
     }
 
@@ -109,20 +109,17 @@ contract StakeManager is StakingMiddlewareParams, IStakeManager {
     /// @dev To ensure accurate accounting of total delegated stake to operators, pending withdrawals and slashable stake are slashed equally
     /// @dev When pending withdrawals are slashed, cancel all pending withdrawals and create a new one with the remainder
     // @audit INVARIANT: The remaining slashed stake is always less or equal to the stake before the slashing minus the amount slashed to ensure the contract always has enough stake to cover the withdrawal of the entire stake
-    function _slashDelegatorStake(address delegator, uint256 remainingPercentage) internal {
+    function _slashDelegatorStake(address delegator, uint96 newStake, uint96 newPendingWithdrawalAmount) internal {
         Stake storage stake_ = _depositorStake[delegator];
-        uint256 currentStake = stake_.stake;
-        uint256 currentPendingWithdrawalAmount = stake_.totalPendingWithdrawal;
-        uint96 newStake = uint96(currentStake * remainingPercentage / PERCENTAGE_DENOMINATOR);
-        uint96 newPendingWithdrawalAmount =
-            uint96(currentPendingWithdrawalAmount * remainingPercentage / PERCENTAGE_DENOMINATOR);
+        uint96 currentStake = stake_.stake;
+        uint96 currentPendingWithdrawalAmount = stake_.totalPendingWithdrawal;
         if (currentPendingWithdrawalAmount != 0) {
             // cancel all pending withdrawals and schedule a new one with the remainder
             _invalidatePendingWithdrawals(delegator);
             _schedulePendingWithdrawal(delegator, newPendingWithdrawalAmount);
         }
         if (currentStake != 0) {
-            _depositorStake[delegator].stake = uint96(newStake);
+            _depositorStake[delegator].stake = newStake;
         }
         uint96 slashedAmount =
             uint96(currentStake + currentPendingWithdrawalAmount - newStake - newPendingWithdrawalAmount);

@@ -309,4 +309,15 @@ contract StakingMiddlewareSlashingTest is L1TestHandler {
         uint256 actualReward = slashingManager.withdrawRewards(delegator);
         assertEq(actualReward, totalReward, 'actual reward does not match shown rewards');
     }
+
+    function test_delegatorBalanceShouldBeConsistentWithOperatorBalance() public {
+        depositAndDelegate(delegator, 9);
+        vm.prank(slasher);
+        slashingManager.slashAmount(operator, 1);
+        vm.prank(slasher);
+        slashingManager.slashAmount(operator, 1);
+        vm.prank(delegator);
+        // this should not cause an underflow
+        slashingManager.announceOperatorUndelegation();
+    }
 }

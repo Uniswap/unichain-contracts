@@ -21,6 +21,8 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
 
     /// @dev Result of a slashing calculation
     struct SlashingResult {
+        /// @dev Whether a slashing occurred
+        bool slashed;
         /// @dev The remaining stake of a delegator after applying slashing instances
         uint256 remainingStake;
         /// @dev The remaining pending withdrawals of a delegator after applying slashing instances
@@ -129,7 +131,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         uint256 globalRewardCheckpoint = _updateGlobalRewardCheckpoint();
 
         SlashingResult memory result = _calculateSlashing(delegator, n, globalRewardCheckpoint);
-        if (!_slashingOccurred(result, delegator)) return;
+        if (!result.slashed) return;
 
         // update the next slashing instance
         _delegatorNextSlashingInstance[delegator] = result.next;
@@ -162,7 +164,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         uint256 unclaimedGlobalReward = UNISTAKER.unclaimedReward(address(this));
         uint256 globalCheckpoint = _getNewGlobalRewardCheckpoint(unclaimedGlobalReward);
         SlashingResult memory result = _calculateSlashing(delegator, type(uint256).max, globalCheckpoint);
-        if (_slashingOccurred(result, delegator)) {
+        if (result.slashed) {
             return _earnedRewardsOf[delegator] + result.newRewards;
         }
         return super.rewardsOf(delegator);
@@ -220,6 +222,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
             // user not delegated to an operator or not slashed
             return result;
         }
+        result.slashed = true;
         // if the delegator has deposited their stake into the UniStaker contract, slash their rewards
         bool isDeposited = _isDepositedIntoUniStaker(delegator);
         uint256 i = 0;
@@ -264,11 +267,6 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
     /// @dev Checks whether a delegator has pending slashing instances, if the next slashing instance is equal to the operator's slashing instances array length, the delegator is not slashed
     function _isDelegatorSlashed(uint256 nextDelegatorInstance, uint256 operatorLength) internal pure returns (bool) {
         return nextDelegatorInstance < operatorLength;
-    }
-
-    /// @dev Checks a slashing result whether a slashing occurred, if the remaining percentage is not 100%, a slashing occurred
-    function _slashingOccurred(SlashingResult memory result, address delegator) internal view returns (bool) {
-        return result.remainingStake != _delegatorStake(delegator);
     }
 
     function _afterSlash(address operator, uint256 remainingPercentage) internal virtual {}

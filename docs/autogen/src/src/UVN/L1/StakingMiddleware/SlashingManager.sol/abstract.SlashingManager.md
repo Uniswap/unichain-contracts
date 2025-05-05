@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/d36fee7571a3aee70804ae50127a8ca3e2e6fc63/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/88a508cf5f865f18b7ea2dc21cac2d745a2aa0c7/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -241,15 +241,6 @@ function _calculateSlashing(address delegator, uint256 n, uint256 globalCheckpoi
 function _isDelegatorSlashed(uint256 nextDelegatorInstance, uint256 operatorLength) internal pure returns (bool);
 ```
 
-### _slashingOccurred
-
-*Checks a slashing result whether a slashing occurred, if the remaining percentage is not 100%, a slashing occurred*
-
-
-```solidity
-function _slashingOccurred(SlashingResult memory result, address delegator) internal view returns (bool);
-```
-
 ### _afterSlash
 
 
@@ -282,6 +273,7 @@ struct SlashingInstance {
 
 ```solidity
 struct SlashingResult {
+    bool slashed;
     uint256 remainingStake;
     uint256 remainingWithdrawals;
     uint256 next;

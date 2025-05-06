@@ -191,7 +191,7 @@ contract OperatorManagerTest is L1TestHandler {
 
     function test_shouldNotBeAbleToDelegateWhileAlreadyDelegating() public {
         operatorManager.delegate(operator);
-        vm.expectRevert(IOperatorManager.OperatorAlreadySelected.selector);
+        vm.expectRevert(IOperatorManager.AlreadyDelegated.selector);
         operatorManager.delegate(operator);
     }
 
@@ -249,12 +249,12 @@ contract OperatorManagerTest is L1TestHandler {
     }
 
     function test_shouldNotBeAbleToUndelegateWhileNotDelegated() public {
-        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.NoOperatorSelected.selector));
+        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.NotDelegated.selector));
         operatorManager.delegate(address(0));
     }
 
     function test_shouldNotBeAbleToAnnounceUndelegationWhileUndelegated() public {
-        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.NoOperatorSelected.selector));
+        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.NotDelegated.selector));
         operatorManager.announceOperatorUndelegation();
     }
 
@@ -342,5 +342,20 @@ contract OperatorManagerTest is L1TestHandler {
         vm.expectEmit();
         emit IStakeManager.Withdrawn(address(this), address(this), DEFAULT_AMOUNT);
         operatorManager.withdraw(address(this), 1);
+    }
+
+    function test_RevertIf_DelegatingWhileUndelegationIsPending() public {
+        vm.startPrank(delegator);
+        operatorManager.delegate(operator);
+        operatorManager.announceOperatorUndelegation();
+        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.UndelegationNotFinalized.selector, block.timestamp));
+        operatorManager.delegate(delegator);
+        vm.stopPrank();
+    }
+
+    function test_RevertIf_UndelegatingWithoutAnnouncingUndelegation() public {
+        operatorManager.delegate(operator);
+        vm.expectRevert(IOperatorManager.AnnounceUndelegationFirst.selector);
+        operatorManager.delegate(address(0));
     }
 }

@@ -526,7 +526,7 @@ contract DelegatorAccessControlTest is L1TestHandler {
 
         // Cannot delegate to operatorB while already delegated
         vm.prank(delegatorA);
-        vm.expectRevert(IOperatorManager.OperatorAlreadySelected.selector);
+        vm.expectRevert(IOperatorManager.AlreadyDelegated.selector);
         delegatorAccessControl.delegate(operatorB);
 
         // Undelegate from operatorA - first announce undelegation
@@ -539,7 +539,12 @@ contract DelegatorAccessControlTest is L1TestHandler {
         // Wait for the delay period
         vm.warp(block.timestamp + 7 days + 1);
 
+        // cannot delegate without undelegation first
+        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.UndelegationNotFinalized.selector, block.timestamp - 1));
+        delegatorAccessControl.delegate(operatorB);
+
         // Now we can delegate to operatorB
+        delegatorAccessControl.delegate(address(0));
         delegatorAccessControl.delegate(operatorB);
         vm.stopPrank();
 

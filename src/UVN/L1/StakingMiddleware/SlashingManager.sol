@@ -135,9 +135,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
 
         // update the next slashing instance
         _delegatorNextSlashingInstance[delegator] = result.next;
-        if (result.newRewards != 0) {
-            _distributeRewards(delegator, result.newRewards, result.newCheckpoint);
-        }
+        _distributeRewards(delegator, result.newRewards, result.newCheckpoint);
         if (result.slashedRewards != 0) {
             REWARD_TOKEN.transfer(slashingBeneficiary(), result.slashedRewards);
         }

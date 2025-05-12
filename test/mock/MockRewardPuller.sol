@@ -44,3 +44,29 @@ contract EmptyRewardPuller is IRewardPuller {
         return interfaceId == type(IRewardPuller).interfaceId || interfaceId == type(IERC165).interfaceId;
     }
 }
+
+contract AnvilRewardPuller is IRewardPuller {
+    uint256 private _amountPerBlock;
+    uint256 private _lastDistribution;
+
+    constructor(uint256 amountPerBlock) {
+        _amountPerBlock = amountPerBlock;
+        _lastDistribution = block.number;
+    }
+
+    function setAmountPerBlock(uint256 amount) external {
+        _amountPerBlock = amount;
+    }
+
+    function pullRewards() external returns (uint256) {
+        uint256 amount = _amountPerBlock * (block.number - _lastDistribution);
+        require(address(this).balance >= amount, 'AnvilRewardPuller: insufficient balance');
+        _lastDistribution = block.number;
+        (bool success,) = msg.sender.call{value: amount}('');
+        return success ? amount : 0;
+    }
+
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+        return interfaceId == type(IRewardPuller).interfaceId || interfaceId == type(IERC165).interfaceId;
+    }
+}

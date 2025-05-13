@@ -1,5 +1,5 @@
 # Notifier
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L1/StakingMiddleware/Notifier.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L1/StakingMiddleware/Notifier.sol)
 
 **Inherits:**
 [SlashingManager](/src/UVN/L1/StakingMiddleware/SlashingManager.sol/abstract.SlashingManager.md), ERC721, [INotifier](/src/interfaces/UVN/L1/StakingMiddleware/INotifier.sol/interface.INotifier.md)
@@ -131,7 +131,7 @@ Allows an operator to set the URI for their token
 
 
 ```solidity
-function setURI(string memory uri) external;
+function setURI(string calldata uri) external;
 ```
 
 ### tokenURI

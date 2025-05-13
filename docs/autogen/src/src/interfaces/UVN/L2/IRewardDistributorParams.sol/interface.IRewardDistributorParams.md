@@ -1,5 +1,5 @@
 # IRewardDistributorParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/f7ee30d3904bcf7f9e6eea33683d2c2c6ac756df/src/interfaces/UVN/L2/IRewardDistributorParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/interfaces/UVN/L2/IRewardDistributorParams.sol)
 
 
 ## Functions
@@ -76,7 +76,9 @@ Emitted when the attestation window length is updated
 
 
 ```solidity
-event AttestationWindowLengthUpdated(uint256 oldAttestationWindowLength, uint256 newAttestationWindowLength);
+event AttestationWindowLengthUpdated(
+    uint256 indexed oldAttestationWindowLength, uint256 indexed newAttestationWindowLength
+);
 ```
 
 ### AttestationPeriodUpdated
@@ -84,7 +86,7 @@ Emitted when the attestation period is updated
 
 
 ```solidity
-event AttestationPeriodUpdated(uint256 oldAttestationPeriod, uint256 newAttestationPeriod);
+event AttestationPeriodUpdated(uint256 indexed oldAttestationPeriod, uint256 indexed newAttestationPeriod);
 ```
 
 ### RewardPullerUpdated
@@ -92,7 +94,7 @@ Emitted when the reward puller contract is updated
 
 
 ```solidity
-event RewardPullerUpdated(address oldRewardPuller, address newRewardPuller);
+event RewardPullerUpdated(address indexed oldRewardPuller, address indexed newRewardPuller);
 ```
 
 ## Errors

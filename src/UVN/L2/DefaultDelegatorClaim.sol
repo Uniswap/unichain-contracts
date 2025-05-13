@@ -8,6 +8,9 @@ import {
 } from '../../interfaces/UVN/L2/IDefaultDelegatorClaim.sol';
 import {AddressAliasHelper} from 'lib/optimism/packages/contracts-bedrock/src/vendor/AddressAliasHelper.sol';
 
+/// @title DefaultDelegatorClaim - A default implementation of IDelegatorClaim
+/// @notice This contract distributes rewards sent to it by the reward distributor contract. Additionally the contract allows an operator to define arbitrary logic on how to handle their fees.
+/// @custom:security-contact security@uniswap.org
 contract DefaultDelegatorClaim is IDefaultDelegatorClaim {
     uint256 private constant PERCENTAGE_DENOMINATOR = 1e18;
     uint256 private constant PRECISION = 1e27;

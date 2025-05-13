@@ -1,8 +1,13 @@
 # DefaultDelegatorClaim
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L2/DefaultDelegatorClaim.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L2/DefaultDelegatorClaim.sol)
 
 **Inherits:**
 [IDefaultDelegatorClaim](/src/interfaces/UVN/L2/IDefaultDelegatorClaim.sol/interface.IDefaultDelegatorClaim.md)
+
+This contract distributes rewards sent to it by the reward distributor contract. Additionally the contract allows an operator to define arbitrary logic on how to handle their fees.
+
+**Note:**
+security-contact: security@uniswap.org
 
 
 ## State Variables

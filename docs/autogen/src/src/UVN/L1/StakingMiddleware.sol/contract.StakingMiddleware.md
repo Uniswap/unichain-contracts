@@ -1,10 +1,13 @@
 # StakingMiddleware
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L1/StakingMiddleware.sol)
 
 **Inherits:**
 [Notifier](/src/UVN/L1/StakingMiddleware/Notifier.sol/abstract.Notifier.md), Multicall, [IStakingMiddleware](/src/interfaces/UVN/L1/IStakingMiddleware.sol/interface.IStakingMiddleware.md)
 
 This contract is the main staking contract for the Unichain Validator Network (UVN). It allows delegators to stake UNI, deposit their underlying staked UNI into the UniStaker contract to participate in UNI governance and accrue protocol fees, and choose an operator to delegate their stake to.
+
+**Note:**
+security-contact: security@uniswap.org
 
 
 ## Functions

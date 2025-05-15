@@ -54,6 +54,8 @@ contract AnvilRewardPuller is IRewardPuller {
         _lastDistribution = block.number;
     }
 
+    receive() external payable {}
+
     function setAmountPerBlock(uint256 amount) external {
         _amountPerBlock = amount;
     }

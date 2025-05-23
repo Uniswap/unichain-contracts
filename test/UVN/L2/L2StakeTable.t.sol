@@ -5,6 +5,8 @@ import {DefaultDelegatorClaim} from '../../../src/UVN/L2/DefaultDelegatorClaim.s
 import {L2StakeTable} from '../../../src/UVN/L2/L2StakeTable.sol';
 
 import {ExampleOperatorFeeManager} from '../../../src/UVN/L2/examples/ExampleOperatorFeeManager.sol';
+
+import {IERC7751} from '../../../src/interfaces/IERC7751.sol';
 import {IDelegatorClaim} from '../../../src/interfaces/UVN/L2/IDelegatorClaim.sol';
 import {IL2StakeTable} from '../../../src/interfaces/UVN/L2/IL2StakeTable.sol';
 import {Test} from 'forge-std/Test.sol';
@@ -186,6 +188,13 @@ contract L2StakeTableTest is Test {
         stakeTable.onWithdrawal(operator1);
     }
 
+    function test_RevertIf_overrideWithZeroAddress() public {
+        stakeTable.reportOperatorStake(operator1, 100 ether, address(0), 0);
+        vm.prank(operator1);
+        vm.expectRevert(IL2StakeTable.ZeroAddress.selector);
+        stakeTable.overrideDelegatorClaimContract(IDelegatorClaim(address(0)));
+    }
+
     function test_overrideDelegatorClaimContract() public {
         stakeTable.reportOperatorStake(operator1, 100 ether, address(0), 0);
         address defaultClaim = stakeTable.beneficiary(operator1);
@@ -208,6 +217,27 @@ contract L2StakeTableTest is Test {
 
         assertEq(stakeTable.beneficiary(operator2), address(customClaim));
         assertNotEq(stakeTable.beneficiary(operator1), address(customClaim));
+    }
+
+    function test_shouldNotRevertIfOverrideIsEOA() public {
+        stakeTable.reportOperatorStake(operator1, 100 ether, address(0), 0);
+        vm.prank(operator1);
+        address eoa = makeAddr('EOA');
+        stakeTable.overrideDelegatorClaimContract(IDelegatorClaim(eoa));
+        assertEq(stakeTable.beneficiary(operator1), eoa);
+        vm.expectEmit(true, true, false, true);
+        emit IL2StakeTable.DelegatorStakeUpdateFailed(
+            operator1,
+            delegator1,
+            abi.encodeWithSelector(
+                IERC7751.WrappedError.selector,
+                eoa,
+                IDelegatorClaim.reportDelegatorStake.selector,
+                IL2StakeTable.NoCode.selector,
+                ''
+            )
+        );
+        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
     }
 
     function test_delegateDisabled() public {
@@ -256,8 +286,18 @@ contract L2StakeTableTest is Test {
         stakeTable.overrideDelegatorClaimContract(failingClaim);
 
         // Try to update delegator stake (should not revert)
-        vm.expectEmit(true, true, false, false);
-        emit IL2StakeTable.DelegatorStakeUpdateFailed(operator1, delegator1);
+        vm.expectEmit(true, true, true, true);
+        emit IL2StakeTable.DelegatorStakeUpdateFailed(
+            operator1,
+            delegator1,
+            abi.encodeWithSelector(
+                IERC7751.WrappedError.selector,
+                address(failingClaim),
+                IDelegatorClaim.reportDelegatorStake.selector,
+                abi.encodeWithSignature('Error(string)', 'oh no something went wrong :('),
+                ''
+            )
+        );
         stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 50 ether);
 
         // Operator stake should still be updated
@@ -412,6 +452,6 @@ contract MockDelegatorClaim is IDelegatorClaim {
 
 contract FailingDelegatorClaim is IDelegatorClaim {
     function reportDelegatorStake(address, uint256) external pure override {
-        revert('oh noeeee something went wrong :(');
+        revert('oh no something went wrong :(');
     }
 }

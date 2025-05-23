@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import {IERC7751} from '../../interfaces/IERC7751.sol';
 import {IBaseService, IDelegatorClaim, IL2StakeTable, IStakeTable} from '../../interfaces/UVN/L2/IL2StakeTable.sol';
 import {DefaultDelegatorClaim} from './DefaultDelegatorClaim.sol';
 import {IVotes} from '@openzeppelin/contracts/governance/utils/IVotes.sol';
@@ -49,10 +50,37 @@ contract L2StakeTable is IL2StakeTable, Votes {
         }
         if (delegator != address(0)) {
             IDelegatorClaim delegatorClaim = _delegatorClaims[operator];
-            try delegatorClaim.reportDelegatorStake{gas: MIN_DELEGATOR_UPDATE_GAS}(delegator, newDelegatorStake) {}
-            catch {
-                emit DelegatorStakeUpdateFailed(operator, delegator);
+            try L2StakeTable(address(this)).reportDelegatorStake(delegatorClaim, delegator, newDelegatorStake) {}
+            catch (bytes memory reason) {
+                if (reason.length != 0) {
+                    emit DelegatorStakeUpdateFailed(operator, delegator, reason);
+                } else {
+                    emit DelegatorStakeUpdateFailed(
+                        operator,
+                        delegator,
+                        abi.encodeWithSelector(
+                            IERC7751.WrappedError.selector,
+                            address(delegatorClaim),
+                            IDelegatorClaim.reportDelegatorStake.selector,
+                            NoCode.selector,
+                            ''
+                        )
+                    );
+                }
             }
+        }
+    }
+
+    /// @dev Called by the `reportOperatorStake` function externally via try catch to ensure that calls to an EOA do not revert
+    function reportDelegatorStake(IDelegatorClaim delegatorClaim, address delegator, uint256 newDelegatorStake)
+        external
+    {
+        if (msg.sender != address(this)) revert OnlyCallableBySelf();
+        try delegatorClaim.reportDelegatorStake{gas: MIN_DELEGATOR_UPDATE_GAS}(delegator, newDelegatorStake) {}
+        catch (bytes memory reason) {
+            revert IERC7751.WrappedError(
+                address(delegatorClaim), IDelegatorClaim.reportDelegatorStake.selector, reason, ''
+            );
         }
     }
 
@@ -88,6 +116,7 @@ contract L2StakeTable is IL2StakeTable, Votes {
 
     /// @dev Sets a delegator claim contract for an operator
     function _setDelegatorClaimContract(address operator, IDelegatorClaim delegatorClaim) internal {
+        if (address(delegatorClaim) == address(0)) revert ZeroAddress();
         _delegatorClaims[operator] = delegatorClaim;
         emit DelegatorClaimContractSet(operator, delegatorClaim);
     }

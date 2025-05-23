@@ -12,12 +12,18 @@ interface IL2StakeTable is IBaseService, IStakeTable, IERC7751 {
     /// @notice Emitted when an operator sets a delegator claim contract
     event DelegatorClaimContractSet(address indexed operator, IDelegatorClaim delegatorClaim);
     /// @notice Emitted when a delegator stake update fails
-    event DelegatorStakeUpdateFailed(address indexed operator, address delegator);
+    event DelegatorStakeUpdateFailed(address indexed operator, address delegator, bytes reason);
 
     /// @notice Thrown when the caller is not the L1 stake table sync contract
     error NotStakeTableSync();
     /// @notice Thrown when a delegation is attempted
     error DelegationDisabled();
+    /// @notice Thrown when the caller is not the L2 stake table contract
+    error OnlyCallableBySelf();
+    /// @notice Thrown when the delegator claim contract is set to a zero address
+    error ZeroAddress();
+    /// @notice Thrown when the delegator claim contract has no code
+    error NoCode();
 
     /// @notice Sets a delegator claim contract for an operator
     /// @param delegatorClaim The delegator claim contract to set

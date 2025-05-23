@@ -237,7 +237,8 @@ contract L2StakeTableTest is Test {
                 ''
             )
         );
-        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 100 ether);
+        stakeTable.reportOperatorStake(operator1, 200 ether, delegator1, 100 ether);
+        assertEq(stakeTable.getVotes(operator1), 200 ether);
     }
 
     function test_delegateDisabled() public {
@@ -298,10 +299,36 @@ contract L2StakeTableTest is Test {
                 ''
             )
         );
-        stakeTable.reportOperatorStake(operator1, 100 ether, delegator1, 50 ether);
+        stakeTable.reportOperatorStake(operator1, 200 ether, delegator1, 50 ether);
 
         // Operator stake should still be updated
-        assertEq(stakeTable.getVotes(operator1), 100 ether);
+        assertEq(stakeTable.getVotes(operator1), 200 ether);
+    }
+
+    function test_delegatorStakeUpdateReturnBomb() public {
+        stakeTable.reportOperatorStake(operator1, 100 ether, address(0), 0);
+
+        // Assign a failing claim contract
+        ReturnBombDelegatorClaim failingClaim = new ReturnBombDelegatorClaim();
+        vm.prank(operator1);
+        stakeTable.overrideDelegatorClaimContract(failingClaim);
+
+        // Try to update delegator stake (should not revert)
+        vm.expectEmit(true, true, true, true);
+        emit IL2StakeTable.DelegatorStakeUpdateFailed(
+            operator1,
+            delegator1,
+            abi.encodeWithSelector(
+                IERC7751.WrappedError.selector,
+                address(failingClaim),
+                IDelegatorClaim.reportDelegatorStake.selector,
+                '',
+                ''
+            )
+        );
+        stakeTable.reportOperatorStake(operator1, 200 ether, delegator1, 50 ether);
+        // Operator stake should still be updated
+        assertEq(stakeTable.getVotes(operator1), 200 ether);
     }
 
     function test_integration_rewardDistribution() public {
@@ -453,5 +480,13 @@ contract MockDelegatorClaim is IDelegatorClaim {
 contract FailingDelegatorClaim is IDelegatorClaim {
     function reportDelegatorStake(address, uint256) external pure override {
         revert('oh no something went wrong :(');
+    }
+}
+
+contract ReturnBombDelegatorClaim is IDelegatorClaim {
+    function reportDelegatorStake(address, uint256) external pure override {
+        assembly {
+            revert(0, 1000000)
+        }
     }
 }

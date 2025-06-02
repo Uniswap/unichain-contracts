@@ -1,5 +1,5 @@
 # StakingMiddlewareParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/43cfeb46627ac8e6e7739462906618c85350c785/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol)
 
 **Inherits:**
 [IStakingMiddlewareParams](/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md), AccessControl
@@ -39,31 +39,63 @@ constructor(address initialAdmin, uint256 withdrawalDelay_, address slashingBene
 
 ### withdrawalDelay
 
+The delay before a user can withdraw their stake or change their operator
+
 
 ```solidity
 function withdrawalDelay() public view returns (uint256);
 ```
+**Returns**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`<none>`|`uint256`|The withdrawal delay in seconds|
+
 
 ### slashingBeneficiary
+
+The slashing beneficiary that receives slashed stake and rewards
 
 
 ```solidity
 function slashingBeneficiary() public view returns (address);
 ```
+**Returns**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`<none>`|`address`|The slashing beneficiary|
+
 
 ### updateWithdrawalDelay
+
+Updates the withdrawal delay
 
 
 ```solidity
 function updateWithdrawalDelay(uint256 withdrawalDelay_) external onlyRole(PARAMS_SETTER_ROLE);
 ```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`withdrawalDelay_`|`uint256`||
+
 
 ### updateSlashingBeneficiary
+
+Updates the slashing beneficiary that receives slashed stake and rewards
 
 
 ```solidity
 function updateSlashingBeneficiary(address slashingBeneficiary_) external onlyRole(PARAMS_SETTER_ROLE);
 ```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`slashingBeneficiary_`|`address`||
+
 
 ### _setWithdrawalDelay
 

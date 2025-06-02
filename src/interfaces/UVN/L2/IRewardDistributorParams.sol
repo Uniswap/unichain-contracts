@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import {IRewardPuller} from './IRewardPuller.sol';
 
+/// @title IRewardDistributor
+/// @notice This contract is a base contract for the reward distributor contract. It manages the parameters required for attestations and reward distribution.
 interface IRewardDistributorParams {
     /// @notice Emitted when the attestation window length is updated
     event AttestationWindowLengthUpdated(uint256 oldAttestationWindowLength, uint256 newAttestationWindowLength);

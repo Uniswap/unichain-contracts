@@ -1,5 +1,5 @@
 # StakingMiddlewareParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/f7b48b64bb184bfa74aa61328a1323e161cd5e8f/src/UVN/L1/StakingMiddleware/StakingMiddlewareParams.sol)
 
 **Inherits:**
 [IStakingMiddlewareParams](/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md), AccessControl
@@ -12,6 +12,13 @@ This contract manages the parameters of the StakingMiddleware contract. It allow
 
 ```solidity
 bytes32 public constant PARAMS_SETTER_ROLE = keccak256('PARAMS_SETTER_ROLE');
+```
+
+
+### MAX_WITHDRAWAL_DELAY
+
+```solidity
+uint256 public constant MAX_WITHDRAWAL_DELAY = 30 days;
 ```
 
 

@@ -1,5 +1,5 @@
 # DelegatorAccessControl
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol)
 
 **Inherits:**
 [OperatorManager](/src/UVN/L1/StakingMiddleware/OperatorManager.sol/abstract.OperatorManager.md), [IDelegatorAccessControl](/src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol/interface.IDelegatorAccessControl.md)
@@ -11,7 +11,7 @@ This contract manages the access control of delegators to operators. It allows O
 ### _delegatorAccessControl
 
 ```solidity
-mapping(address delegator => AccessControlParams accessControl) private _delegatorAccessControl;
+mapping(address operator => AccessControlParams accessControl) private _delegatorAccessControl;
 ```
 
 

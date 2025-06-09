@@ -16,6 +16,7 @@ import {MessageHashUtils} from '@openzeppelin/contracts/utils/cryptography/Messa
 /// @title RewardDistributor
 /// @notice Distributes rewards to operators based on their attestations. Operators attest to a group of blocks (windows). Whenever a window is finalized, the reward is distributed to the operators that voted together with the majority of the votes.
 /// @dev To guarantee the correct allocation of rewards to windows, should no attestations be made to a window, the scheduled window is extended to the previous block before it activates.
+/// @custom:security-contact security@uniswap.org
 contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
@@ -55,8 +56,8 @@ contract RewardDistributor is RewardDistributorParams, IRewardDistributor {
     function attest(
         uint256 blockNumber,
         bytes32 blockHash,
-        bytes memory additionalData,
-        bytes memory signature,
+        bytes calldata additionalData,
+        bytes calldata signature,
         bytes32 graffiti
     ) external {
         if (blockNumber >= block.number) revert NoBlockHashAvailable();

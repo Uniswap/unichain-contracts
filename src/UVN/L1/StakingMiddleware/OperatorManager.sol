@@ -61,7 +61,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         _beforeUndelegationAnnouncement(delegator);
         uint96 undelegateAt = uint96(block.timestamp + withdrawalDelay());
         _undelegationData[delegator] = UndelegationData({operator: operator, undelegateAt: undelegateAt});
-        super._delegate(delegator, address(0));
+        OperatorVotes._delegate(delegator, address(0));
         emit OperatorUndelegationAnnounced(delegator, operator, undelegateAt);
         _afterUndelegationAnnouncement(delegator);
     }
@@ -77,7 +77,7 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
             _deselectOperator(delegator);
         } else {
             _selectOperator(delegator, operator);
-            super._delegate(delegator, operator);
+            OperatorVotes._delegate(delegator, operator);
             _afterDelegation(delegator, operator);
         }
     }

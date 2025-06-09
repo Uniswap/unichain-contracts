@@ -1,8 +1,8 @@
 {
   "onWithdrawal": "41499",
   "reportOperatorSlash": "41967",
-  "reportOperatorStake:delegatorClaim:cold": "86252",
-  "reportOperatorStake:delegatorClaim:warm": "44093",
-  "reportOperatorStake:delegatorClaimWithRewards": "83893",
-  "reportOperatorStake:deployDelegatorClaim": "802859"
+  "reportOperatorStake:delegatorClaim:cold": "87169",
+  "reportOperatorStake:delegatorClaim:warm": "45010",
+  "reportOperatorStake:delegatorClaimWithRewards": "84810",
+  "reportOperatorStake:deployDelegatorClaim": "805290"
 }

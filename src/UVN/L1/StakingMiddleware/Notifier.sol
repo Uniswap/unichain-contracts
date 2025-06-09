@@ -98,6 +98,7 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
         emit URIUpdated(msg.sender, tokenId, uri);
     }
 
+    /// @inheritdoc ERC721
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireOwned(tokenId);
         return _uris[OperatorTokenLib.toAddress(tokenId)];
@@ -200,6 +201,7 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
         }
     }
 
+    /// @inheritdoc ERC721
     function supportsInterface(bytes4 interfaceId) public view override(AccessControl, ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }

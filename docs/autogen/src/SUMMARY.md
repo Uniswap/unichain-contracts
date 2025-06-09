@@ -57,7 +57,6 @@
           - [IStakeManager](src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol/interface.IStakeManager.md)
           - [IStakingMiddlewareParams](src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol/interface.IStakingMiddlewareParams.md)
           - [IUniStakerWrapper](src/interfaces/UVN/L1/StakingMiddleware/IUniStakerWrapper.sol/interface.IUniStakerWrapper.md)
-        - [IDelegationManager](src/interfaces/UVN/L1/IDelegationManager.sol/interface.IDelegationManager.md)
         - [IService](src/interfaces/UVN/L1/IService.sol/interface.IService.md)
         - [IStakeTableSync](src/interfaces/UVN/L1/IStakeTableSync.sol/interface.IStakeTableSync.md)
         - [IStakingMiddleware](src/interfaces/UVN/L1/IStakingMiddleware.sol/interface.IStakingMiddleware.md)

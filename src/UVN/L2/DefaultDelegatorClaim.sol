@@ -8,6 +8,8 @@ import {
 } from '../../interfaces/UVN/L2/IDefaultDelegatorClaim.sol';
 import {AddressAliasHelper} from 'lib/optimism/packages/contracts-bedrock/src/vendor/AddressAliasHelper.sol';
 
+/// @title DefaultDelegatorClaim
+/// @notice This contract distributes rewards sent to it by the reward distributor contract. Additionally the contract allows an operator to define arbitrary logic on how to handle their fees.
 contract DefaultDelegatorClaim is IDefaultDelegatorClaim {
     uint256 private constant PERCENTAGE_DENOMINATOR = 1e18;
     uint256 private constant PRECISION = 1e27;
@@ -62,7 +64,6 @@ contract DefaultDelegatorClaim is IDefaultDelegatorClaim {
     }
 
     /// @inheritdoc IDelegatorClaim
-    /// @dev When an operator is slashed, delegator stakes are only updated when slashing is applied on L1
     function reportDelegatorStake(address delegator, uint256 newDelegatorStake) external {
         if (msg.sender != STAKE_TABLE) revert NotStakeTable();
         _updateRewardCheckpoint(delegator);

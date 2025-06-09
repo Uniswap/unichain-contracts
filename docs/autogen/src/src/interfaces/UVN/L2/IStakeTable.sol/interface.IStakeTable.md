@@ -1,8 +1,10 @@
 # IStakeTable
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/59d8d0f3dfaec834d237a9218ae7c1d8d99315b3/src/interfaces/UVN/L2/IStakeTable.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/interfaces/UVN/L2/IStakeTable.sol)
 
 **Inherits:**
 IVotes
+
+The reward distributor contract pulls voting weights and the beneficiary for reward distribution from contracts implementing this interface.
 
 
 ## Functions

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import {IDelegationManager} from '../../../interfaces/UVN/L1/IDelegationManager.sol';
 import {IStakingMiddlewareParams} from '../../../interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 
@@ -19,18 +18,22 @@ contract StakingMiddlewareParams is IStakingMiddlewareParams, AccessControl {
         _setSlashingBeneficiary(slashingBeneficiary_);
     }
 
+    /// @inheritdoc IStakingMiddlewareParams
     function withdrawalDelay() public view returns (uint256) {
         return _withdrawalDelay;
     }
 
+    /// @inheritdoc IStakingMiddlewareParams
     function slashingBeneficiary() public view returns (address) {
         return _slashingBeneficiary;
     }
 
+    /// @inheritdoc IStakingMiddlewareParams
     function updateWithdrawalDelay(uint256 withdrawalDelay_) external onlyRole(PARAMS_SETTER_ROLE) {
         _setWithdrawalDelay(withdrawalDelay_);
     }
 
+    /// @inheritdoc IStakingMiddlewareParams
     function updateSlashingBeneficiary(address slashingBeneficiary_) external onlyRole(PARAMS_SETTER_ROLE) {
         _setSlashingBeneficiary(slashingBeneficiary_);
     }

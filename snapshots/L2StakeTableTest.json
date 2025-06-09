@@ -4,5 +4,5 @@
   "reportOperatorStake:delegatorClaim:cold": "87169",
   "reportOperatorStake:delegatorClaim:warm": "45010",
   "reportOperatorStake:delegatorClaimWithRewards": "84810",
-  "reportOperatorStake:deployDelegatorClaim": "805290"
+  "reportOperatorStake:deployDelegatorClaim": "802882"
 }

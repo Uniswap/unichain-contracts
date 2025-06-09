@@ -1,5 +1,5 @@
 # IStakingMiddlewareParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7f66025a53e574ca519390c88a9335515138fc79/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/64e316f970cf7532173a2a7bf7faa9e25ee98124/src/interfaces/UVN/L1/StakingMiddleware/IStakingMiddlewareParams.sol)
 
 **Inherits:**
 IAccessControl
@@ -83,7 +83,7 @@ Emitted when the withdrawal delay is updated
 
 
 ```solidity
-event WithdrawalDelayUpdated(uint256 oldWithdrawalDelay, uint256 newWithdrawalDelay);
+event WithdrawalDelayUpdated(uint256 indexed oldWithdrawalDelay, uint256 indexed newWithdrawalDelay);
 ```
 
 ### SlashingBeneficiaryUpdated
@@ -91,7 +91,7 @@ Emitted when the slashing beneficiary is updated
 
 
 ```solidity
-event SlashingBeneficiaryUpdated(address oldSlashingBeneficiary, address newSlashingBeneficiary);
+event SlashingBeneficiaryUpdated(address indexed oldSlashingBeneficiary, address indexed newSlashingBeneficiary);
 ```
 
 ## Errors

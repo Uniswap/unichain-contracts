@@ -1,5 +1,5 @@
 # IRewardDistributorParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/interfaces/UVN/L2/IRewardDistributorParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/64e316f970cf7532173a2a7bf7faa9e25ee98124/src/interfaces/UVN/L2/IRewardDistributorParams.sol)
 
 This contract is a base contract for the reward distributor contract. It manages the parameters required for attestations and reward distribution.
 
@@ -78,7 +78,9 @@ Emitted when the attestation window length is updated
 
 
 ```solidity
-event AttestationWindowLengthUpdated(uint256 oldAttestationWindowLength, uint256 newAttestationWindowLength);
+event AttestationWindowLengthUpdated(
+    uint256 indexed oldAttestationWindowLength, uint256 indexed newAttestationWindowLength
+);
 ```
 
 ### AttestationPeriodUpdated
@@ -86,7 +88,7 @@ Emitted when the attestation period is updated
 
 
 ```solidity
-event AttestationPeriodUpdated(uint256 oldAttestationPeriod, uint256 newAttestationPeriod);
+event AttestationPeriodUpdated(uint256 indexed oldAttestationPeriod, uint256 indexed newAttestationPeriod);
 ```
 
 ### RewardPullerUpdated
@@ -94,7 +96,7 @@ Emitted when the reward puller contract is updated
 
 
 ```solidity
-event RewardPullerUpdated(address oldRewardPuller, address newRewardPuller);
+event RewardPullerUpdated(address indexed oldRewardPuller, address indexed newRewardPuller);
 ```
 
 ## Errors

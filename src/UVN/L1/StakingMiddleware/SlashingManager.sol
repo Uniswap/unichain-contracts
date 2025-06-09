@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import {ISlashingManager} from '../../../interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol';
 import {DelegatorAccessControl} from './DelegatorAccessControl.sol';
+import {OperatorManager} from './OperatorManager.sol';
 import {IProtocolRewardDistributor, ProtocolRewardDistributor} from './ProtocolRewardDistributor.sol';
 import {IStakeManager, StakeManager} from './StakeManager.sol';
 
@@ -165,7 +166,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
         if (result.slashed) {
             return _earnedRewardsOf[delegator] + result.newRewards;
         }
-        return super.rewardsOf(delegator);
+        return ProtocolRewardDistributor.rewardsOf(delegator);
     }
 
     // @audit Can introduce minor rounding errors between the sum of all remaining balances and the the recorded total stake due to rounding errors
@@ -177,7 +178,7 @@ abstract contract SlashingManager is DelegatorAccessControl, ISlashingManager {
             rewardCheckpoint: globalRewardCheckpoint
         });
         _slashingInstances[operator].push(instance);
-        super._slashOperatorVotes(operator, remainingPercentage);
+        OperatorManager._slashOperatorVotes(operator, remainingPercentage);
         _afterSlash(operator, remainingPercentage);
     }
 

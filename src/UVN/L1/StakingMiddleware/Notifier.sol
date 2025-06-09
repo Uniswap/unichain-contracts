@@ -176,7 +176,7 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
     /// @dev Allow the operator to always force transfer their own token
     function _isAuthorized(address owner, address spender, uint256 tokenId) internal view override returns (bool) {
         if (spender == OperatorTokenLib.toAddress(tokenId)) return true;
-        return super._isAuthorized(owner, spender, tokenId);
+        return ERC721._isAuthorized(owner, spender, tokenId);
     }
 
     /// @dev Checks if an account is a service contract by ensuring that the account is not an EOA or 7702 enabled account and that the smart contract supports the `IService` interface

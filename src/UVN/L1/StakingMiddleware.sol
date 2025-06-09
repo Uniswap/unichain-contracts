@@ -19,6 +19,6 @@ contract StakingMiddleware is Notifier, Multicall, IStakingMiddleware {
     /// @inheritdoc Nonces
     /// @dev The `Nonces` library does not come with an interface, to ensure that the function is included in the interface of this contract, add it here
     function nonces(address owner) public view override(Nonces, IStakingMiddleware) returns (uint256) {
-        return super.nonces(owner);
+        return Nonces.nonces(owner);
     }
 }

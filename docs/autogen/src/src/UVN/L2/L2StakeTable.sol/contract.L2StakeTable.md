@@ -6,6 +6,9 @@
 
 This contract is a clone of the L1 stake table. Whenever the balance of an operator changes on L1, this contract is notified and the balance is updated on L2. This contract deploys a default contract for delegators to claim rewards when the ERC-721 token is deposited on L1. This contract is then notified of subsequent stake changes on L1. Operators can override the default delegator claim contract with a custom implementation to distribute rewards differently.
 
+**Note:**
+security-contact: security@uniswap.org
+
 
 ## State Variables
 ### MIN_DELEGATOR_UPDATE_GAS

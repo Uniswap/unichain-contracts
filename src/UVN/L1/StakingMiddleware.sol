@@ -10,6 +10,7 @@ import {Nonces} from '@openzeppelin/contracts/utils/Nonces.sol';
 
 /// @title StakingMiddleware
 /// @notice This contract is the main staking contract for the Unichain Validator Network (UVN). It allows delegators to stake UNI, deposit their underlying staked UNI into the UniStaker contract to participate in UNI governance and accrue protocol fees, and choose an operator to delegate their stake to.
+/// @custom:security-contact security@uniswap.org
 contract StakingMiddleware is Notifier, Multicall, IStakingMiddleware {
     constructor(IUniStaker unistaker_, address initialAdmin, uint256 withdrawalDelay_, address slashingBeneficiary_)
         UniStakerWrapper(unistaker_, initialAdmin, withdrawalDelay_, slashingBeneficiary_)

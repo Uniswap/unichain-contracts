@@ -9,6 +9,7 @@ import {EIP712, Votes} from '@openzeppelin/contracts/governance/utils/Votes.sol'
 
 /// @title L2StakeTable - Clone of the L1 stake table
 /// @notice This contract is a clone of the L1 stake table. Whenever the balance of an operator changes on L1, this contract is notified and the balance is updated on L2. This contract deploys a default contract for delegators to claim rewards when the ERC-721 token is deposited on L1. This contract is then notified of subsequent stake changes on L1. Operators can override the default delegator claim contract with a custom implementation to distribute rewards differently.
+/// @custom:security-contact security@uniswap.org
 contract L2StakeTable is IL2StakeTable, Votes {
     uint256 private constant MIN_DELEGATOR_UPDATE_GAS = 200_000;
     uint256 private constant PERCENTAGE_DENOMINATOR = 1e18;

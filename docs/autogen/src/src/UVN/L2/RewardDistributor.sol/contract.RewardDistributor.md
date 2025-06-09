@@ -8,6 +8,9 @@ Distributes rewards to operators based on their attestations. Operators attest t
 
 *To guarantee the correct allocation of rewards to windows, should no attestations be made to a window, the scheduled window is extended to the previous block before it activates.*
 
+**Note:**
+security-contact: security@uniswap.org
+
 
 ## State Variables
 ### SUCCESSFUL_ATTESTATION_PERCENTAGE

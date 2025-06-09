@@ -6,6 +6,8 @@ import {IRewardPuller} from '../../interfaces/UVN/L2/IRewardPuller.sol';
 import {Window, Windows} from './libraries/WindowLib.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 
+/// @title RewardDistributorParams
+/// @notice This contract is a base contract for the reward distributor contract. It manages the parameters required for attestations and reward distribution.
 contract RewardDistributorParams is AccessControl, IRewardDistributorParams {
     bytes32 public constant PARAM_SETTER_ROLE = keccak256('PARAM_SETTER_ROLE');
 

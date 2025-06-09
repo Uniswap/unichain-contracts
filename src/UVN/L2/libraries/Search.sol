@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+/// @title Search
+/// @notice This library provides functions to search for a target value in an array sorted in ascending order.
 library Search {
     /// @dev Performs exponential descending search to narrow down the range for finding a target value in a array sorted in ascending order with a bias towards higher values
     /// @return left the lower index of the range when target is rounded up to the index (array[left - 1] < target <= array[left])

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+/// @title OperatorTokenLib
+/// @notice This library provides functions to convert between operator addresses and token ids.
 library OperatorTokenLib {
     /// @dev Converts an operator address to a token id
     function toTokenId(address operator) internal pure returns (uint256) {

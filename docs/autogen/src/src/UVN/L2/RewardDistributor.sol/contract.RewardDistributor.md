@@ -84,8 +84,8 @@ Attest to a window of blocks
 function attest(
     uint256 blockNumber,
     bytes32 blockHash,
-    bytes memory additionalData,
-    bytes memory signature,
+    bytes calldata additionalData,
+    bytes calldata signature,
     bytes32 graffiti
 ) external;
 ```

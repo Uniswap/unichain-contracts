@@ -6,9 +6,6 @@
 
 This contract distributes rewards sent to it by the reward distributor contract. Additionally the contract allows an operator to define arbitrary logic on how to handle their fees.
 
-**Note:**
-security-contact: security@uniswap.org
-
 
 ## State Variables
 ### PERCENTAGE_DENOMINATOR
@@ -112,12 +109,21 @@ receive() external payable;
 
 ### reportDelegatorStake
 
-*When an operator is slashed, delegator stakes are only updated when slashing is applied on L1*
+Reports a delegator stake to the reward distributor contract
+
+*MUST revert if the caller is not the L2 stake table sync contract*
 
 
 ```solidity
 function reportDelegatorStake(address delegator, uint256 newDelegatorStake) external;
 ```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`delegator`|`address`|The address of the delegator|
+|`newDelegatorStake`|`uint256`||
+
 
 ### setOperatorFeeManager
 

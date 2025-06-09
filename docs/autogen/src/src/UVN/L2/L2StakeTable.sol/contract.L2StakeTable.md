@@ -88,6 +88,15 @@ function reportOperatorStake(address operator, uint256 newBalance, address deleg
 |`newDelegatorStake`|`uint256`|The new stake of the delegator.|
 
 
+### reportDelegatorStake
+
+*Called by the `reportOperatorStake` function externally via try catch to ensure that calls to an EOA do not revert*
+
+
+```solidity
+function reportDelegatorStake(IDelegatorClaim delegatorClaim, address delegator, uint256 newDelegatorStake) external;
+```
+
 ### reportOperatorSlash
 
 This function is called when an operator is slashed.

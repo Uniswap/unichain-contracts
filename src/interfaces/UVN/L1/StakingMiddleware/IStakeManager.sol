@@ -9,7 +9,7 @@ import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 interface IStakeManager is IStakingMiddlewareParams {
     struct PendingWithdrawal {
         uint96 amount;
-        uint40 timestamp;
+        uint40 scheduledAt;
         bool withdrawn;
     }
 

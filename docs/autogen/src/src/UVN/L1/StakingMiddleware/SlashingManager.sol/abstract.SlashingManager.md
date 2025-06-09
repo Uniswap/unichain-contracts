@@ -1,5 +1,5 @@
 # SlashingManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/88a508cf5f865f18b7ea2dc21cac2d745a2aa0c7/src/UVN/L1/StakingMiddleware/SlashingManager.sol)
 
 **Inherits:**
 [DelegatorAccessControl](/src/UVN/L1/StakingMiddleware/DelegatorAccessControl.sol/abstract.DelegatorAccessControl.md), [ISlashingManager](/src/interfaces/UVN/L1/StakingMiddleware/ISlashingManager.sol/interface.ISlashingManager.md)
@@ -70,13 +70,13 @@ function _beforeStake(address delegator, uint96 amount) internal override;
 function _beforeUnstake(address delegator, uint96 amount) internal override;
 ```
 
-### _beforeWithdraw
+### _beforeWithdrawCalculation
 
 *Before a delegator withdraws, apply all pending slashing instances to the delegator's stake*
 
 
 ```solidity
-function _beforeWithdraw(address delegator, uint96 amount) internal override;
+function _beforeWithdrawCalculation(address delegator) internal override;
 ```
 
 ### _beforeUniStakerDeposit
@@ -207,6 +207,17 @@ function delegatorStake(address delegator) public view override(StakeManager, IS
 function slashableStake(address delegator) public view override(StakeManager, IStakeManager) returns (uint96);
 ```
 
+### pendingWithdrawalAmount
+
+
+```solidity
+function pendingWithdrawalAmount(address delegator)
+    public
+    view
+    override(StakeManager, IStakeManager)
+    returns (uint96);
+```
+
 ### _calculateSlashing
 
 *iterates over slashing occurrences by the operator a delegator has selected. For every slashing instance, it calculates the new stake based on the total percentage of the total delegated stake slashed.*
@@ -228,24 +239,6 @@ function _calculateSlashing(address delegator, uint256 n, uint256 globalCheckpoi
 
 ```solidity
 function _isDelegatorSlashed(uint256 nextDelegatorInstance, uint256 operatorLength) internal pure returns (bool);
-```
-
-### _remainingStake
-
-*Applies a slashing result to a stake*
-
-
-```solidity
-function _remainingStake(uint96 stake_, SlashingResult memory result) internal pure returns (uint96);
-```
-
-### _slashingOccurred
-
-*Checks a slashing result whether a slashing occurred, if the remaining percentage is not 100%, a slashing occurred*
-
-
-```solidity
-function _slashingOccurred(SlashingResult memory result) internal pure returns (bool);
 ```
 
 ### _afterSlash
@@ -280,7 +273,9 @@ struct SlashingInstance {
 
 ```solidity
 struct SlashingResult {
-    uint256 remainingPercentage;
+    bool slashed;
+    uint256 remainingStake;
+    uint256 remainingWithdrawals;
     uint256 next;
     uint256 newRewards;
     uint256 slashedRewards;

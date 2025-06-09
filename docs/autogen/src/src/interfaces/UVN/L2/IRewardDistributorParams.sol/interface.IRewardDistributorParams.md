@@ -1,5 +1,7 @@
 # IRewardDistributorParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/f7ee30d3904bcf7f9e6eea33683d2c2c6ac756df/src/interfaces/UVN/L2/IRewardDistributorParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/interfaces/UVN/L2/IRewardDistributorParams.sol)
+
+This contract is a base contract for the reward distributor contract. It manages the parameters required for attestations and reward distribution.
 
 
 ## Functions

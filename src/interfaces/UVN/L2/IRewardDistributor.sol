@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import {IRewardDistributorParams} from './IRewardDistributorParams.sol';
 
+/// @title IRewardDistributor
+/// @notice Distributes rewards to operators based on their attestations. Operators attest to a group of blocks (windows). Whenever a window is finalized, the reward is distributed to the operators that voted together with the majority of the votes.
+/// @dev To guarantee the correct allocation of rewards to windows, should no attestations be made to a window, the scheduled window is extended to the previous block before it activates.
 interface IRewardDistributor is IRewardDistributorParams {
     /// @notice Status of block numbers and windows
     /// @dev NonExistent: The block number/window is in the future and has not been scheduled

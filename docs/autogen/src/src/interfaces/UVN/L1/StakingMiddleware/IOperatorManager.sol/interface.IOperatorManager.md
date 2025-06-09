@@ -1,5 +1,5 @@
 # IOperatorManager
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/f3a7525f5971b3bc886ba551e43cf8afecfdaa02/src/interfaces/UVN/L1/StakingMiddleware/IOperatorManager.sol)
 
 **Inherits:**
 [IProtocolRewardDistributor](/src/interfaces/UVN/L1/StakingMiddleware/IProtocolRewardDistributor.sol/interface.IProtocolRewardDistributor.md), IVotes
@@ -48,20 +48,28 @@ event OperatorUndelegationAnnounced(address indexed delegator, address indexed o
 ```
 
 ## Errors
-### OperatorAlreadySelected
-Thrown when a delegator attempts to delegate to another operator while already delegating to one
+### AlreadyDelegated
+Thrown when a delegator attempts to delegate to another operator while already delegating to one or having a pending undelegation
 
 
 ```solidity
-error OperatorAlreadySelected();
+error AlreadyDelegated();
 ```
 
-### NoOperatorSelected
+### NotDelegated
 Thrown when a delegator attempts to undelegate from an operator while not delegating to one
 
 
 ```solidity
-error NoOperatorSelected();
+error NotDelegated();
+```
+
+### AnnounceUndelegationFirst
+Thrown when a delegator attempts to undelegate from an operator without announcing their intention to undelegate first
+
+
+```solidity
+error AnnounceUndelegationFirst();
 ```
 
 ### UndelegationNotFinalized

@@ -24,19 +24,19 @@ contract StakeManagerTestHarness is StakeManager {
     {}
 
     /// @notice Helper function to test the internal _slashDelegatorStake function
-    function slashDelegatorStake(address delegator, uint256 remainingPercentage) external {
-        _slashDelegatorStake(delegator, remainingPercentage);
+    function slashDelegatorStake(address delegator, uint96 newStake, uint96 newPendingWithdrawalAmount) external {
+        _slashDelegatorStake(delegator, newStake, newPendingWithdrawalAmount);
     }
 
-    /// Implement _before* hooks to track changes to the ghost stake
+    /// Implement _after* hooks to track changes to the ghost stake
 
-    function _beforeStake(address delegator, uint96 amount) internal override {
-        super._beforeStake(delegator, amount);
+    function _afterStake(address delegator, uint96 amount) internal override {
+        super._afterStake(delegator, amount);
         _ghostDepositorStake[delegator].stake += amount;
     }
 
-    function _beforeUnstake(address delegator, uint96 amount) internal override {
-        super._beforeUnstake(delegator, amount);
+    function _afterUnstake(address delegator, uint96 amount) internal override {
+        super._afterUnstake(delegator, amount);
         _ghostDepositorStake[delegator].stake -= amount;
         // Add pending withdraw to ghost stake
         _ghostSchedulePendingWithdrawal(delegator, amount);
@@ -201,14 +201,17 @@ contract StakeManagerInvariantHandler is Test {
     function slash(uint256 remainingPercentage, uint256 actorIndexSeed) external useActor(actorIndexSeed) {
         uint96 _delegatorStake = stakeManagerTestHarness.delegatorStake(currentActor);
         uint96 _slashableStake = stakeManagerTestHarness.slashableStake(currentActor);
-
+        uint96 _pendingWithdrawalAmount = stakeManagerTestHarness.pendingWithdrawalAmount(currentActor);
         remainingPercentage = _boundToUint256(remainingPercentage, 1e18);
 
-        stakeManagerTestHarness.slashDelegatorStake(currentActor, remainingPercentage);
+        uint256 newStake = _delegatorStake * remainingPercentage / 1e18;
+        uint256 newPendingWithdrawalAmount = _pendingWithdrawalAmount * remainingPercentage / 1e18;
+        stakeManagerTestHarness.slashDelegatorStake(currentActor, uint96(newStake), uint96(newPendingWithdrawalAmount));
 
         // Stakes after slashing must be less than or equal to the original stake
         assertLe(stakeManagerTestHarness.delegatorStake(currentActor), _delegatorStake);
         assertLe(stakeManagerTestHarness.slashableStake(currentActor), _slashableStake);
+        assertLe(stakeManagerTestHarness.pendingWithdrawalAmount(currentActor), _pendingWithdrawalAmount);
     }
 }
 
@@ -408,18 +411,20 @@ contract StakeManagerTest is L1TestHandler {
 
     function test_slashDelegatorStake() public {
         uint96 amount = 1000;
-
+        uint96 unstakeAmount = 400;
         // Setup
         stakeToken.mint(delegator, amount);
         vm.startPrank(delegator);
         stakeToken.approve(address(stakeManager), amount);
         stakeManager.stake(amount);
-        stakeManager.unstake(400);
+        stakeManager.unstake(unstakeAmount);
         vm.stopPrank();
 
         // Use the exposed slashDelegatorStake function (80% remaining)
         uint256 remainingPercentage = 0.8e18; // 80% in fixed point
-        stakeManager.slashDelegatorStake(delegator, remainingPercentage);
+        uint96 newStake = uint96((amount - unstakeAmount) * remainingPercentage / 1e18);
+        uint96 newPendingWithdrawalAmount = uint96(unstakeAmount * remainingPercentage / 1e18);
+        stakeManager.slashDelegatorStake(delegator, newStake, newPendingWithdrawalAmount);
 
         // Verify - after slashing 20%, we should have 80% of the original stake left
         assertEq(stakeManager.delegatorStake(delegator), 480); // 600 * 0.8 = 480
@@ -432,22 +437,25 @@ contract StakeManagerTest is L1TestHandler {
 
     function test_slashDelegatorStake_multiplePendingWithdrawals() public {
         uint96 amount = 1000;
-
+        uint96 unstakeAmount1 = 200;
+        uint96 unstakeAmount2 = 300;
         // Setup
         stakeToken.mint(delegator, amount);
         vm.startPrank(delegator);
         stakeToken.approve(address(stakeManager), amount);
         stakeManager.stake(amount);
         // Create two pending withdrawals
-        stakeManager.unstake(200);
-        stakeManager.unstake(300);
+        stakeManager.unstake(unstakeAmount1);
+        stakeManager.unstake(unstakeAmount2);
         vm.stopPrank();
 
         // Use the exposed slashDelegatorStake function (70% remaining)
         uint256 remainingPercentage = 0.7e18; // 70% in fixed point
+        uint96 newStake = uint96((amount - unstakeAmount1 - unstakeAmount2) * remainingPercentage / 1e18);
+        uint96 newPendingWithdrawalAmount = uint96((unstakeAmount1 + unstakeAmount2) * remainingPercentage / 1e18);
         vm.expectEmit();
         emit IStakeManager.PendingWithdrawalsInvalidated(delegator, 0, 1);
-        stakeManager.slashDelegatorStake(delegator, remainingPercentage);
+        stakeManager.slashDelegatorStake(delegator, newStake, newPendingWithdrawalAmount);
 
         // Verify - after slashing 30%, we should have 70% of the original stake left
         assertEq(stakeManager.delegatorStake(delegator), 350); // 500 * 0.7 = 350

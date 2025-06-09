@@ -1,5 +1,5 @@
 # RewardDistributor
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L2/RewardDistributor.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L2/RewardDistributor.sol)
 
 **Inherits:**
 [RewardDistributorParams](/src/UVN/L2/RewardDistributorParams.sol/contract.RewardDistributorParams.md), [IRewardDistributor](/src/interfaces/UVN/L2/IRewardDistributor.sol/interface.IRewardDistributor.md)
@@ -81,8 +81,8 @@ Attest to a window of blocks
 function attest(
     uint256 blockNumber,
     bytes32 blockHash,
-    bytes memory additionalData,
-    bytes memory signature,
+    bytes calldata additionalData,
+    bytes calldata signature,
     bytes32 graffiti
 ) external;
 ```

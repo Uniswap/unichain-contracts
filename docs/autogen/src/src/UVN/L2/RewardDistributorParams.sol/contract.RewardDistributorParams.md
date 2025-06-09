@@ -1,8 +1,10 @@
 # RewardDistributorParams
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/b7383382c1ce8df5f5120f02338dfd44fd340bf2/src/UVN/L2/RewardDistributorParams.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L2/RewardDistributorParams.sol)
 
 **Inherits:**
 AccessControl, [IRewardDistributorParams](/src/interfaces/UVN/L2/IRewardDistributorParams.sol/interface.IRewardDistributorParams.md)
+
+This contract is a base contract for the reward distributor contract. It manages the parameters required for attestations and reward distribution.
 
 
 ## State Variables

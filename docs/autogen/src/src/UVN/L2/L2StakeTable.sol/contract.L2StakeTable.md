@@ -1,5 +1,5 @@
 # L2StakeTable
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L2/L2StakeTable.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L2/L2StakeTable.sol)
 
 **Inherits:**
 [IL2StakeTable](/src/interfaces/UVN/L2/IL2StakeTable.sol/interface.IL2StakeTable.md), [Votes](/src/UVN/L1/StakingMiddleware/libraries/Votes.sol/abstract.Votes.md)
@@ -84,6 +84,15 @@ function reportOperatorStake(address operator, uint256 newBalance, address deleg
 |`delegator`|`address`|The address of the delegator.|
 |`newDelegatorStake`|`uint256`|The new stake of the delegator.|
 
+
+### reportDelegatorStake
+
+*Called by the `reportOperatorStake` function externally via try catch to ensure that calls to an EOA do not revert*
+
+
+```solidity
+function reportDelegatorStake(IDelegatorClaim delegatorClaim, address delegator, uint256 newDelegatorStake) external;
+```
 
 ### reportOperatorSlash
 

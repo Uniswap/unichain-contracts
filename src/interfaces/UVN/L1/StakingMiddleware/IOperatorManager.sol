@@ -13,11 +13,14 @@ interface IOperatorManager is IProtocolRewardDistributor, IVotes {
     /// @notice Emitted when a delegator announces their intention to undelegate from their current operator
     event OperatorUndelegationAnnounced(address indexed delegator, address indexed operator, uint256 timestamp);
 
-    /// @notice Thrown when a delegator attempts to delegate to another operator while already delegating to one
-    error OperatorAlreadySelected();
+    /// @notice Thrown when a delegator attempts to delegate to another operator while already delegating to one or having a pending undelegation
+    error AlreadyDelegated();
 
     /// @notice Thrown when a delegator attempts to undelegate from an operator while not delegating to one
-    error NoOperatorSelected();
+    error NotDelegated();
+
+    /// @notice Thrown when a delegator attempts to undelegate from an operator without announcing their intention to undelegate first
+    error AnnounceUndelegationFirst();
 
     /// @notice Thrown when a delegator attempts to undelegate from an operator while the undelegation is not finalized
     error UndelegationNotFinalized(uint256 timestamp);

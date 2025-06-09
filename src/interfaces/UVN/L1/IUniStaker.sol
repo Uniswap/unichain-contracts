@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {IERC20Delegates} from 'lib/unistaker/src/interfaces/IERC20Delegates.sol';
 
+/// @dev See - https://docs.unistaker.io/technical-reference/unistaker
 interface IUniStaker {
     type DepositIdentifier is uint256;
     /// @notice Metadata associated with a discrete staking deposit.

@@ -91,7 +91,7 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
     }
 
     /// @inheritdoc INotifier
-    function setURI(string memory uri) external {
+    function setURI(string calldata uri) external {
         uint256 tokenId = OperatorTokenLib.toTokenId(msg.sender);
         _requireOwned(tokenId);
         _uris[msg.sender] = uri;

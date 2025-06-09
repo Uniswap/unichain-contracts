@@ -131,7 +131,7 @@ Allows an operator to set the URI for their token
 
 
 ```solidity
-function setURI(string memory uri) external;
+function setURI(string calldata uri) external;
 ```
 
 ### tokenURI

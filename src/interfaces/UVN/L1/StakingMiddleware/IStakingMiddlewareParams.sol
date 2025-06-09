@@ -7,9 +7,9 @@ import {IAccessControl} from '@openzeppelin/contracts/access/IAccessControl.sol'
 /// @notice This contract manages the parameters of the StakingMiddleware contract. It allows roles to set the withdrawal delay and the slashing beneficiary.
 interface IStakingMiddlewareParams is IAccessControl {
     /// @notice Emitted when the withdrawal delay is updated
-    event WithdrawalDelayUpdated(uint256 oldWithdrawalDelay, uint256 newWithdrawalDelay);
+    event WithdrawalDelayUpdated(uint256 indexed oldWithdrawalDelay, uint256 indexed newWithdrawalDelay);
     /// @notice Emitted when the slashing beneficiary is updated
-    event SlashingBeneficiaryUpdated(address oldSlashingBeneficiary, address newSlashingBeneficiary);
+    event SlashingBeneficiaryUpdated(address indexed oldSlashingBeneficiary, address indexed newSlashingBeneficiary);
 
     /// @notice Thrown when the withdrawal delay is set to a value greater than the maximum allowed
     error InvalidWithdrawalDelay();

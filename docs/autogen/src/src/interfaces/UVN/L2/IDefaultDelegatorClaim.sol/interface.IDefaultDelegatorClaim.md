@@ -1,5 +1,5 @@
 # IDefaultDelegatorClaim
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/interfaces/UVN/L2/IDefaultDelegatorClaim.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/interfaces/UVN/L2/IDefaultDelegatorClaim.sol)
 
 **Inherits:**
 [IDelegatorClaim](/src/interfaces/UVN/L2/IDelegatorClaim.sol/interface.IDelegatorClaim.md), [IERC7751](/src/interfaces/IERC7751.sol/interface.IERC7751.md)
@@ -154,7 +154,7 @@ Emitted when the operator fee manager is set
 
 
 ```solidity
-event OperatorFeeManagerSet(address newOperatorFeeManager);
+event OperatorFeeManagerSet(address indexed newOperatorFeeManager);
 ```
 
 ### RewardsClaimed

@@ -12,6 +12,7 @@ import {ERC165, IERC165} from '@openzeppelin/contracts/utils/introspection/ERC16
 
 /// @title StakeTableSync
 /// @notice This contract is used to sync the stake table of the StakingMiddleware contract to the L2. On notifications about slashing and balance changes from the StakingMiddleware, the data is forwarded to the StakeTable contract on L2. On deposits of operator ERC-721 tokens, the initial balance of the operator is reported to the StakeTable contract on L2. Should an operator already have delegators before depositing their operator token or should they withdraw their operator token and re-deposit it, inconsistencies in the stake of individual delegators could occur. This contract exposes two sync functions to forcefully sync the correct balances to L2.
+/// @custom:security-contact security@uniswap.org
 contract StakeTableSync is IStakeTableSync, ERC165 {
     uint64 private constant DEFAULT_GAS_LIMIT = 200_000;
     uint64 private constant DEPLOY_GAS_LIMIT = 1_000_000;

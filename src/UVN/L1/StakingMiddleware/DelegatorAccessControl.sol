@@ -16,7 +16,7 @@ abstract contract DelegatorAccessControl is OperatorManager, IDelegatorAccessCon
         IDelegatorVerifier verifier;
     }
 
-    mapping(address delegator => AccessControlParams accessControl) private _delegatorAccessControl;
+    mapping(address operator => AccessControlParams accessControl) private _delegatorAccessControl;
 
     /// @dev Before a delegator selects an operator, check if they are allowed to delegate to them
     function _beforeDelegation(address delegator, address operator) internal override {

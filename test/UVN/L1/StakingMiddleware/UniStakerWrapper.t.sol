@@ -12,8 +12,8 @@ contract UniStakerWrapperHarness is UniStakerWrapper {
         UniStakerWrapper(unistaker, initialAdmin, withdrawalDelay_, slashingBeneficiary_)
     {}
 
-    function slashDelegatorStake(address delegator, uint256 remainingPercentage) external {
-        _slashDelegatorStake(delegator, remainingPercentage);
+    function slashDelegatorStake(address delegator, uint96 newStake, uint96 newPendingWithdrawalAmount) external {
+        _slashDelegatorStake(delegator, newStake, newPendingWithdrawalAmount);
     }
 }
 
@@ -215,11 +215,19 @@ contract UniStakerWrapperTest is L1TestHandler {
     function test_shouldWithdrawSlashedAmountBeforeSlashing() public {
         uint96 stakeAmount = 1000;
         uint256 remainingPercentage = 0.4e18;
-        deposit(address(this), stakeAmount);
-        unistakerWrapper.slashDelegatorStake(address(this), remainingPercentage);
         uint256 remainingStake = stakeAmount * remainingPercentage / 1e18;
+        deposit(address(this), stakeAmount);
+        unistakerWrapper.slashDelegatorStake(address(this), uint96(remainingStake), 0);
         assertBalance(address(this), remainingStake);
         assertTotalAmountStaked(remainingStake);
         assertEq(stakeToken.balanceOf(slashingBeneficiary), stakeAmount - remainingStake);
+    }
+
+    function test_shouldDepositPendingWithdrawals() public {
+        unistakerWrapper.stake(10);
+        unistakerWrapper.unstake(9);
+        unistakerWrapper.depositIntoUniStaker(delegatee);
+        assertTotalAmountStaked(10);
+        unistakerWrapper.withdraw(address(this), 1);
     }
 }

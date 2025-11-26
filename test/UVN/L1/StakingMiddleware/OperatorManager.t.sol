@@ -6,7 +6,7 @@ import {UniStakerWrapper} from '../../../../src/UVN/L1/StakingMiddleware/UniStak
 import {IUniStaker} from '../../../../src/interfaces/UVN/L1/IUnistaker.sol';
 import {IDelegatorAccessControl} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IDelegatorAccessControl.sol';
 import {IDelegatorVerifier} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IDelegatorVerifier.sol';
-
+import {IStakeManager} from '../../../../src/interfaces/UVN/L1/StakingMiddleware/IStakeManager.sol';
 import {L1TestHandler} from '../L1TestHandler.sol';
 import {IVotes} from '@openzeppelin/contracts/governance/utils/IVotes.sol';
 import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
@@ -191,7 +191,7 @@ contract OperatorManagerTest is L1TestHandler {
 
     function test_shouldNotBeAbleToDelegateWhileAlreadyDelegating() public {
         operatorManager.delegate(operator);
-        vm.expectRevert(IOperatorManager.OperatorAlreadySelected.selector);
+        vm.expectRevert(IOperatorManager.AlreadyDelegated.selector);
         operatorManager.delegate(operator);
     }
 
@@ -249,12 +249,12 @@ contract OperatorManagerTest is L1TestHandler {
     }
 
     function test_shouldNotBeAbleToUndelegateWhileNotDelegated() public {
-        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.NoOperatorSelected.selector));
+        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.NotDelegated.selector));
         operatorManager.delegate(address(0));
     }
 
     function test_shouldNotBeAbleToAnnounceUndelegationWhileUndelegated() public {
-        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.NoOperatorSelected.selector));
+        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.NotDelegated.selector));
         operatorManager.announceOperatorUndelegation();
     }
 
@@ -334,5 +334,28 @@ contract OperatorManagerTest is L1TestHandler {
         assertTotalVotes(
             DEFAULT_AMOUNT + remainingVotes, 'total votes should decrease by slashed amount of the slashed operator'
         );
+    }
+
+    function test_shouldNotDecreaseSlashableStakeOnWithdrawalIfUndelegated() public {
+        operatorManager.stake(DEFAULT_AMOUNT);
+        operatorManager.unstake(DEFAULT_AMOUNT);
+        vm.expectEmit();
+        emit IStakeManager.Withdrawn(address(this), address(this), DEFAULT_AMOUNT);
+        operatorManager.withdraw(address(this), 1);
+    }
+
+    function test_RevertIf_DelegatingWhileUndelegationIsPending() public {
+        vm.startPrank(delegator);
+        operatorManager.delegate(operator);
+        operatorManager.announceOperatorUndelegation();
+        vm.expectRevert(abi.encodeWithSelector(IOperatorManager.UndelegationNotFinalized.selector, block.timestamp));
+        operatorManager.delegate(delegator);
+        vm.stopPrank();
+    }
+
+    function test_RevertIf_UndelegatingWithoutAnnouncingUndelegation() public {
+        operatorManager.delegate(operator);
+        vm.expectRevert(IOperatorManager.AnnounceUndelegationFirst.selector);
+        operatorManager.delegate(address(0));
     }
 }

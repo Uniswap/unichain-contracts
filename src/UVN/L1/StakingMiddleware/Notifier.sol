@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.26;
 
 import {IBaseService} from '../../../interfaces/UVN/IBaseService.sol';
 import {IService} from '../../../interfaces/UVN/L1/IService.sol';
@@ -91,13 +91,14 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
     }
 
     /// @inheritdoc INotifier
-    function setURI(string memory uri) external {
+    function setURI(string calldata uri) external {
         uint256 tokenId = OperatorTokenLib.toTokenId(msg.sender);
         _requireOwned(tokenId);
         _uris[msg.sender] = uri;
         emit URIUpdated(msg.sender, tokenId, uri);
     }
 
+    /// @inheritdoc ERC721
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireOwned(tokenId);
         return _uris[OperatorTokenLib.toAddress(tokenId)];
@@ -175,7 +176,7 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
     /// @dev Allow the operator to always force transfer their own token
     function _isAuthorized(address owner, address spender, uint256 tokenId) internal view override returns (bool) {
         if (spender == OperatorTokenLib.toAddress(tokenId)) return true;
-        return super._isAuthorized(owner, spender, tokenId);
+        return ERC721._isAuthorized(owner, spender, tokenId);
     }
 
     /// @dev Checks if an account is a service contract by ensuring that the account is not an EOA or 7702 enabled account and that the smart contract supports the `IService` interface
@@ -200,6 +201,7 @@ abstract contract Notifier is SlashingManager, ERC721, INotifier {
         }
     }
 
+    /// @inheritdoc ERC721
     function supportsInterface(bytes4 interfaceId) public view override(AccessControl, ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }

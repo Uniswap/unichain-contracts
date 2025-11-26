@@ -1,5 +1,7 @@
 # OperatorTokenLib
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c6fb0d16c45440c99bf5e7d1fa8e991b11a08777/src/UVN/L1/StakingMiddleware/libraries/OperatorTokenLib.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L1/StakingMiddleware/libraries/OperatorTokenLib.sol)
+
+This library provides functions to convert between operator addresses and token ids.
 
 
 ## Functions

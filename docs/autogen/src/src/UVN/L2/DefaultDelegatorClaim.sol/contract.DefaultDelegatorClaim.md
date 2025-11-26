@@ -1,8 +1,10 @@
 # DefaultDelegatorClaim
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L2/DefaultDelegatorClaim.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L2/DefaultDelegatorClaim.sol)
 
 **Inherits:**
 [IDefaultDelegatorClaim](/src/interfaces/UVN/L2/IDefaultDelegatorClaim.sol/interface.IDefaultDelegatorClaim.md)
+
+This contract distributes rewards sent to it by the reward distributor contract. Additionally the contract allows an operator to define arbitrary logic on how to handle their fees.
 
 
 ## State Variables
@@ -107,12 +109,21 @@ receive() external payable;
 
 ### reportDelegatorStake
 
-*When an operator is slashed, delegator stakes are only updated when slashing is applied on L1*
+Reports a delegator stake to the reward distributor contract
+
+*MUST revert if the caller is not the L2 stake table sync contract*
 
 
 ```solidity
 function reportDelegatorStake(address delegator, uint256 newDelegatorStake) external;
 ```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`delegator`|`address`|The address of the delegator|
+|`newDelegatorStake`|`uint256`||
+
 
 ### setOperatorFeeManager
 

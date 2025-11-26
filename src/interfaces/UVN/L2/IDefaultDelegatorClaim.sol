@@ -13,7 +13,7 @@ interface IDefaultDelegatorClaim is IDelegatorClaim, IERC7751 {
     /// @notice Emitted when rewards are distributed to delegators and the operator fee is taken
     event RewardDistributed(uint256 delegatorReward, uint256 operatorFee);
     /// @notice Emitted when the operator fee manager is set
-    event OperatorFeeManagerSet(address newOperatorFeeManager);
+    event OperatorFeeManagerSet(address indexed newOperatorFeeManager);
     /// @notice Emitted when rewards are claimed by a delegator
     event RewardsClaimed(address indexed delegator, address indexed to, uint256 amount);
 

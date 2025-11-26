@@ -44,7 +44,10 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
     /// @dev After a delegator withdraws their unstaked stake, decrease the slashable stake of the operator
     function _afterWithdraw(address delegator, uint96 amount) internal virtual override {
         super._afterWithdraw(delegator, amount);
-        _slashableStakes[delegates(delegator)] -= amount;
+        address operator = delegates(delegator);
+        if (operator != address(0)) {
+            _slashableStakes[operator] -= amount;
+        }
     }
 
     /// @inheritdoc IOperatorManager
@@ -54,11 +57,11 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
         if (_undelegationData[delegator].operator != address(0)) {
             revert UndelegationNotFinalized(_undelegationData[delegator].undelegateAt);
         }
-        if (operator == address(0)) revert NoOperatorSelected();
+        if (operator == address(0)) revert NotDelegated();
         _beforeUndelegationAnnouncement(delegator);
         uint96 undelegateAt = uint96(block.timestamp + withdrawalDelay());
         _undelegationData[delegator] = UndelegationData({operator: operator, undelegateAt: undelegateAt});
-        super._delegate(delegator, address(0));
+        OperatorVotes._delegate(delegator, address(0));
         emit OperatorUndelegationAnnounced(delegator, operator, undelegateAt);
         _afterUndelegationAnnouncement(delegator);
     }
@@ -74,16 +77,16 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
             _deselectOperator(delegator);
         } else {
             _selectOperator(delegator, operator);
-            super._delegate(delegator, operator);
+            OperatorVotes._delegate(delegator, operator);
             _afterDelegation(delegator, operator);
         }
     }
 
     /// @dev Delegates a delegator's stake to an operator, the delegator must not be already delegating to an operator and must have any pending undelegation finalized
     function _selectOperator(address delegator, address operator) internal {
-        if (delegates(delegator) != address(0)) revert OperatorAlreadySelected();
-        uint256 undelegateAt = _undelegationData[delegator].undelegateAt;
-        if (undelegateAt > block.timestamp) {
+        if (delegates(delegator) != address(0)) revert AlreadyDelegated();
+        if (_undelegationData[delegator].operator != address(0)) {
+            uint256 undelegateAt = _undelegationData[delegator].undelegateAt;
             revert UndelegationNotFinalized(undelegateAt);
         }
         _beforeDelegation(delegator, operator);
@@ -93,9 +96,11 @@ abstract contract OperatorManager is OperatorVotes, ProtocolRewardDistributor, I
     /// @dev Undelegates a delegator from an operator, the delegator must first announce their intention to undelegate by calling `announceOperatorUndelegation`. This function can only be called once the delay has passed.
     function _deselectOperator(address delegator) internal {
         address operator = delegates(delegator);
+        // delegator is already delegating to an operator
+        if (operator != address(0)) revert AnnounceUndelegationFirst();
         UndelegationData memory undelegationData = _undelegationData[delegator];
         // delegator is not delegating and has no pending undelegation
-        if (undelegationData.operator == address(0) && operator == address(0)) revert NoOperatorSelected();
+        if (undelegationData.operator == address(0)) revert NotDelegated();
         if (undelegationData.undelegateAt > block.timestamp) {
             revert UndelegationNotFinalized(undelegationData.undelegateAt);
         }

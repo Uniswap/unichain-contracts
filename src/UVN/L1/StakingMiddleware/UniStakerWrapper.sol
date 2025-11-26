@@ -56,7 +56,7 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     function depositIntoUniStaker(address governanceDelegatee) external returns (uint256 depositId) {
         if (_isDepositedIntoUniStaker(msg.sender)) revert AlreadyDepositedIntoUniStaker();
         _beforeUniStakerDeposit(msg.sender);
-        uint96 amount = _delegatorStake(msg.sender);
+        uint96 amount = _slashableStake(msg.sender);
         if (amount == 0) revert NoStakeToDeposit();
         depositId = _depositIntoUniStaker(amount, governanceDelegatee);
     }
@@ -65,7 +65,7 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     function withdrawFromUniStaker() external {
         if (!_isDepositedIntoUniStaker(msg.sender)) revert NotDepositedIntoUniStaker();
         _beforeUniStakerWithdrawal(msg.sender);
-        uint96 amount = _delegatorStake(msg.sender);
+        uint96 amount = _slashableStake(msg.sender);
         _withdrawFromUniStaker(amount);
     }
 
@@ -113,7 +113,6 @@ contract UniStakerWrapper is StakeManager, IUniStakerWrapper {
     /// @dev Withdraws an amount from a delegator's stake deposited into the UniStaker contract. If the entire stake is withdrawn, subsequent deposits will no longer auto-deposit into the UniStaker contract.
     function _withdrawFromUniStaker(address delegator, uint96 amount) internal {
         uint256 depositId = _depositIds[delegator];
-        // TODO revert if not deposited and amount is not 0
         if (depositId != 0) {
             UNISTAKER.withdraw(IUniStaker.DepositIdentifier.wrap(depositId), amount);
             emit UniStakerWithdrawn(delegator, depositId, amount);

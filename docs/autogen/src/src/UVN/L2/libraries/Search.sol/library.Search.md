@@ -1,5 +1,7 @@
 # Search
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/c8c648dc23e382ba7de8e12001eb6ca537ff671f/src/UVN/L2/libraries/Search.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L2/libraries/Search.sol)
+
+This library provides functions to search for a target value in an array sorted in ascending order.
 
 
 ## Functions

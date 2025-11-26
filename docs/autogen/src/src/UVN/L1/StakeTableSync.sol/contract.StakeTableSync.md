@@ -1,10 +1,13 @@
 # StakeTableSync
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/31f7d1e84e305ebb14dd3f50a3450497938c6404/src/UVN/L1/StakeTableSync.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/3acb5f12419bea9fea7cca34c0464a9cc73593b7/src/UVN/L1/StakeTableSync.sol)
 
 **Inherits:**
 [IStakeTableSync](/src/interfaces/UVN/L1/IStakeTableSync.sol/interface.IStakeTableSync.md), ERC165
 
 This contract is used to sync the stake table of the StakingMiddleware contract to the L2. On notifications about slashing and balance changes from the StakingMiddleware, the data is forwarded to the StakeTable contract on L2. On deposits of operator ERC-721 tokens, the initial balance of the operator is reported to the StakeTable contract on L2. Should an operator already have delegators before depositing their operator token or should they withdraw their operator token and re-deposit it, inconsistencies in the stake of individual delegators could occur. This contract exposes two sync functions to forcefully sync the correct balances to L2.
+
+**Note:**
+security-contact: security@uniswap.org
 
 
 ## State Variables

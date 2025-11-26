@@ -1,5 +1,5 @@
 # INetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/01b16016c9ca0bdf466dccf23f199a62de47a78e/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/33cb753a9dff7dc4f158cb22b7d57a8aa251fef2/src/interfaces/FeeSplitter/INetFeeSplitter.sol)
 
 
 ## Functions
@@ -7,7 +7,7 @@
 
 Transfers a allocation from one recipient to another
 
-*reverts if the recipient doesn't have a setter*
+reverts if the recipient doesn't have a setter
 
 
 ```solidity
@@ -26,7 +26,7 @@ function transferAllocation(address oldRecipient, address newRecipient, uint256 
 
 Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
 
-*reverts if the recipient already has a setter*
+reverts if the recipient already has a setter
 
 
 ```solidity

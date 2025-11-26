@@ -55,7 +55,7 @@ contract FeeSplitter is IFeeSplitter {
         }
 
         // unlock
-        assembly ("memory-safe") {
+        assembly ('memory-safe') {
             tstore(LOCK_STORAGE_SLOT, 1)
         }
         _feeVaultWithdrawal(Predeploys.SEQUENCER_FEE_WALLET);
@@ -63,14 +63,14 @@ contract FeeSplitter is IFeeSplitter {
         _feeVaultWithdrawal(Predeploys.L1_FEE_VAULT);
 
         // lock
-        assembly ("memory-safe") {
+        assembly ('memory-safe') {
             tstore(LOCK_STORAGE_SLOT, 0)
         }
 
         uint256 netFeeRevenue;
         uint256 grossFeeRevenue = address(this).balance;
 
-        assembly ("memory-safe") {
+        assembly ('memory-safe') {
             netFeeRevenue := tload(NET_REVENUE_STORAGE_SLOT)
             tstore(NET_REVENUE_STORAGE_SLOT, 0)
         }
@@ -118,7 +118,7 @@ contract FeeSplitter is IFeeSplitter {
     /// @dev anyone can call the withdraw function on the vaults, the lock ensures that a withdrawal is only successful if the fee splitter is withdrawing the fees to ensure accurate accounting
     receive() external payable virtual {
         uint256 unlocked;
-        assembly ("memory-safe") {
+        assembly ('memory-safe') {
             unlocked := tload(LOCK_STORAGE_SLOT)
         }
         if (unlocked == 0) revert Locked();
@@ -127,7 +127,7 @@ contract FeeSplitter is IFeeSplitter {
         if (msg.sender == Predeploys.SEQUENCER_FEE_WALLET || msg.sender == Predeploys.BASE_FEE_VAULT) {
             uint256 amount = msg.value;
             // combine the fees from the sequencer and base FeeVaults as net revenue
-            assembly ("memory-safe") {
+            assembly ('memory-safe') {
                 tstore(NET_REVENUE_STORAGE_SLOT, add(tload(NET_REVENUE_STORAGE_SLOT), amount))
             }
         } else if (msg.sender == Predeploys.L1_FEE_VAULT) {

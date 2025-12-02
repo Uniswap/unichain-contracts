@@ -1,8 +1,8 @@
 # NetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/33cb753a9dff7dc4f158cb22b7d57a8aa251fef2/src/FeeSplitter/NetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/0ef8c116535322474dee36aa6e19ce89142633be/src/FeeSplitter/NetFeeSplitter.sol)
 
 **Inherits:**
-[INetFeeSplitter](/Users/daniel/Documents/uniswap/contracts/unichain-contracts/docs/autogen/src/src/interfaces/FeeSplitter/INetFeeSplitter.sol/interface.INetFeeSplitter.md)
+[INetFeeSplitter](/Users/eric.zhong/uniswap/unichain-contracts/docs/autogen/src/src/interfaces/FeeSplitter/INetFeeSplitter.sol/interface.INetFeeSplitter.md)
 
 Splits net fees between multiple recipients. Recipients are managed by setters. Setters can transfer the entire allocation or a portion of it to other recipients.
 

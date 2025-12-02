@@ -1,8 +1,8 @@
 # FeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/33cb753a9dff7dc4f158cb22b7d57a8aa251fef2/src/FeeSplitter/FeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/0ef8c116535322474dee36aa6e19ce89142633be/src/FeeSplitter/FeeSplitter.sol)
 
 **Inherits:**
-[IFeeSplitter](/Users/daniel/Documents/uniswap/contracts/unichain-contracts/docs/autogen/src/src/interfaces/FeeSplitter/IFeeSplitter.sol/interface.IFeeSplitter.md)
+[IFeeSplitter](/Users/eric.zhong/uniswap/unichain-contracts/docs/autogen/src/src/interfaces/FeeSplitter/IFeeSplitter.sol/interface.IFeeSplitter.md)
 
 Withdraws funds from system FeeVault contracts, shares revenue with Optimism, sends remaining revenue to L1 and net fee recipients
 

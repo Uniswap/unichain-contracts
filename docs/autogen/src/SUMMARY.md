@@ -2,11 +2,11 @@
 - [Home](README.md)
 # src
   - [❱ FeeSplitter](src/FeeSplitter/README.md)
+    - [FeeRecipientForwarder](src/FeeSplitter/FeeRecipientForwarder.sol/contract.FeeRecipientForwarder.md)
     - [FeeSplitter](src/FeeSplitter/FeeSplitter.sol/contract.FeeSplitter.md)
     - [L1NetRecipient](src/FeeSplitter/L1NetRecipient.sol/contract.L1NetRecipient.md)
     - [L1Splitter](src/FeeSplitter/L1Splitter.sol/contract.L1Splitter.md)
     - [NetFeeSplitter](src/FeeSplitter/NetFeeSplitter.sol/contract.NetFeeSplitter.md)
-    - [TokenJarRecipient](src/FeeSplitter/TokenJarRecipient.sol/contract.TokenJarRecipient.md)
   - [❱ interfaces](src/interfaces/README.md)
     - [❱ FeeSplitter](src/interfaces/FeeSplitter/README.md)
       - [IFeeSplitter](src/interfaces/FeeSplitter/IFeeSplitter.sol/interface.IFeeSplitter.md)

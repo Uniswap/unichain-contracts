@@ -3,8 +3,8 @@ pragma solidity 0.8.26;
 
 import 'forge-std/Test.sol';
 
-import {INetFeeSplitter, NetFeeSplitter} from '../../src/FeeSplitter/NetFeeSplitter.sol';
 import {FeeRecipientForwarder} from '../../src/FeeSplitter/FeeRecipientForwarder.sol';
+import {INetFeeSplitter, NetFeeSplitter} from '../../src/FeeSplitter/NetFeeSplitter.sol';
 
 contract FeeRecipientForwarderTest is Test {
     NetFeeSplitter splitter;
@@ -18,7 +18,7 @@ contract FeeRecipientForwarderTest is Test {
 
         address[] memory recipients = new address[](1);
         INetFeeSplitter.Recipient[] memory recipientData = new INetFeeSplitter.Recipient[](1);
-        
+
         // First deploy splitter with setter as initial recipient
         recipients[0] = setter;
         recipientData[0] = INetFeeSplitter.Recipient({setter: setter, allocation: 10_000});

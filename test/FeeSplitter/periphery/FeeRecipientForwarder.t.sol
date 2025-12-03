@@ -3,8 +3,8 @@ pragma solidity 0.8.26;
 
 import 'forge-std/Test.sol';
 
-import {FeeRecipientForwarder} from '../../src/FeeSplitter/FeeRecipientForwarder.sol';
-import {INetFeeSplitter, NetFeeSplitter} from '../../src/FeeSplitter/NetFeeSplitter.sol';
+import {INetFeeSplitter, NetFeeSplitter} from '../../../src/FeeSplitter/NetFeeSplitter.sol';
+import {FeeRecipientForwarder} from '../../../src/FeeSplitter/periphery/FeeRecipientForwarder.sol';
 
 contract FeeRecipientForwarderTest is Test {
     NetFeeSplitter splitter;

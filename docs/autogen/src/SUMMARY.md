@@ -2,7 +2,9 @@
 - [Home](README.md)
 # src
   - [❱ FeeSplitter](src/FeeSplitter/README.md)
-    - [FeeRecipientForwarder](src/FeeSplitter/FeeRecipientForwarder.sol/contract.FeeRecipientForwarder.md)
+    - [❱ periphery](src/FeeSplitter/periphery/README.md)
+      - [FeeRecipientCoordinator](src/FeeSplitter/periphery/FeeRecipientCoordinator.sol/contract.FeeRecipientCoordinator.md)
+      - [FeeRecipientForwarder](src/FeeSplitter/periphery/FeeRecipientForwarder.sol/contract.FeeRecipientForwarder.md)
     - [FeeSplitter](src/FeeSplitter/FeeSplitter.sol/contract.FeeSplitter.md)
     - [L1NetRecipient](src/FeeSplitter/L1NetRecipient.sol/contract.L1NetRecipient.md)
     - [L1Splitter](src/FeeSplitter/L1Splitter.sol/contract.L1Splitter.md)
@@ -15,4 +17,6 @@
     - [❱ optimism](src/interfaces/optimism/README.md)
       - [IFeeVault](src/interfaces/optimism/IFeeVault.sol/interface.IFeeVault.md)
       - [IL2StandardBridge](src/interfaces/optimism/IL2StandardBridge.sol/interface.IL2StandardBridge.md)
+    - [❱ periphery](src/interfaces/periphery/README.md)
+      - [IFeeRecipientForwarder](src/interfaces/periphery/IFeeRecipientForwarder.sol/interface.IFeeRecipientForwarder.md)
     - [IL2CrossDomainMessenger](src/interfaces/IL2CrossDomainMessenger.sol/interface.IL2CrossDomainMessenger.md)

@@ -1,8 +1,11 @@
 # L1Splitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/0ef8c116535322474dee36aa6e19ce89142633be/src/FeeSplitter/L1Splitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/abab1dab5c3da5c73350d0ee6dcecbaa4471f609/src/FeeSplitter/L1Splitter.sol)
 
 **Inherits:**
-[IL1Splitter](/Users/eric.zhong/uniswap/unichain-contracts/docs/autogen/src/src/interfaces/FeeSplitter/IL1Splitter.sol/interface.IL1Splitter.md), Ownable2Step
+[IL1Splitter](/src/interfaces/FeeSplitter/IL1Splitter.sol/interface.IL1Splitter.md), Ownable2Step
+
+**Title:**
+L1Splitter
 
 Withdraws the L1 fees to the L1 wallet via the L2 Standard Bridge.
 

@@ -1,5 +1,11 @@
 # FeeRecipientForwarder
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/0ef8c116535322474dee36aa6e19ce89142633be/src/FeeSplitter/FeeRecipientForwarder.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/abab1dab5c3da5c73350d0ee6dcecbaa4471f609/src/FeeSplitter/periphery/FeeRecipientForwarder.sol)
+
+**Inherits:**
+[IFeeRecipientForwarder](/src/interfaces/periphery/IFeeRecipientForwarder.sol/interface.IFeeRecipientForwarder.md)
+
+**Title:**
+Fee Recipient Forwarder
 
 A recipient contract for the NetFeeSplitter that forwards fees to another recipient
 

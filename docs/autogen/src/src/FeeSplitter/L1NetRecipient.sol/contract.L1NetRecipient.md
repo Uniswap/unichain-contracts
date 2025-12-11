@@ -1,8 +1,11 @@
 # L1NetRecipient
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/0ef8c116535322474dee36aa6e19ce89142633be/src/FeeSplitter/L1NetRecipient.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/abab1dab5c3da5c73350d0ee6dcecbaa4471f609/src/FeeSplitter/L1NetRecipient.sol)
 
 **Inherits:**
-[L1Splitter](/Users/eric.zhong/uniswap/unichain-contracts/docs/autogen/src/src/FeeSplitter/L1Splitter.sol/contract.L1Splitter.md)
+[L1Splitter](/src/FeeSplitter/L1Splitter.sol/contract.L1Splitter.md)
+
+**Title:**
+L1 Net Recipient
 
 Pulls fees from the `NetFeeSplitter` and withdraws them to L1
 

@@ -109,4 +109,55 @@ contract UnificationE2ETest is Test {
         assertEq(UF_RECIPIENT.balance, ufBalanceBefore + earnedFeesUF);
         assertEq(SPLITTER.earnedFees(UF_RECIPIENT), 0);
     }
+
+    function test_GenerateUnificationCalldata() public pure {
+        bool ulGoesFirst = true;
+
+        address firstOldRecipient = ulGoesFirst ? UL_RECIPIENT : UF_RECIPIENT;
+        address secondOldRecipient = ulGoesFirst ? UF_RECIPIENT : UL_RECIPIENT;
+        address firstCaller = ulGoesFirst ? UL_SETTER : UF_SETTER;
+        address secondCaller = ulGoesFirst ? UF_SETTER : UL_SETTER;
+        uint256 firstAllocation = ulGoesFirst ? 2400 : 7600;
+        uint256 secondAllocation = ulGoesFirst ? 7600 : 2400;
+
+        // Generate calldata for first recipient: transferAllocationAndSetSetter
+        // Called by first caller to transfer allocation to FORWARDER with TIMELOCK_ALIASED as setter
+        bytes memory firstTransferAllocationAndSetSetterCalldata = abi.encodeWithSelector(
+            NetFeeSplitter.transferAllocationAndSetSetter.selector,
+            firstOldRecipient, // oldRecipient
+            address(FORWARDER), // newRecipient
+            TIMELOCK_ALIASED, // newSetter
+            firstAllocation // allocation
+        );
+        console.log('=== Unification Migration Calldata ===');
+        console.log('');
+        console.log('1. transferAllocationAndSetSetter');
+        console.log('   Caller (%s): %s', ulGoesFirst ? 'UL_SETTER' : 'UF_SETTER', firstCaller);
+        console.log('   Target (NetFeeSplitter): %s', address(SPLITTER));
+        console.log('   Old Recipient (%s): %s', ulGoesFirst ? 'UL_RECIPIENT' : 'UF_RECIPIENT', firstOldRecipient);
+        console.log('   New Recipient (FORWARDER): %s', address(FORWARDER));
+        console.log('   New Setter (TIMELOCK_ALIASED): %s', TIMELOCK_ALIASED);
+        console.log('   Allocation: %s', firstAllocation);
+        console.log('   Calldata:');
+        console.logBytes(firstTransferAllocationAndSetSetterCalldata);
+
+        // Generate calldata for Uniswap Foundation: transferAllocation
+        // Called by UF_SETTER to transfer allocation to FORWARDER
+        bytes memory transferAllocationCalldata = abi.encodeWithSelector(
+            NetFeeSplitter.transferAllocation.selector,
+            secondOldRecipient, // oldRecipient
+            address(FORWARDER), // newRecipient
+            secondAllocation // allocation
+        );
+
+        console.log('');
+        console.log('2. transferAllocation');
+        console.log('   Caller (%s): %s', ulGoesFirst ? 'UF_SETTER' : 'UL_SETTER', secondCaller);
+        console.log('   Target (NetFeeSplitter): %s', address(SPLITTER));
+        console.log('   Old Recipient (%s): %s', ulGoesFirst ? 'UF_RECIPIENT' : 'UL_RECIPIENT', secondOldRecipient);
+        console.log('   New Recipient (FORWARDER): %s', address(FORWARDER));
+        console.log('   Allocation: %s', secondAllocation);
+        console.log('   Calldata:');
+        console.logBytes(transferAllocationCalldata);
+    }
 }

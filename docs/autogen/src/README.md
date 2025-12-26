@@ -1,46 +1,118 @@
-## Template Repo (Foundry)
+# Unichain Contracts
 
-[![CI Status](../../actions/workflows/test.yaml/badge.svg)](../../actions)
+## Overview
 
-This template repo is a quick and easy way to get started with a new Solidity project. It comes with a number of features that are useful for developing and deploying smart contracts. Such as:
+This repository contains the core Unichain protocol contracts, including the fee distribution system. The system automatically collects fees from L2 fee vaults, calculates revenue shares, and distributes them to Optimism, L1 recipients, and net fee recipients.
 
-- Pre-commit hooks for formatting, auto generated documentation, and more
-- Various libraries with useful contracts (OpenZeppelin, Solady) and libraries (Deployment log generation, storage checks, deployer templates)
+### Fee Flow
 
-#### Table of Contents
+```
+L2 Fee Vaults (Optimism Standard)
+├── Sequencer Fee Vault
+├── Base Fee Vault
+└── L1 Fee Vault
+        │
+        ▼
+    FeeSplitter
+    (calculates Optimism's share)
+        │
+        ├──▶ Optimism Wallet (15% of net OR 2.5% of gross, whichever is higher)
+        ├──▶ L1Splitter ──▶ L2StandardBridge ──▶ L1 Recipient
+        └──▶ NetFeeSplitter
+                │
+                └──▶ Recipients (with allocations)
+                        └──▶ FeeRecipientForwarder ──▶ TokenJar
+```
 
-- [Setup](#setup)
-- [Deployment](#deployment)
-- [Docs](#docs)
-- [Contributing](#contributing)
+## Contracts
+
+### Core Contracts
+
+| Contract           | Description                                                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **FeeSplitter**    | Primary contract that withdraws ETH from three L2 fee vaults and orchestrates fee distribution. Calculates Optimism's revenue share (max of 15% net or 2.5% gross). |
+| **L1Splitter**     | Manages L1 fee distribution by bridging fees to L1 via the L2 Standard Bridge. Includes configurable withdrawal intervals and minimum amounts for gas efficiency.   |
+| **NetFeeSplitter** | Distributes net fees (sequencer + base fees) among multiple recipients with customizable allocations. Uses an index-based mechanism for efficient distribution.     |
+| **L1NetRecipient** | Combines L1Splitter functionality with NetFeeSplitter withdrawal capability for pulling fees before bridging to L1.                                                 |
+
+### Periphery Contracts
+
+| Contract                  | Description                                                                                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **FeeRecipientForwarder** | A recipient contract for NetFeeSplitter that forwards withdrawn fees to another address (e.g., TokenJar). |
+
+#### FeeRecipientForwarder
+
+Post Unification all sequencer fees are sent to the TokenJar via the FeeRecipientForwarder. Anyone can call `withdraw` on the FeeRecipientForwarder to send the fees to the TokenJar at any time. Accrued fees to the TokenJar can be checked via the `earnedFees(feeRecipientForwarder)` function.
+
+## Deployed Contract Addresses (Unichain Mainnet)
+
+### Unichain Custom Contracts
+
+| Contract              | Address                                      | Description                                                                   |
+| --------------------- | -------------------------------------------- | ----------------------------------------------------------------------------- |
+| FeeSplitter           | `0x4300c0D3c0d3c0d3c0d3c0d3C0D3c0d3c0d30001` | Withdraws from fee vaults and distributes to Optimism, L1, and net recipients |
+| L1Splitter (Optimism) | `0x4300C0D3C0D3C0D3C0d3C0d3c0d3C0d3C0d30002` | Bridges Optimism's revenue share to L1                                        |
+| L1Splitter (L1 Fees)  | `0x4300c0d3c0d3c0D3c0d3C0D3c0d3C0D3C0D30003` | Bridges L1 fee revenue to L1                                                  |
+| NetFeeSplitter        | `0x4300c0D3c0D3c0D3c0D3c0D3C0D3c0d3c0D30004` | Distributes net fees among recipients based on their allocation               |
+| FeeRecipientForwarder | `0x7A6f67B6042Ca34B01E0DeC6FeaD644CD3b8C235` | Forwards fees from NetFeeSplitter to TokenJar                                 |
+| TokenJar              | `0xD576BDF6b560079a4c204f7644e556DbB19140b5` | Receives forwarded fees for distribution                                      |
+
+### Optimism Standard Predeploys
+
+| Contract          | Address                                      | Description                  |
+| ----------------- | -------------------------------------------- | ---------------------------- |
+| SequencerFeeVault | `0x4200000000000000000000000000000000000011` | Collects sequencer fees      |
+| BaseFeeVault      | `0x4200000000000000000000000000000000000019` | Collects base fees           |
+| L1FeeVault        | `0x420000000000000000000000000000000000001A` | Collects L1 data fees        |
+| L2StandardBridge  | `0x4200000000000000000000000000000000000010` | Bridges assets from L2 to L1 |
 
 ## Setup
 
-Follow these steps to set up your local environment:
+### Prerequisites
 
-- [Install foundry](https://book.getfoundry.sh/getting-started/installation)
-- Install dependencies: `forge install`
-- Build contracts: `forge build`
-- Test contracts: `forge test`
+- [Foundry](https://book.getfoundry.sh/getting-started/installation)
 
-If you intend to develop on this repo, follow the steps outlined in [CONTRIBUTING.md](CONTRIBUTING.md#install).
+### Installation
+
+```shell
+forge install
+forge build
+```
+
+### Testing
+
+```shell
+forge test
+```
+
+For fork tests against Unichain mainnet:
+
+```shell
+UNICHAIN_RPC_URL=<your_rpc_url> forge test
+```
 
 ## Deployment
 
-This repo utilizes versioned deployments. For more information on how to use forge scripts within the repo, check [here](CONTRIBUTING.md#deployment).
-
-Smart contracts are deployed or upgraded using the following command:
+Deploy contracts using versioned deployment scripts:
 
 ```shell
 forge script script/Deploy.s.sol --broadcast --rpc-url <rpc_url> --verify
 ```
 
-## Docs
+See [CONTRIBUTING.md](CONTRIBUTING.md#deployment) for detailed deployment instructions.
 
-The documentation and architecture diagrams for the contracts within this repo can be found [here](docs/).
-Detailed documentation generated from the NatSpec documentation of the contracts can be found [here](docs/autogen/src/src/).
-When exploring the contracts within this repository, it is recommended to start with the interfaces first and then move on to the implementation as outlined [here](CONTRIBUTING.md#natspec--comments)
+## Documentation
+
+- [Architecture Documentation](docs/)
+- [Auto-generated NatSpec Documentation](docs/autogen/src/src/)
+
+When exploring the contracts, start with the interfaces in `src/interfaces/` before reviewing implementations.
 
 ## Contributing
 
-If you want to contribute to this project, please check [CONTRIBUTING.md](CONTRIBUTING.md) first.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to this repository.
+
+## License
+
+MIT

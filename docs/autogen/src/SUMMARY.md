@@ -3,7 +3,6 @@
 # src
   - [❱ FeeSplitter](src/FeeSplitter/README.md)
     - [❱ periphery](src/FeeSplitter/periphery/README.md)
-      - [FeeRecipientCoordinator](src/FeeSplitter/periphery/FeeRecipientCoordinator.sol/contract.FeeRecipientCoordinator.md)
       - [FeeRecipientForwarder](src/FeeSplitter/periphery/FeeRecipientForwarder.sol/contract.FeeRecipientForwarder.md)
     - [FeeSplitter](src/FeeSplitter/FeeSplitter.sol/contract.FeeSplitter.md)
     - [L1NetRecipient](src/FeeSplitter/L1NetRecipient.sol/contract.L1NetRecipient.md)

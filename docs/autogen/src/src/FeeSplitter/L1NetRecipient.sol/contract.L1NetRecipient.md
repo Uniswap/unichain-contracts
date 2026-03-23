@@ -1,8 +1,11 @@
 # L1NetRecipient
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/7d082d43521bcb905aa20ba11b80b16647dcf7ef/src/FeeSplitter/L1NetRecipient.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/abab1dab5c3da5c73350d0ee6dcecbaa4471f609/src/FeeSplitter/L1NetRecipient.sol)
 
 **Inherits:**
 [L1Splitter](/src/FeeSplitter/L1Splitter.sol/contract.L1Splitter.md)
+
+**Title:**
+L1 Net Recipient
 
 Pulls fees from the `NetFeeSplitter` and withdraws them to L1
 
@@ -11,7 +14,7 @@ Pulls fees from the `NetFeeSplitter` and withdraws them to L1
 ### NET_FEE_SPLITTER
 
 ```solidity
-INetFeeSplitter private immutable NET_FEE_SPLITTER;
+INetFeeSplitter private immutable NET_FEE_SPLITTER
 ```
 
 

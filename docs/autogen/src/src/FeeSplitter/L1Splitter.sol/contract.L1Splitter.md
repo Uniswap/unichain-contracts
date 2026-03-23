@@ -1,61 +1,64 @@
 # L1Splitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/ee199923a093ed2a625368ca03e88e027a4e1411/src/FeeSplitter/L1Splitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/abab1dab5c3da5c73350d0ee6dcecbaa4471f609/src/FeeSplitter/L1Splitter.sol)
 
 **Inherits:**
 [IL1Splitter](/src/interfaces/FeeSplitter/IL1Splitter.sol/interface.IL1Splitter.md), Ownable2Step
+
+**Title:**
+L1Splitter
 
 Withdraws the L1 fees to the L1 wallet via the L2 Standard Bridge.
 
 
 ## State Variables
 ### WITHDRAWAL_MIN_GAS
-*The minimum gas limit for the FeeSplitter withdrawal transaction to L1.*
+The minimum gas limit for the FeeSplitter withdrawal transaction to L1.
 
 
 ```solidity
-uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000;
+uint32 internal constant WITHDRAWAL_MIN_GAS = 35_000
 ```
 
 
 ### MIN_DISBURSEMENT_INTERVAL
 
 ```solidity
-uint48 internal constant MIN_DISBURSEMENT_INTERVAL = 10 minutes;
+uint48 internal constant MIN_DISBURSEMENT_INTERVAL = 10 minutes
 ```
 
 
 ### MIN_WITHDRAWAL_AMOUNT
 
 ```solidity
-uint256 internal constant MIN_WITHDRAWAL_AMOUNT = 0.01 ether;
+uint256 internal constant MIN_WITHDRAWAL_AMOUNT = 0.01 ether
 ```
 
 
 ### l1Recipient
 
 ```solidity
-address public l1Recipient;
+address public l1Recipient
 ```
 
 
 ### feeDisbursementInterval
 
 ```solidity
-uint48 public feeDisbursementInterval;
+uint48 public feeDisbursementInterval
 ```
 
 
 ### lastDisbursementTime
 
 ```solidity
-uint48 public lastDisbursementTime;
+uint48 public lastDisbursementTime
 ```
 
 
 ### minWithdrawalAmount
 
 ```solidity
-uint256 public minWithdrawalAmount;
+uint256 public minWithdrawalAmount
 ```
 
 

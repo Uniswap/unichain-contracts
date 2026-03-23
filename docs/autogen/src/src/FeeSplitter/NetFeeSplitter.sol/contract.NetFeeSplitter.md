@@ -1,8 +1,11 @@
 # NetFeeSplitter
-[Git Source](https://github.com/Uniswap/unichain-contracts/blob/fb9024ae9d58cf7bc4a43f01cec0f0f78196a82a/src/FeeSplitter/NetFeeSplitter.sol)
+[Git Source](https://github.com/Uniswap/unichain-contracts/blob/abab1dab5c3da5c73350d0ee6dcecbaa4471f609/src/FeeSplitter/NetFeeSplitter.sol)
 
 **Inherits:**
 [INetFeeSplitter](/src/interfaces/FeeSplitter/INetFeeSplitter.sol/interface.INetFeeSplitter.md)
+
+**Title:**
+NetFeeSplitter
 
 Splits net fees between multiple recipients. Recipients are managed by setters. Setters can transfer the entire allocation or a portion of it to other recipients.
 
@@ -11,42 +14,42 @@ Splits net fees between multiple recipients. Recipients are managed by setters. 
 ### TOTAL_ALLOCATION
 
 ```solidity
-uint256 internal constant TOTAL_ALLOCATION = 10_000;
+uint256 internal constant TOTAL_ALLOCATION = 10_000
 ```
 
 
 ### MAGNITUDE
 
 ```solidity
-uint256 private constant MAGNITUDE = 1e30;
+uint256 private constant MAGNITUDE = 1e30
 ```
 
 
 ### _index
 
 ```solidity
-uint256 private _index;
+uint256 private _index
 ```
 
 
 ### _indexOf
 
 ```solidity
-mapping(address recipient => uint256 index) private _indexOf;
+mapping(address recipient => uint256 index) private _indexOf
 ```
 
 
 ### _earned
 
 ```solidity
-mapping(address recipient => uint256 _earned) private _earned;
+mapping(address recipient => uint256 _earned) private _earned
 ```
 
 
 ### recipients
 
 ```solidity
-mapping(address recipient => Recipient) public recipients;
+mapping(address recipient => Recipient) public recipients
 ```
 
 
@@ -55,12 +58,12 @@ mapping(address recipient => Recipient) public recipients;
 
 
 ```solidity
-constructor(address[] memory initialRecipients, Recipient[] memory recipientData);
+constructor(address[] memory initialRecipients, Recipient[] memory recipientData) ;
 ```
 
 ### receive
 
-*Keep track of incoming fees*
+Keep track of incoming fees
 
 
 ```solidity
@@ -71,7 +74,7 @@ receive() external payable;
 
 Transfers a allocation from one recipient to another
 
-*reverts if the recipient doesn't have a setter*
+reverts if the recipient doesn't have a setter
 
 
 ```solidity
@@ -90,7 +93,7 @@ function transferAllocation(address oldRecipient, address newRecipient, uint256 
 
 Transfers the allocation of a recipient to another recipient and sets the setter of the recipient
 
-*reverts if the recipient already has a setter*
+reverts if the recipient already has a setter
 
 
 ```solidity

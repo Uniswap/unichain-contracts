@@ -3,7 +3,7 @@ set -e
 forge build
 rm -rf docs/autogen
 # generate docs
-forge doc -b -o docs/autogen
+forge doc -o docs/autogen
 
 # Unstage all docs where only the commit hash changed
 # Get a list of all unstaged files in the directory

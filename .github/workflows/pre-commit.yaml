@@ -11,12 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
+      # gelatodigital/automate (nested in lib/optimism) was deleted upstream and is not imported here
+      - name: Init nested submodules
+        run: git -C lib/optimism -c submodule.packages/contracts-bedrock/lib/automate.update=none submodule update --init --recursive
       - uses: actions/setup-python@v5
         with:
           submodules: recursive
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.5.1
       - name: Install pre-commit
         run: pip install pre-commit
       - name: Run pre-commit
